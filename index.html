@@ -8,19 +8,53 @@ table {border-spacing: 10px;}
 </head>
 
 <body>
-
+<style type="text/css">
+ 
+html { background: white; margin:0;}
+ #wrap {width:1150px;margin:0 auto;}
+ #left_col {float:left;width:800px;}
+ #right_col {float:right;width:350px;}
+</style>
+<script>
+function toggle() {
+    var image = document.getElementById('portrait');
+    if (image.src.match("photo.jpg")) {
+        image.src = "photo3.jpg";
+    } else {
+        image.src = "photo.jpg";
+    }
+}
+</script>
+<div id="wrap">
+<div id ="left_col">
 <h1>Welcome</h1>
 <h2>Ruobing Zhao</h2>
 
-<table style="width:60%">
+<table style="width:90%">
   <tr>
-    <td>I am a PhD candidate in Mechanical &amp Aerospace Engineering at University of California, San Diego. I completed my B.S. degree at University of California, Los Angeles (UCLA) in 2013.</td>    
+    <td>I am a PhD candidate in Mechanical &amp Aerospace Engineering at University of California, San Diego. I received my B.S. degree at University of California, Los Angeles (UCLA) in 2013, with a major in Chemical Engineering and a minor in Mathematics.</td>    
   </tr>
   <tr>
-    <td> My current research area is stochastic control theory and its application to physics problems (e.g. Sch&oumldinger equation). I am also interested in application of stochastic processes in biology (chemical reation networks, tumor growth, etc.)</td>
+    <td>My email address is ruz015 at eng dot ucsd dot edu.</td>
   </tr>
   <tr>
-    <td>Graduate Coursework:</td>
+    <td> My current research area is <b>stochastic control theory and its application to physics</b> (e.g. Schr&oumldinger equation). I am also interested in application of stochastic processes in biology (chemical reation networks, tumor growth, etc.)</td>
+  </tr>
+  <!--<tr><td><u>Demonstration</u></td></tr>-->
+  <tr>
+    <td><video width="250" height="250" controls>
+           <source src="breves0prob.mp4" type="video/mp4">
+        </video>
+        <video width="250" height="250" controls>
+           <source src="breves1prob_periodic.mp4" type="video/mp4">
+        </video></td>
+  </tr>
+  <tr><td>A point mass rotates around a charged nucleus under electrostatic force. An approximation of the wave function as a series expansion is obtained through the use of a complex-valued diffusion representation. The Probability density functions associated with the quadratic and cubic terms from the series are shown in the figure.</td>
+  </tr>
+<!--A charged nucleus in the central field generates a Coulomb potential field, and a point mass rotates around the nucleus under electrostatic force. The Schr&oumldinger equation is converted to dequantized form, and an approximation of the solution as series expansion is obtained through the use of a complex-valued diffusion representation. As the radial distance to the center of the field approaches infinity, the solution approaches to that of a free particle. Probability density functions associated with the quadratic and cubic terms from the series are shown in the figure below.-->
+
+  <tr>
+    <td><u>Graduate Coursework</u></td>
   </tr>
   <tr>
     <td><i>Mathematics</i>: Real Analysis, Probability Theory, Functional Analysis, Convex Analysis, Stochastic Differential Equations </td>
@@ -28,12 +62,71 @@ table {border-spacing: 10px;}
   <tr>
     <td><i>Control Theory</i>: Linear Systems, Linear Control, Nonlinear Systems, Nonlinear Control, Optimal Control, Hybrid Systems </td>
   </tr>
+  <!--<tr>
+    <td><u>Other Past Coursework (Highly Incomplete)</u></td>
+  </tr>
   <tr>
-    <td><img src="photo.jpg" alt = "my photo" width="300" height="300"></td>
+    <td>Graph Theory, Quantum Mechanics, Biochemistry, Thermodynamics</td>
+  </tr>
+  <tr>-->
+    <td><u>Teaching Experience</u></td>
+  </tr>
+  <tr>
+    <td><i>Undergraduate</i>: Numerical Methods for Engineers </td>
+  </tr>
+  <tr>
+    <td><i>Graduate</i>: Optimal Control, Real Analysis for Application </td>
+  </tr>
+</table>
+<table style="width:90%">
+  <tr>
+    <td><u>Publications and Talks</u></td>
+  </tr>
+  <tr>
+    <td><i>Publications</i></td>
+  </tr>
+  <!--<tr>
+    <td><i>Journals</i></td>
+  </tr>-->
+  <tr>
+    <td>Diffusion Process Representations for a
+Scalar-Field Schr&oumldinger Equation Solution in
+Rotating Coordinates</td>
+    <td>Submitted to SIAM journals, Under Review (with M. McEneaney)</td>
+  </tr>
+  <!--<tr>
+    <td><i>Conferences</i></td>
+  </tr>-->
+  <tr>
+    <td>A Diffusion-Based Solution Technique for Certain Schr&oumldinger Equation Dynamical Systems</td>
+    <td>European Control Conferences 2018 (with M. McEneaney)</td>
+  </tr>
+  <tr>
+    <td><i>Talks</i></td>
+  </tr>
+  <tr>
+    <td> Diffusion Process Approximation for a Solution of the
+Schr&oumldinger Equation</td>
+    <td>Southern California Control Workshop 2017 (with M. McEneaney)</td>
+  </tr>
+  <tr>
+    <td> Hamilton-Jacobi Equations for Two-Point Boundary-Value Problems in Conservative Systems and Dequantized Schr&oumldinger Equations</td>
+    <td>SIAM Conference on Control & Its Applications 2017 (with M. McEneaney, P. Dower)</td>
+  </tr>
+  <tr>
+    <td> A Complex-valued Controlled-diffusion Representation for the Schr&oumldinger Equation in a Rotating Frame</td>
+    <td>SIAM Conference on Control & Its Applications 2017 (with M. McEneaney)</td>
   </tr>
 </table>
 <hr>
 <!--I studied piano from age 6-15, and I remain an aficionado of classical music. Here's a <a href="music.html">guide</a> if you'd like to get into classical music.-->
+</div>
+<div id ="right_col">
+  <img id="portrait" src="photo.jpg" onclick="toggle()" alt = "my photo" width="300" height="300">
+<!--<p><u>Miscellaneous</u></p>
+<p><a href="music.html">Music</a></p>-->
+</div>
+</div>
 
 </body>
 </html>
