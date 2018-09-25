@@ -5,6 +5,11 @@
 th {text-align: left;}
 table {border-spacing: 10px;}
 </style>
+<style>
+.small_font{
+	font-size: 90%;
+  }
+</style>
 <meta name="description" content="Ruobing Zhao, PhD candidate, Stochastic, Control, UCSD, Schrodinger Equation" />
 <meta name="google-site-verification" content="b1828-lme_mSdFIEWPNtptJ81KB5KsB727395LERKAA" />
 <title>Ruobing Zhao's Homepage</title>
@@ -21,6 +26,7 @@ html { background: white; margin:0;}
  #left_col {float:left;width:800px;}
  #right_col {float:right;width:350px;}
 </style>
+
 <script>
 function toggle() {
     var image = document.getElementById('portrait');
@@ -39,6 +45,15 @@ function toggle3() {
         image.src = "photo22.jpg";
     } else {
         image.src = "photo.jpg";
+    }
+}
+
+function disptext() {
+    var x = document.getElementById("other_exp");
+    if (x.style.display === "block") {
+        x.style.display = "none";
+    } else {
+        x.style.display = "block";
     }
 }
 </script>
@@ -73,23 +88,21 @@ function toggle3() {
   </tr>
 <!--A charged nucleus in the central field generates a Coulomb potential field, and a point mass rotates around the nucleus under electrostatic force. The Schr&oumldinger equation is converted to dequantized form, and an approximation of the solution as series expansion is obtained through the use of a complex-valued diffusion representation. As the radial distance to the center of the field approaches infinity, the solution approaches to that of a free particle. Probability density functions associated with the quadratic and cubic terms from the series are shown in the figure below.-->
 </table>
-<table style="width:90%; font-family:courier; font-size: 100%;" id="cv">
+<table style="width:90%; font-family:courier;" id="cv">
   <tr>
     <th><u>Education</u></th>
   </tr>
   <tr>
-    <td>B.S. Chemical Engineering/Mathematics</td>
-    <td>University of California, Los Angeles (UCLA), 2009 - 2013</td>
+    <td>B.S. Chemical Engineering/Mathematics<br><span class="small_font">University of California, Los Angeles (UCLA), 2009 - 2013</span></td>
   </tr>
   <tr>
-    <td>Ph.D. Mechanical Engineering (Control Theory)</td>
-    <td>University of California, San Diego, 2013 - Present</td>
+    <td>Ph.D. Mechanical Engineering (Control Theory)<br><span class="small_font">University of California, San Diego, 2013 - Present</span></td>
   </tr>
   <tr>
     <th><u>Honors</u></th>
   </tr>
   <tr>
-    <td>Charles Lee Powell Foundation Graduate Fellowship, 2013 - 2016</td>
+    <td>Charles Lee Powell Foundation Graduate Fellowship<br><span class="small_font">2013 - 2016</span></td>
   </tr>
   <tr>
     <th><u>Publications and Talks</u></th>
@@ -103,35 +116,29 @@ function toggle3() {
   <tr>
     <td>Diffusion Process Representations for a
 Scalar-Field Schr&oumldinger Equation Solution in
-Rotating Coordinates</td>
-    <td>Submitted to SIAM journals, Under Review (with M. McEneaney)</td>
+Rotating Coordinates<br><span class="small_font">Submitted to SIAM journals, Under Review (with M. McEneaney)</span></td>
   </tr>
   <!--<tr>
     <td><i>Conferences</i></td>
   </tr>-->
   <tr>
-    <td>A Diffusion-Based Solution Technique for Certain Schr&oumldinger Equation Dynamical Systems</td>
-    <td>European Control Conferences 2018 (with M. McEneaney)</td>
+    <td>A Diffusion-Based Solution Technique for Certain Schr&oumldinger Equation Dynamical Systems<br><span class="small_font">European Control Conferences 2018 (with M. McEneaney)</span></td>
   </tr>
   <tr>
-    <td>Staticization of A Class of Non-convex Action Functionals in Quantum Mechanics</td>
-    <td>Preprint available soon</td>
+    <td>Staticization of A Class of Non-convex Action Functionals in Quantum Mechanics<br><span class="small_font">Preprint available soon</span></td>
   </tr>
   <tr>
     <td><i>Talks</i></td>
   </tr>
   <tr>
     <td> Diffusion Process Approximation for a Solution of the
-Schr&oumldinger Equation</td>
-    <td>Southern California Control Workshop 2017 (with M. McEneaney)</td>
+Schr&oumldinger Equation<br><span class="small_font">Southern California Control Workshop 2017 (with M. McEneaney)</span></td>
   </tr>
   <tr>
-    <td> Hamilton-Jacobi Equations for Two-Point Boundary-Value Problems in Conservative Systems and Dequantized Schr&oumldinger Equations</td>
-    <td>SIAM Conference on Control & Its Applications 2017 (with M. McEneaney, P. Dower)</td>
+    <td> Hamilton-Jacobi Equations for Two-Point Boundary-Value Problems in Conservative Systems and Dequantized Schr&oumldinger Equations<br><span class="small_font">SIAM Conference on Control & Its Applications 2017 (with M. McEneaney, P. Dower)</span></td>
   </tr>
   <tr>
-    <td> A Complex-valued Controlled-diffusion Representation for the Schr&oumldinger Equation in a Rotating Frame</td>
-    <td>SIAM Conference on Control & Its Applications 2017 (with M. McEneaney)</td>
+    <td> A Complex-valued Controlled-diffusion Representation for the Schr&oumldinger Equation in a Rotating Frame<br><span class="small_font">SIAM Conference on Control & Its Applications 2017 (with M. McEneaney)</span></td>
   </tr>
   <tr>
     <th><u>Service</u></th>
@@ -139,8 +146,6 @@ Schr&oumldinger Equation</td>
   <tr>
     <td>Reviewer of European Control Conferences</td>
   </tr>
-</table>
-<table style="width:90%; font-family:courier;">
   <tr>
     <th><u>Graduate Coursework</u></th>
   </tr>
@@ -166,13 +171,15 @@ Schr&oumldinger Equation</td>
     <td><i>Graduate</i>: Optimal Control*, Real Analysis for Application </td>
   </tr>
   <tr>
-    <td style = "font-size: 80%;">*Recommended in 100% of student evaluations in most recent assignments (as of summer 2018)</td>
+    <td><span class="small_font">*Recommended in 100% of student evaluations in most recent assignments (as of summer 2018)</span></td>
+  </tr>
+<!--</table>
+<table style="width:90%; font-family:courier;">-->
+  <tr>
+    <th onclick="disptext()"><u>Other Past Research-Related Experiences (click on text to view!)</u></th>
   </tr>
 </table>
-<table style="width:90%; font-family:courier;">
-  <tr>
-    <th><u>Other Past Research-Related Experiences</u></th>
-  </tr>
+<table id="other_exp"; style="display:none; width:90%; font-family:courier;">
   <tr>
     <td><i>Undergraduate Research Internship</i></td>
   </tr>
@@ -184,9 +191,7 @@ Schr&oumldinger Equation</td>
     <td><i>Undergraduate Research Internship</i></td>
   </tr>
   <tr>
-    <td>Developed MATLAB codes that simulate elastic areas colliding with solid objects of various shapes and stiffness through the use of Finite Element Method (FEM), the Neo-Hookean elasticity model and Piola-Kirchoff stress in 2D.
-
-Studied the Chvatal-Erdos Theorem in graph theory and the existence of Hamiltonian cycles on chessboards.</td>
+    <td>Developed MATLAB codes that simulate elastic areas colliding with solid objects of various shapes and stiffness through the use of Finite Element Method (FEM), the Neo-Hookean elasticity model and Piola-Kirchoff stress in 2D.<br>Studied the Chv&aacutetal-Erd&#337s Theorem in graph theory and the existence of Hamiltonian cycles.</td>
     <td>University of California, Los Angeles, <br>2012.1 - 2012.6</td>
   </tr>
 </table>
