@@ -14,10 +14,43 @@
 <body>
 <style type="text/css">
 
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 60%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 40% ;
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+}
+
 html { background: white; margin:0;}
- #wrap {margin:0 auto;}
+ /* #wrap {margin:0 auto;}
  #left_col {float:left;}
- #right_col {float:right;}
+ #right_col {float:right;} */
 </style>
 <div id="wrap">
   <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -41,9 +74,9 @@ html { background: white; margin:0;}
    </div>
    </div>
  </nav>
-<div class = "container">
+<div class = "container" id = "container">
 <div class = "row">
-  <div class = "col-xs-8" id="left_col">
+  <div class = "col-sm-8" id="left_col">
     <br>
     <br>
     <br>
@@ -110,7 +143,7 @@ html { background: white; margin:0;}
     </p>
     <hr>
   </div>
-  <div class = "col-xs-4" id="right_col">
+  <div class = "col-sm-4" id="right_col">
     <br>
     <br>
     <br>
