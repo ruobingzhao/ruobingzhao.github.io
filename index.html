@@ -13,18 +13,23 @@ table {border-spacing: 10px;}
 <meta name="description" content="I am a PhD candidate at University of California, San Diego (UCSD). My research area is stochastic optimal control. This is my homepage." />
 <meta name="google-site-verification" content="b1828-lme_mSdFIEWPNtptJ81KB5KsB727395LERKAA" />
 <title>Ruobing Zhao's Homepage</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
 <meta name="keywords" content="UCSD, Stochastic,Control Theory,Optimal Control,Schroedinger Equation,classical music">
 <meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 </head>
 
 <body>
 <style type="text/css">
 
 html { background: white; margin:0;}
- #wrap {width:1150px;margin:0 auto;}
- #left_col {float:left;width:800px;}
- #right_col {float:right;width:350px;}
+ #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;}
 </style>
 
 <script>
@@ -42,60 +47,63 @@ html { background: white; margin:0;}
 // -->
 </script>
 <div id="wrap">
-<div id ="left_col">
-<h1>Welcome</h1>
-<h2>Ruobing Zhao</h2>
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+	     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+	       <span class="icon-bar"></span>
+	       <span class="icon-bar"></span>
+	       <span class="icon-bar"></span>
+	     </button>
+       <a class="navbar-brand" href="#">Ruobing Zhao's Homepage</a>
+     </div>
+		 <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li class="active"><a href="#">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">Mom</a></li>
+			 <li><a href="cv.pdf">CV</a></li>
+     </ul>
+	 </div>
+   </div>
+ </nav>
+<div class="container">
+<div class = "row">
+<div class="col-xs-8" id ="left_col">
+	<br>
+	<br>
+	<br>
+	<h1>Welcome</h1>
+	<h2>Ruobing Zhao</h2>
 
-<table style="width:90%; font-family:courier;">
-  <tr>
-    <td>On Aug 30th, 2019, I successfully defended my Ph.D. Dissertation at University of California, San Diego (UCSD). I received my B.S. degree at University of California, Los Angeles (UCLA) in 2013 and my M.S. degree at University of California, San Diego in 2015.</td>
-  </tr>
-  <!--<tr>
-    <td>My email address is ruz015 at eng dot ucsd dot edu.</td>
-  </tr>-->
-  <tr>
+	<table style="width:90%;" >
+  	<tr>
+    <td>On Aug 30th, 2019, I successfully defended my Ph.D. Dissertation on stationary-action stochastic control representation of the Schrödinger initial value problem at University of California, San Diego (UCSD). I received my B.S. degree at University of California, Los Angeles (UCLA) in 2013 and my M.S. degree at University of California, San Diego in 2015.</td>
+  	</tr>
+  	<tr>
     <td> My research interests include stochastic optimal control and its application, dynamical systems, and stochastic differential equations.</td>
-  </tr>
-  <tr>
-    <!--<td>My Erd&#337s Number is 4. (R. Zhao - W. McEneaney - W. Fleming - R. Bellman - P. Erd&#337s)</td>-->
-  </tr>
-  <!-- <tr>
-    <td><br><i>Solving The Schr&oumldinger Equation Using Stochastic Control Method</i></td>
-  </tr>
-  <tr>
-    <td><video width="250" height="250" controls>
-           <source src="breves0prob.mp4" type="video/mp4">
-        </video>
-        <video width="250" height="250" controls>
-           <source src="breves1prob_periodic.mp4" type="video/mp4">
-        </video></td>
-  </tr>
-  <tr><td>A point mass rotates around a charged nucleus (assumed to be very far from the point mass) under electrostatic force. An approximation of the wave function as a series expansion is obtained through the use of stationary propagation of action functional and a complex-valued diffusion representation. The Probability density functions associated with the quadratic and cubic terms from the series are shown in the figure; the distribution of a free partical in radial direction and in plane are recovered.</td>
-  </tr> -->
-</table>
-
-<hr>
-<br>
-<p style="font-family:courier; font-size:90%;"><i>Miscellaneous</i></p>
-<p style="font-family:courier; font-size:90%;"><a href="teaching.html">Teaching evaluations</a></p>
-<p style="font-family:courier; font-size:90%;"><a href="music.html">Music</a></p>
-<p style="font-family:courier; font-size:90%;"><a href="memoriam.html">My mom</a></p>
+  	</tr>
+	</table>
+	<!-- <hr> -->
+	<br>
+	<p style="font-size:90%;"><i>Miscellaneous</i></p>
+	<p style="font-size:90%;"><a href="teaching.html">Teaching evaluations</a></p>
+	<p style="font-size:90%;"><a href="music.html">Music</a></p>
+	<p style="font-size:90%;"><a href="memoriam.html">My mom</a></p>
 </div>
-<div id ="right_col" style="font-family:courier;">
-  <img id="portrait" src="photo.jpg" alt = "my photo" height="300">
-
-<!--<p><a href="RZ_cv.pdf">CV (updated on March 20th, 2019)</a></p>-->
-<p><a href="cv.pdf">CV</a></p>
-
-<!-- <p>Website: <a href = "https://ruobingzhao.github.io/"><i>https://ruobingzhao.github.io/</i></a></p> -->
-<p>Email: <br><i>ruz015 at eng dot ucsd dot edu</i><br><i>ruz015 at ucsd dot edu</i></p>
-<!-- <p><a href = "https://www.instagram.com/aycarambart/"><img id="icon" src="icon.png" width="30" height="30"></a></p> -->
-<br>
-<!--
-<p><i>Miscellaneous</i></p>
-<p><a href="memoriam.html">In Memoriam</a></p>
-<p><a href="music.html">Music</a></p>
--->
+<div class="col-xs-4" id ="right_col">
+	<br>
+	<br>
+	<br>
+  <img class="img-rounded" id="portrait" src="photo.jpg" alt = "my photo" height=300px>
+	<p><br></p>
+	<p><a href="cv.pdf" class="btn btn-default" role="button">CV <span class="glyphicon glyphicon-download"></span></a></p>
+	<p><a href="mailto: ruz015@eng.ucsd.edu"  class="btn btn-default" >Email <span class="glyphicon glyphicon-envelope"></span></a><i> ruz015 at eng dot ucsd dot edu</i></p>
+	<p><a href="mailto: ruz015@ucsd.edu"  class="btn btn-default" >Email <span class="glyphicon glyphicon-envelope"></span></a><i> ruz015 at ucsd dot edu</i></p>
+	<br>
+</div>
+</div>
 </div>
 </div>
 
