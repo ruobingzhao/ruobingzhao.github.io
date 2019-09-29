@@ -162,12 +162,12 @@ function vanilla_euro() {
     </form>
     Click <a href="#vanilla_euro_tutorial" onclick = "toggle_vis('vanilla_euro_tutorial')">here</a> to view/hide tutorial.
     <div id ="vanilla_euro_tutorial">
-      Let \( S_t \) be the price of the asset at time \(t\). We use a discrete time model with \(n\) steps to approximate the evolution of asset price over the time interval \([0,T]\). The binomial model assumes that in one time period (after one time step with size \(\delta_t\)), the asset price will go from the current price \(S\) to either a higher value \(u\cdot S \) ("up") with probability \(p\) or to a lower value \(d\cdot S\) ("down") with probability \(1-p\), where \(p\) is the risk neutral probability. The Cox-Ross-Rubinstein model assumes that \(u = \exp(\sigma\sqrt{\delta_t})\), \(d = \exp(-\sigma\sqrt{\delta_t})\), \(p = \frac{R-d}{u-d}\), where \(\sigma\) is the volatility of the asset and \(R = \exp(r\delta_t)\). The asset price tree after \(n\) periods looks like this:
+      Let \( S_t \) be the price of the asset at time \(t\). We use a discrete time model with \(n\) steps to approximate the evolution of asset price over the time interval \([0,T]\). The binomial model assumes that in one time period (after one time step with size \(\delta_t\)), the asset price will go from the current price \(S\) to either a higher value \(u\cdot S \) ("up") with probability \(p\) or to a lower value \(d\cdot S\) ("down") with probability \(1-p\), where \(p\) is the risk neutral probability. The Cox-Ross-Rubinstein model assumes that \(u = \exp(\sigma\sqrt{\delta_t})\), \(d = \exp(-\sigma\sqrt{\delta_t})\), \(p = \frac{R-d}{u-d}\), where \(\sigma\) is the volatility of the asset and \(R = \exp(r\delta_t)\) is a factor that accounts for compounding riskless interest rate \(r\) over a period of time \(\delta_t\). The asset price tree after \(n\) periods looks like this:
       <img src="assetpricetree.png" class="img-rounded" alt="tree" style="float:none;width:400px;">
       <br>
       Let \(K \) be the strike price of the option.
-      We know that at expiration, the price of an European call option is \( \max(S_T-K,0)\). Recall that the one-period risk neutral European call option price (as a function of the asset price \(S\) and time \(t\)) is given by \[C(t,S) =\frac{1}{R} \bigg[ p C(t+\delta_t, uS) + (1-p)C(t+\delta_t,dS) \bigg].\]
-      We first calculate the option price at expiration for the \(n+1\) possible price values (see the asset price tree at \(t = T\)), and iteratively calculate the option price at the previous time step using the  one-period pricing formula until we reach the current time 0. That is, the call option price at time \(T = n\delta_t\) (as a function of the asset price) is:
+      We know that at expiration, the price of an European call option is \( \max(S_T-K,0)\). The one-period (one time step) risk neutral European call option price \(C\), as a function of the asset price \(S\) and time \(t\), is given by \[C(t,S) =\frac{1}{R} \bigg[ p C(t+\delta_t, uS) + (1-p)C(t+\delta_t,dS) \bigg].\]
+      Denote by \(C_j^i\) the call option price \(C(i\delta_t,u^{i-j}d^jS_0)\), at time \(t= i\delta_t\) and asset price \(u^{i-j}d^jS_0\). We first calculate the option price at expiration for the \(n+1\) possible price values (see the asset price tree at \(t = T\)), and iteratively calculate the option price at the previous time step using the  one-period pricing formula until we reach the current time 0. That is, the call option price at time \(T = n\delta_t\) (as a function of the asset price) is:
       \[C^n_0 = \max(u^nS_0-K,0)\]
       \[C^n_1 = \max(u^{n-1}dS_0-K,0)\]
       \[...\]
@@ -178,7 +178,7 @@ function vanilla_euro() {
       \[C^{n-1}_1 =\frac{1}{R} \bigg[ p C^n_1 + (1-p)C^n_2 \bigg]\]
       \[...\]
       \[C^{n-1}_{n-1} =\frac{1}{R} \bigg[ p C^n_{n-1} + (1-p)C^n_n \bigg]\]
-      And so on. Every time we go back one step in time, the number of possible call option prices reduces by one. As we reach time \(t=0\), the value \(C^0_0\) is the price of the European call option. The European put option price can be easily calculated using put-call parity:
+      And so on. Every time we go back one step in time, the number of possible call option prices reduces by one. As we reach time \(t=0\), the value \(C^0_0\) is the price of the European call option given the current (i.e. \(t=0\)) stock price \(S\). The European put option price can be easily calculated using put-call parity:
       \[P = C -S + K \exp(-r(T-0)).\]
       <br>
       <p><a href="#vanilla_euro_code" onclick="toggle_vis('vanilla_euro_code')">View/hide c++ code</a></p>
