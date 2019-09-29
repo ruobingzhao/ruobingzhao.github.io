@@ -143,7 +143,7 @@ function vanilla_euro() {
     </h4>
     This simple web calculator calculates the European call/put option prices for an asset that pays no dividends.
     <form name = "vanilla_euro_option_calc">
-    Asset price ($) = <input type ="text" name = "txtS">
+    Current asset price ($) = <input type ="text" name = "txtS">
     <br>
     Strike price ($) = <input type ="text" name = "txtK">
     <br>
@@ -155,9 +155,9 @@ function vanilla_euro() {
     <br>
     <input type ="button" value = "Calculate" onClick = "vanilla_euro()">
     <br>
-    European Call Option Price = <input type ="text" name = "txtcall">
+    European Call Option Price ($) = <input type ="text" name = "txtcall">
     <br>
-    European Put Option Price = <input type ="text" name = "txtput">
+    European Put Option Price ($) = <input type ="text" name = "txtput">
 
     </form>
     Click <a href="#" onclick = "toggle_vis('vanilla_euro_tutorial')">here</a> to view/hide tutorial.
