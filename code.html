@@ -183,6 +183,10 @@ function vanilla_euro() {
       <br>
       <p><a href ="#" onclick="toggle_vis('vanilla_euro_code')">View/hide c++ code</a></p>
       <div id="vanilla_euro_code"><pre>
+#ifndef option_h
+#define option_h
+using namespace std;
+#include &lt;math.h&gt;       // exp, sqrt, pow
 struct option {
     double call;
     double put;
@@ -232,7 +236,8 @@ option optionPrice
     result.put = result.call - S + K*exp(-r*(T-t));
     delete [] V;
     return result;
-};</pre></div>
+};
+#endif</pre></div>
       <p><a href="#" onclick="toggle_vis('vanilla_euro_tutorial')">Hide tutorial</a></p>
     </div>
     <hr>
