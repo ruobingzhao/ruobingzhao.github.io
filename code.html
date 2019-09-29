@@ -166,7 +166,7 @@ function vanilla_euro() {
       <img src="assetpricetree.png" class="img-rounded" alt="tree" style="float:none;width:400px;">
       <br>
       Let \(K \) be the strike price of the option.
-      We know that at expiration, the price of an European call option is \( \max(S_T-K,0)\). The one-period (one time step) risk neutral European call option price \(C\), as a function of the asset price \(S\) and time \(t\), is given by \[C(t,S) =\frac{1}{R} \bigg[ p C(t+\delta_t, uS) + (1-p)C(t+\delta_t,dS) \bigg].\]
+      We know that at expiration, the price of an European call option is \( \max(S_T-K,0)\). The one-period (one time step) risk neutral European call option price \(C\), as a function of the asset price \(S\) and time \(t\), is given by the formula \[C(t,S) =\frac{1}{R} \bigg[ p C(t+\delta_t, uS) + (1-p)C(t+\delta_t,dS) \bigg].\]
       Denote by \(C_j^i\) the call option price \(C(i\delta_t,u^{i-j}d^jS_0)\), at time \(t= i\delta_t\) and asset price \(u^{i-j}d^jS_0\). We first calculate the option price at expiration for the \(n+1\) possible price values (see the asset price tree at \(t = T\)), and iteratively calculate the option price at the previous time step using the  one-period pricing formula until we reach the current time 0. That is, the call option price at time \(T = n\delta_t\) (as a function of the asset price) is:
       \[C^n_0 = \max(u^nS_0-K,0)\]
       \[C^n_1 = \max(u^{n-1}dS_0-K,0)\]
