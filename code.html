@@ -107,6 +107,107 @@ function vanilla_euro() {
     document.vanilla_euro_option_calc.txtcall.value = call;
     document.vanilla_euro_option_calc.txtput.value = put;
 }
+
+function american_option() {
+    var S, K, intr, T, sig;
+    S = Number(document.american_option_calc.txtS.value);
+    K = Number(document.american_option_calc.txtK.value);
+    intr = Number(document.american_option_calc.txtr.value)/100;
+    T = Number(document.american_option_calc.txtT.value);
+    sig = Number(document.american_option_calc.txtsig.value)/100;
+
+    //step size
+    var dt = 0.0002;
+    // calculate step size
+    var n = T/dt;
+    // american option values
+    var V = new Array(n+1);
+    // european option values for comparison
+    var W = new Array(n+1);
+    // use CRR model for u, d, p
+    var u = Math.exp(sig*Math.sqrt(dt));
+    var d = Math.exp(-sig*Math.sqrt(dt));
+    var R = Math.exp(intr*dt);
+    var p = (R-d)/(u-d);
+    // initialize optimal exercise timeout
+    var ex_t = T;
+
+    // iterator
+    var i,j,k;
+
+    var divp;
+    divp = Number(document.american_option_calc.txtdivp.value)/100;
+    // get dividend dates input as string
+    var str_val = document.american_option_calc.txtdiv.value;
+    // get each dividend date separated by commas
+    var str_arr = str_val.split(',');
+    var div_arr = [];
+    // push into array of numbers
+    for(i=0; i < str_arr.length; i++){
+      if (str_arr[i] != "" && str_arr[i] != " ")
+      div_arr.push(parseFloat(str_arr[i]));
+    }
+    // sort dividend dates from lowest to highest
+    div_arr = div_arr.sort(function(a, b){return a-b});
+
+    // build asset prices tree
+    var S_tree = [];
+    // allocate arrays
+    for(i=0; i<n+1; i++) {
+      S_tree[i] = new Array(i+1);
+    }
+    // find time steps for dividend payment
+    for (i=0;i<div_arr.length; i++){
+      div_arr[i] = div_arr[i]/dt;
+    }
+
+    var count = 0;
+    // calculate price values
+    for(i = 0; i< n+1;i++){
+        // count how many time dividend is paid
+        for(k = 0; k< div_arr.length; k++){
+            if(i>=div_arr[k]){
+                count = count +1;
+              }
+            }
+            for(j = 0; j<i+1; j++){
+              // multiply asset price by the dividend discount factor
+              S_tree[i][j] = S*Math.pow(u,j)*Math.pow(d,i-j)*Math.pow(1-divp,count);
+            }
+            count = 0;
+    }
+        // calculate the option prices at time T
+        for (j = 0; j < n+1; j++){
+          // american
+          V[j] = Math.max(S_tree[n][j] - K, 0.);
+          // european
+          W[j] = Math.max(S_tree[n][j] - K, 0.);
+        }
+        // iteratively calculate the option price at the previous time step until time is t
+          // using one period pricing formula
+          for (i = n-1; i >= 0; i--){
+            for (j = 0; j<= i; j++){
+              var hj = Math.max(S_tree[i][j] - K, 0.);
+              var Cj = (1/R)*(p*V[j+1] + (1-p)*V[j]);
+              // european
+              W[j] = (1/R)*(p*W[j+1] + (1-p)*W[j]);
+              //american
+              if (hj>= Cj){
+                  V[j] = hj;
+                  // record stopping time
+                  ex_t = i*dt;
+                }
+                else{
+                  V[j] = Cj;
+                }
+              }
+            }
+            call = V[0];
+            eurocall = W[0];
+            document.american_option_calc.txtcall.value = call;
+            document.american_option_calc.txtext.value = ex_t;
+            document.american_option_calc.txteurocall.value = eurocall;
+}
 </script>
 <div id="wrap">
   <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -241,9 +342,35 @@ option optionPrice
       <p><a href="#" onclick="toggle_vis('vanilla_euro_tutorial')">Hide tutorial</a></p>
     </div>
     <hr>
+
     <h4>
-      Tutorial 2: TBD
+      Tutorial 2: American Call Option Price Calculator for Dividend-Paying Assets (Binomial Model)
     </h4>
+    <form name ="american_option_calc">
+    Asset price ($) = <input type ="text" name = "txtS">
+    <br>
+    Strike price ($) = <input type ="text" name = "txtK">
+    <br>
+    Interest rate (%) = <input type ="text" name = "txtr">
+    <br>
+    Time to maturity (year) = <input type ="text" name = "txtT">
+    <br>
+    Volatility (%) = <input type ="text" name = "txtsig">
+    <br>
+    Time to dividend dates (year, separate by commas) = <input type ="text" name = "txtdiv" id ="div_time">
+    <br>
+    Dividend yield for EACH payment (%) = <input type ="text" name = "txtdivp" id = "div_yield">
+    <br>
+    <input type ="button" value = "Calculate" onClick = "american_option()">
+    <br>
+    American Call Option Price ($) = <input type ="text" name = "txtcall">
+    <br>
+    Time to Optimal Exercise (year) = <input type ="text" name = "txtext">
+    <br>
+    For Comparison:<br>
+    European call for the same asset ($) = <input type ="text" name = "txteurocall">
+    </form>
+    <hr>
   </div>
   <div class = "col-sm-4" id="right_col">
     <br>
