@@ -133,8 +133,6 @@ function american_option() {
     var d = Math.exp(-sig*Math.sqrt(dt));
     var R = Math.exp(intr*dt);
     var p = (R-d)/(u-d);
-    // initialize optimal exercise timeout
-    var ex_t = T;
 
     // iterator
     var i,j,k;
@@ -199,8 +197,6 @@ function american_option() {
               //american
               if (hj> Cj){
                   V[j] = hj;
-                  // record stopping time
-                  ex_t = i*dt;
                 }
                 else{
                   V[j] = Cj;
@@ -210,7 +206,6 @@ function american_option() {
             call = V[0];
             eurocall = W[0];
             document.american_option_calc.txtcall.value = call;
-            document.american_option_calc.txtext.value = ex_t;
             document.american_option_calc.txteurocall.value = eurocall;
 }
 </script>
@@ -369,8 +364,6 @@ option optionPrice
     <input type ="button" value = "Calculate" onClick = "american_option()">
     <br>
     American Call Option Price ($) = <input type ="text" name = "txtcall">
-    <br>
-    Time to Optimal Exercise (year) = <input type ="text" name = "txtext">
     <br>
     For Comparison:<br>
     European call for the same asset ($) = <input type ="text" name = "txteurocall">
