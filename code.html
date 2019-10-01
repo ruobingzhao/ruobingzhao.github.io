@@ -406,7 +406,6 @@ double americanOptionPrice
     double d = 1/u;
     double R = exp(r*dt);
     double p = (R-d)/(u-d);
-    double ex_t = 0;
 
     // if no dividends, call the European call option function
     if (divdates.size() == 0){
@@ -471,16 +470,12 @@ double americanOptionPrice
             // American price
             if (hj>= Cj){
                 V[j] = hj;
-                // record stopping time
-                ex_t = i*dt;
             }
             else{
                 V[j] = Cj;
             }
         }
     }
-    // optimal stopping time is the smallest t such that hj >= Cj
-    cout << "Exercise the option at time " << ex_t<< '\n';
     // set value for call price
     call = V[0];
     cout << "European option: "<< W[0]<<'\n';
