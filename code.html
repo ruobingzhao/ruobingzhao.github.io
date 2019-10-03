@@ -282,65 +282,65 @@ function american_option() {
       And so on. Every time we go back one step in time, the number of possible call option prices reduces by one. As we reach time \(t=0\), the value \(C^0_0\) is the price of the European call option given the current (i.e. \(t=0\)) stock price \(S\). The European put option price can be easily calculated using put-call parity:
       \[P = C -S + K \exp(-r(T-0)).\]
       <br>
-      <p><a href="#vanilla_euro_code" onclick="toggle_vis('vanilla_euro_code')">View/hide c++ code</a></p>
-      <div id="vanilla_euro_code"><pre>
+      <p><a href="#" onclick="toggle_vis('vanilla_euro_tutorial')">Hide tutorial</a></p>
+    </div>
+    <p><a href="#vanilla_euro_code" onclick="toggle_vis('vanilla_euro_code')">View/hide c++ code</a></p>
+    <div id="vanilla_euro_code"><pre>
 #ifndef option_h
 #define option_h
 using namespace std;
 #include &lt;math.h&gt;       // exp, sqrt, pow
 struct option {
-    double call;
-    double put;
+  double call;
+  double put;
 };
 
 option optionPrice
 (
- double S, // stock price
- double K, // strike price
- double r, // riskless interest rate
- double t, // current time
- double T, // expiration time
- double sig, // volatility
- int n // number of steps
+double S, // stock price
+double K, // strike price
+double r, // riskless interest rate
+double t, // current time
+double T, // expiration time
+double sig, // volatility
+int n // number of steps
 )
 {
-    option result;
+  option result;
 
-    // calculate step size
-    double dt = (T-t)/n;
-    // use CRR model for u, d, p
-    double u = exp(sig*sqrt(dt));
-    double d = 1/u;
-    double R = exp(r*dt);
-    double p = (R-d)/(u-d);
+  // calculate step size
+  double dt = (T-t)/n;
+  // use CRR model for u, d, p
+  double u = exp(sig*sqrt(dt));
+  double d = 1/u;
+  double R = exp(r*dt);
+  double p = (R-d)/(u-d);
 
-    // allocate (n+1) nodes for option values
-    double * V = new double [n+1];
+  // allocate (n+1) nodes for option values
+  double * V = new double [n+1];
 
-    // calculate the option prices at time T
-    for (int j = 0; j < n+1; j++){
-        V[j] = max(S*pow(u,j)*pow(d,n-j) - K, 0.);
-    }
+  // calculate the option prices at time T
+  for (int j = 0; j < n+1; j++){
+      V[j] = max(S*pow(u,j)*pow(d,n-j) - K, 0.);
+  }
 
-    // iteratively calculate the option price at the previous time step until time is t
-    // using one period pricing formula
-    for (int i = n-1; i >= 0; i--){
-        for (int j = 0; j<= i; j++){
-            V[j] = (1/R)*(p*V[j+1] + (1-p)*V[j]);
-        }
-    }
+  // iteratively calculate the option price at the previous time step until time is t
+  // using one period pricing formula
+  for (int i = n-1; i >= 0; i--){
+      for (int j = 0; j<= i; j++){
+          V[j] = (1/R)*(p*V[j+1] + (1-p)*V[j]);
+      }
+  }
 
-    // set value for call price
-    result.call = V[0];
-    // calculate put price from put-call parity
-    // P = C - S +  K*exp(-r(T-t))
-    result.put = result.call - S + K*exp(-r*(T-t));
-    delete [] V;
-    return result;
+  // set value for call price
+  result.call = V[0];
+  // calculate put price from put-call parity
+  // P = C - S +  K*exp(-r(T-t))
+  result.put = result.call - S + K*exp(-r*(T-t));
+  delete [] V;
+  return result;
 };
 #endif</pre></div>
-      <p><a href="#" onclick="toggle_vis('vanilla_euro_tutorial')">Hide tutorial</a></p>
-    </div>
     <hr>
 
     <h4>
