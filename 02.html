@@ -25,11 +25,11 @@
   }
   #left_col {
     order: 1 ;
-    width: 60%;
+    width: 70%;
   }
   #right_col {
     order: 2 ;
-    width: 40% ;
+    width: 30% ;
   }
 }
 @media all and (max-width: 629px) {
@@ -238,114 +238,11 @@ function american_option() {
     <br>
     <br>
     <br>
-    <i>All contents are created by Ruobing Zhao on 9/27/19. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
-    <h4>
-      <u>Tutorial 1</u> Vanilla European Option Price Calculator (Binomial Model)
-    </h4>
-    This simple web calculator calculates the European call/put option prices for an asset that pays no dividends.
-    <form name = "vanilla_euro_option_calc">
-    Current asset price ($) = <input type ="text" name = "txtS">
-    <br>
-    Strike price ($) = <input type ="text" name = "txtK">
-    <br>
-    Interest rate (%) = <input type ="text" name = "txtr">
-    <br>
-    Time to maturity (year) = <input type ="text" name = "txtT">
-    <br>
-    Volatility (%) = <input type ="text" name = "txtsig">
-    <br>
-    <input type ="button" value = "Calculate" onClick = "vanilla_euro()">
-    <br>
-    European Call Option Price ($) = <input type ="text" name = "txtcall">
-    <br>
-    European Put Option Price ($) = <input type ="text" name = "txtput">
-
-    </form>
-    <p><a href="#vanilla_euro_code" onclick="toggle_vis('vanilla_euro_code')">View/hide c++ code</a></p>
-    <div id="vanilla_euro_code"><pre>
-#ifndef option_h
-#define option_h
-using namespace std;
-#include &lt;math.h&gt;       // exp, sqrt, pow
-struct option {
-  double call;
-  double put;
-};
-
-option optionPrice
-(
-double S, // stock price
-double K, // strike price
-double r, // riskless interest rate
-double t, // current time
-double T, // expiration time
-double sig, // volatility
-int n // number of steps
-)
-{
-  option result;
-
-  // calculate step size
-  double dt = (T-t)/n;
-  // use CRR model for u, d, p
-  double u = exp(sig*sqrt(dt));
-  double d = 1/u;
-  double R = exp(r*dt);
-  double p = (R-d)/(u-d);
-
-  // allocate (n+1) nodes for option values
-  double * V = new double [n+1];
-
-  // calculate the option prices at time T
-  for (int j = 0; j < n+1; j++){
-      V[j] = max(S*pow(u,j)*pow(d,n-j) - K, 0.);
-  }
-
-  // iteratively calculate the option price at the previous time step until time is t
-  // using one period pricing formula
-  for (int i = n-1; i >= 0; i--){
-      for (int j = 0; j<= i; j++){
-          V[j] = (1/R)*(p*V[j+1] + (1-p)*V[j]);
-      }
-  }
-
-  // set value for call price
-  result.call = V[0];
-  // calculate put price from put-call parity
-  // P = C - S +  K*exp(-r(T-t))
-  result.put = result.call - S + K*exp(-r*(T-t));
-  delete [] V;
-  return result;
-};
-#endif</pre></div>
-<!-- Click <a href="#vanilla_euro_tutorial" onclick = "toggle_vis('vanilla_euro_tutorial')">here</a> to view/hide tutorial.
-<div id ="vanilla_euro_tutorial">
-  Let \( S_t \) be the price of the asset at time \(t\). Consider a European call option that matures at time \(T\). We use a discrete time model with \(n\) steps to approximate the evolution of asset price over the time interval \([0,T]\). The binomial model (under risk neutral probability measure) assumes that in one time period (after one time step with size \(\delta_t\)), the asset price will go from the current price \(S\) to either a higher value \(u\cdot S \) ("up") with probability \(p\) or to a lower value \(d\cdot S\) ("down") with probability \(1-p\), where \(p\) is the risk neutral probability. The Cox-Ross-Rubinstein model assumes that \(u = \exp(\sigma\sqrt{\delta_t})\), \(d = \exp(-\sigma\sqrt{\delta_t})\), \(p = \frac{R-d}{u-d}\), where \(\sigma\) is the volatility of the asset and \(R = \exp(r\delta_t)\) is a factor that accounts for compounding riskless interest rate \(r\) over a period of time \(\delta_t\). The asset price tree after \(n\) periods looks like this:
-  <img src="assetpricetree.png" class="img-rounded" alt="tree" style="float:none;width:400px;">
-  <br>
-  Let \(K \) be the strike price of the option.
-  We know that at expiration (maturity), the price of an European call option is \( \max(S_T-K,0)\). The one-period (one time step) risk neutral European call option price \(C\), as a function of the asset price \(S\) and time \(t\), is given by the formula \[C(t,S) =\frac{1}{R} \bigg[ p C(t+\delta_t, uS) + (1-p)C(t+\delta_t,dS) \bigg].\]
-  Denote by \(C_j^i\) the call option price \(C(i\delta_t,u^{i-j}d^jS_0)\), at time \(t= i\delta_t\) and asset price \(u^{i-j}d^jS_0\). We first calculate the option price at expiration for the \(n+1\) possible price values (see the asset price tree at \(t = T\)), and iteratively calculate the option price at the previous time step using the  one-period pricing formula until we reach the current time 0. That is, the call option price at expiration time \(T = n\delta_t\), given each possible asset price, is:
-  \[C^n_0 = \max(u^nS_0-K,0)\]
-  \[C^n_1 = \max(u^{n-1}dS_0-K,0)\]
-  \[...\]
-  \[C^n_{n-1} = \max(ud^{n-1}S_0-K,0)\]
-  \[C^n_n = \max(d^nS_0-K,0)\]
-  Going back one step, at time \(t = T-\delta_t = (n-1)\delta_t\), the call option price (as a function of the asset price) is:
-  \[C^{n-1}_0 =\frac{1}{R} \bigg[ p C^n_0 + (1-p)C^n_1 \bigg]\]
-  \[C^{n-1}_1 =\frac{1}{R} \bigg[ p C^n_1 + (1-p)C^n_2 \bigg]\]
-  \[...\]
-  \[C^{n-1}_{n-1} =\frac{1}{R} \bigg[ p C^n_{n-1} + (1-p)C^n_n \bigg]\]
-  And so on. Every time we go back one step in time, the number of possible call option prices reduces by one. As we reach time \(t=0\), the value \(C^0_0\) is the price of the European call option given the current (i.e. \(t=0\)) stock price \(S\). The European put option price can be easily calculated using put-call parity:
-  \[P = C -S + K \exp(-r(T-0)).\]
-  <br>
-  <p><a href="#" onclick="toggle_vis('vanilla_euro_tutorial')">Hide tutorial</a></p>
-</div> -->
-    <hr>
-
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
     <h4>
       <u>Tutorial 2</u> Dynamic Programming Example: American Call Option Price Calculator for Dividend-Paying Assets (Binomial Model)
     </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
     <form name ="american_option_calc">
     Asset price ($) = <input type ="text" name = "txtS">
     <br>
@@ -490,12 +387,6 @@ double americanOptionPrice
 };
 #endif</pre></div>
     <hr>
-  </div>
-  <div class = "col-sm-4" id="right_col">
-    <br>
-    <br>
-    <br>
-    <!-- <img src="stonks.png" class="img-rounded" alt="stonks" style="float:left;width:250px;"> -->
   </div>
 </div>
 </div>

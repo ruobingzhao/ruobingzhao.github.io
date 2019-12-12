@@ -25,11 +25,11 @@
   }
   #left_col {
     order: 1 ;
-    width: 60%;
+    width: 70%;
   }
   #right_col {
     order: 2 ;
-    width: 40% ;
+    width: 30% ;
   }
 }
 @media all and (max-width: 629px) {
@@ -58,10 +58,6 @@ html { background: white; margin:0;}
    display: none;
  }
  #vanilla_euro_code {
-   font-family: courier;
-   display: none;
- }
- #american_option_code {
    font-family: courier;
    display: none;
  }
@@ -112,102 +108,6 @@ function vanilla_euro() {
     document.vanilla_euro_option_calc.txtput.value = put;
 }
 
-function american_option() {
-    var S, K, intr, T, sig;
-    S = Number(document.american_option_calc.txtS.value);
-    K = Number(document.american_option_calc.txtK.value);
-    intr = Number(document.american_option_calc.txtr.value)/100;
-    T = Number(document.american_option_calc.txtT.value);
-    sig = Number(document.american_option_calc.txtsig.value)/100;
-
-    //step size
-    var dt = 0.0002;
-    // calculate step size
-    var n = T/dt;
-    // american option values
-    var V = new Array(n+1);
-    // european option values for comparison
-    var W = new Array(n+1);
-    // use CRR model for u, d, p
-    var u = Math.exp(sig*Math.sqrt(dt));
-    var d = Math.exp(-sig*Math.sqrt(dt));
-    var R = Math.exp(intr*dt);
-    var p = (R-d)/(u-d);
-
-    // iterator
-    var i,j,k;
-
-    var divp;
-    divp = Number(document.american_option_calc.txtdivp.value)/100;
-    // get dividend dates input as string
-    var str_val = document.american_option_calc.txtdiv.value;
-    // get each dividend date separated by commas
-    var str_arr = str_val.split(',');
-    var div_arr = [];
-    // push into array of numbers
-    for(i=0; i < str_arr.length; i++){
-      if (str_arr[i] != "" && str_arr[i] != " ")
-      div_arr.push(parseFloat(str_arr[i]));
-    }
-    // sort dividend dates from lowest to highest
-    div_arr = div_arr.sort(function(a, b){return a-b});
-
-    // build asset prices tree
-    var S_tree = [];
-    // allocate arrays
-    for(i=0; i<n+1; i++) {
-      S_tree[i] = new Array(i+1);
-    }
-    // find time steps for dividend payment
-    for (i=0;i<div_arr.length; i++){
-      div_arr[i] = div_arr[i]/dt;
-    }
-
-    var count = 0;
-    // calculate price values
-    for(i = 0; i< n+1;i++){
-        // count how many time dividend is paid
-        for(k = 0; k< div_arr.length; k++){
-            if(i>=div_arr[k]){
-                count = count +1;
-              }
-            }
-            for(j = 0; j<i+1; j++){
-              // multiply asset price by the dividend discount factor
-              S_tree[i][j] = S*Math.pow(u,j)*Math.pow(d,i-j)*Math.pow(1-divp,count);
-            }
-            count = 0;
-    }
-        // calculate the option prices at time T
-        for (j = 0; j < n+1; j++){
-          // american
-          V[j] = Math.max(S_tree[n][j] - K, 0.);
-          // european
-          W[j] = Math.max(S_tree[n][j] - K, 0.);
-        }
-        // iteratively calculate the option price at the previous time step until time is t
-          // using one period pricing formula
-          var hj, Cj;
-          for (i = n-1; i >= 0; i--){
-            for (j = 0; j<= i; j++){
-              hj = Math.max(S_tree[i][j] - K, 0.);
-              Cj = (1/R)*(p*V[j+1] + (1-p)*V[j]);
-              // european
-              W[j] = (1/R)*(p*W[j+1] + (1-p)*W[j]);
-              //american
-              if (hj> Cj){
-                  V[j] = hj;
-                }
-                else{
-                  V[j] = Cj;
-                }
-              }
-            }
-            call = V[0];
-            eurocall = W[0];
-            document.american_option_calc.txtcall.value = call;
-            document.american_option_calc.txteurocall.value = eurocall;
-}
 </script>
 <div id="wrap">
   <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -238,10 +138,11 @@ function american_option() {
     <br>
     <br>
     <br>
-    <i>All contents are created by Ruobing Zhao on 9/27/19. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
     <h4>
       <u>Tutorial 1</u> Vanilla European Option Price Calculator (Binomial Model)
     </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
     This simple web calculator calculates the European call/put option prices for an asset that pays no dividends.
     <form name = "vanilla_euro_option_calc">
     Current asset price ($) = <input type ="text" name = "txtS">
@@ -342,160 +243,6 @@ int n // number of steps
   <p><a href="#" onclick="toggle_vis('vanilla_euro_tutorial')">Hide tutorial</a></p>
 </div> -->
     <hr>
-
-    <h4>
-      <u>Tutorial 2</u> Dynamic Programming Example: American Call Option Price Calculator for Dividend-Paying Assets (Binomial Model)
-    </h4>
-    <form name ="american_option_calc">
-    Asset price ($) = <input type ="text" name = "txtS">
-    <br>
-    Strike price ($) = <input type ="text" name = "txtK">
-    <br>
-    Interest rate (%) = <input type ="text" name = "txtr">
-    <br>
-    Time to maturity (year) = <input type ="text" name = "txtT">
-    <br>
-    Volatility (%) = <input type ="text" name = "txtsig">
-    <br>
-    Time to dividend dates (year, separate by commas) = <input type ="text" name = "txtdiv" id ="div_time">
-    <br>
-    Dividend yield for EACH payment (%) = <input type ="text" name = "txtdivp" id = "div_yield">
-    <br>
-    <input type ="button" value = "Calculate" onClick = "american_option()">
-    <br>
-    American Call Option Price ($) = <input type ="text" name = "txtcall">
-    <br>
-    For Comparison:<br>
-    European call for the same asset ($) = <input type ="text" name = "txteurocall">
-    </form>
-    <p><a href="#american_option_code" onclick="toggle_vis('american_option_code')">View/hide c++ code</a></p>
-    <div id="american_option_code"><pre>
-#ifndef american_option_h
-#define american_option_h
-using namespace std;
-#include&lt;vector&gt;
-#include &lt;math.h&gt;       // exp, sqrt, pow
-struct option {
-  double call;
-  double put;
-};
-
-// European option calculator
-// Code in Tutorial 1 above
-option optionPrice();
-
-double americanOptionPrice
-(
- double S, // stock price
- double K, // strike price
- double r, // riskless interest rate
- double t, // current time
- double T, // expiration time
- double sig, // volatility
- int n, // number of steps
- vector&lt;double&gt; divdates, // date of dividends
- double divp // yield for each dividend
-)
-{
-    double call;
-
-    // calculate step size
-    double dt = (T-t)/n;
-    // use CRR model for u, d, p
-    double u = exp(sig*sqrt(dt));
-    double d = 1/u;
-    double R = exp(r*dt);
-    double p = (R-d)/(u-d);
-
-    // if no dividends, call the European call option function
-    if (divdates.size() == 0){
-        option result = optionPrice( S, K, r, t, T, sig, n);
-        return result.call;
-    }
-
-    // build asset prices tree
-    double ** S_tree = new double * [n+1];
-
-    int i = 0;
-    int j = 0;
-    // allocate arrays
-    for(i=0; i&lt;n+1; i++) {
-        S_tree[i] = new double[i+1];
-    }
-
-    // find time steps for dividend payment
-    for (i=0;i&lt;divdates.size(); i++){
-        divdates[i] = divdates[i]/dt;
-    }
-    int count = 0;
-    // calculate price values
-    for(i = 0; i< n+1;i++){
-        // count how many time dividend is paid
-        for(int k = 0; k< divdates.size(); k++){
-            if(i>=divdates[k]){
-                count = count +1;
-            }
-        }
-        for(j = 0; j&lt;i+1; j++){
-            // multiply asset price by the dividend discount factor
-            S_tree[i][j] = S*pow(u,j)*pow(d,i-j)*pow(1-divp,count);
-        }
-        count = 0;
-    }
-
-    // allocate (n+1) nodes for option values
-    // American call option
-    double * V = new double [n+1];
-    // European: for comparison
-    double * W = new double [n+1];
-
-    // calculate the option prices at time T
-    for (j = 0; j < n+1; j++){
-        V[j] = max(S_tree[n][j] - K, 0.);
-        W[j] = max(S_tree[n][j] - K, 0.);
-    }
-
-    // iteratively calculate the option price at the previous time step until time is t
-    // using one period pricing formula
-    double hj;
-    double Cj;
-    for (i = n-1; i >= 0; i--){
-        for (j = 0; j<= i; j++){
-            // payoff for exercising the option
-            hj = max(S_tree[i][j] - K, 0.);
-            // payoff for keeping the option
-            Cj = (1/R)*(p*V[j+1] + (1-p)*V[j]);
-            // European price for comparison
-            W[j] = (1/R)*(p*W[j+1] + (1-p)*W[j]);
-            // American price
-            if (hj>= Cj){
-                V[j] = hj;
-            }
-            else{
-                V[j] = Cj;
-            }
-        }
-    }
-    // set value for call price
-    call = V[0];
-    cout << "European option: "<< W[0]<<'\n';
-    // free dynamically allocated memory
-    delete [] V;
-    delete [] W;
-    for(i=0; i&lt;n+1; i++) {
-        delete [] S_tree[i];
-    }
-    delete [] S_tree;
-    return call;
-};
-#endif</pre></div>
-    <hr>
-  </div>
-  <div class = "col-sm-4" id="right_col">
-    <br>
-    <br>
-    <br>
-    <!-- <img src="stonks.png" class="img-rounded" alt="stonks" style="float:left;width:250px;"> -->
   </div>
 </div>
 </div>
