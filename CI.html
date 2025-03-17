@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="Code" />
+<meta name="keywords" content="Confidence Interval, Statistics, Numerical Methods" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numerical Methods Tutorial</title
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+<style type="text/css">
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+
+</style>
+<script>
+
+// CI for the mean of normal distribution
+const mu, sigsq, n_normal, num_sn;
+mu = Number(document.CI_mean_normal.txtmu.value);
+sigsq = Number(document.CI_mean_normal.txtsigsq.value);
+n_normal = document.CI_mean_normal.txtn_normal.value;
+num_sn = document.CI_mean_normal.txtnum_sn.value;
+
+function randomNormal(mean, sd){
+  const u1 = Math.random();
+  const u2 = Math.random();
+  const z0 = Math.sqrt(-2.0 * Math.log(u1))* Math.cos(2.0 * Math.PI *u2);
+  return z0 * sd + mean
+}
+
+function generateNormalSample(last) {
+  var sd = Math.sqrt(sigsq);
+  var sum = 0;
+  var sample_mean = 0;
+
+
+  // generate a sample of size n
+  var currentSample = new Array(n_normal);
+  for (var i = 0; i < n_normal; i++ ){
+    currentSample[i] = randomNormal(mu, sd);
+  }
+
+  // Calculate the sample mean
+  for (var j = 0; j < n_normal; j++){
+    sum += currentSample[j];
+  }
+  sample_mean = sum/n_normal;
+
+  // update sample plot (only for the last sample)
+  if (last) {
+    SamplePlot(currentSample);
+  }
+
+  // return the sample mean
+  return sample_mean;
+
+}
+
+function IntervalPlot() {
+
+}
+
+function SamplePlot(values) {
+  const trace = {
+    x: values,
+    type: 'histogram',
+  };
+
+  const layout = {
+    title: 'Last Sample',
+  };
+
+  // plotly for plotting
+  Plotly.newPlot(sample_plot_normal, [trace], layout);
+}
+
+function CI_normal() {
+  var sampleMeans = new Array(num_sn);
+  for (var k = 1; k < num_sn; k++) {
+    if (k == num_sn){
+      // last sample
+      sampleMeans[k] = generateNormalSample(true);
+    }
+    else {
+      sampleMeans[k] = generateNormalSample(false);
+    }
+  }
+
+  // Confidence interval plot
+  //IntervalPlot();
+
+}
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "col-sm-8" id="left_col">
+    <br>
+    <br>
+    <br>
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      3. Confidence Interval Demo
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    This simple applet helps users understand confidence intervals.
+    <hr>
+    <div class ="container">
+    95% Confidence Interval of Means (Normal Distribution)
+    <div class ="container">
+    <form name = "CI_mean_normal">
+    Population mean (&mu;) <input type ="text" name = "txtmu">
+    <br>
+    Population variance (&sigma;&sup2; &gt; 0) <input type ="text" name = "txtsigsq">
+    <br>
+    Sample size <input type ="number" name = "txtn_normal", value = "30" max = "100" min ="5" step = "5">
+    <br>
+    Number of samples <input type ="number" name = "txtnum_sn", value = "5" max = "100" min ="5" step = "5">
+    <input type ="button" value = "Generate samples" onClick = "CI_normal()">
+    <br>
+    </form>
+    </div>
+    <div class ="plot" id = "CI_plot_normal">
+    </div>
+    <div class ="plot" id = "sample_plot_normal">
+    </div>
+    </div>
+
+    <hr>
+    <div class = "container">
+    95% Confidence Interval of Proportions (Binomial Distribution)
+    <div class="container">
+    <form name = "CI_proportion_binomial">
+      Population proportion (0 &lt; p &lt; 1)  <input type ="text" name = "txtp">
+      <br>
+      Sample size <input type ="number" name = "txtn_binomial", value = "30" max = "100" min ="5" step = "5">
+      <br>
+      Number of samples <input type ="number" name = "txtnum_sn", value = "5" max = "100" min ="5" step = "5">
+      <input type ="button" value = "Generate samples" onClick = "CI_binomial()">
+      <br>
+    </form>
+    </div>
+    <div class ="plot" id = "CI_plot_binomial">
+    </div>
+    <div class ="plot" id = "sample_plot_binomial">
+    </div>
+    </div>
+
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+</body>
+</html>
