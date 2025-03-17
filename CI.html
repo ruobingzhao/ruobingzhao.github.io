@@ -58,11 +58,7 @@ html { background: white; margin:0;}
 <script>
 
 // CI for the mean of normal distribution
-const mu, sigsq, n_normal, num_sn;
-mu = Number(document.CI_mean_normal.txtmu.value);
-sigsq = Number(document.CI_mean_normal.txtsigsq.value);
-n_normal = document.CI_mean_normal.txtn_normal.value;
-num_sn = document.CI_mean_normal.txtnum_sn.value;
+let mu, sigsq, n_normal, num_sn;
 
 function randomNormal(mean, sd){
   const u1 = Math.random();
@@ -72,6 +68,9 @@ function randomNormal(mean, sd){
 }
 
 function generateNormalSample(last) {
+  mu = Number(document.CI_mean_normal.txtmu.value);
+  sigsq = Number(document.CI_mean_normal.txtsigsq.value);
+  n_normal = Number(document.CI_mean_normal.txtn_normal.value);
   var sd = Math.sqrt(sigsq);
   var sum = 0;
   var sample_mean = 0;
@@ -114,13 +113,14 @@ function SamplePlot(values) {
   };
 
   // plotly for plotting
-  Plotly.newPlot(sample_plot_normal, [trace], layout);
+  Plotly.newPlot('sample_plot_normal', [trace], layout);
 }
 
 function CI_normal() {
+  num_sn = Number(document.CI_mean_normal.txtnum_sn.value);
   var sampleMeans = new Array(num_sn);
-  for (var k = 1; k < num_sn; k++) {
-    if (k == num_sn){
+  for (var k = 0; k < num_sn; k++) {
+    if (k == num_sn-1){
       // last sample
       sampleMeans[k] = generateNormalSample(true);
     }
@@ -128,7 +128,6 @@ function CI_normal() {
       sampleMeans[k] = generateNormalSample(false);
     }
   }
-
   // Confidence interval plot
   //IntervalPlot();
 
