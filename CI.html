@@ -16,6 +16,29 @@
 <body>
 <style type="text/css">
 
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%; /* Takes 75% of the width (leaving 5% for margins)
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1; /* Each plot takes equal space within plots-container
+  height: 350px;
+}
+*/
+
 @media all and (min-width: 630px) {
   /* two column code */
   #container {
@@ -30,6 +53,19 @@
   #right_col {
     order: 2 ;
     width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
   }
 }
 @media all and (max-width: 629px) {
@@ -46,6 +82,13 @@
 	#left_col {
     order: 2 ;
     width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
   }
 }
 
@@ -159,7 +202,7 @@ function CI_normal() {
  </nav>
 <div class = "container" id = "container">
 <div class = "row">
-  <div class = "col-sm-8" id="left_col">
+  <div class = "container">
     <br>
     <br>
     <br>
@@ -170,9 +213,9 @@ function CI_normal() {
     <a href="num_meth.html">Back to Contents</a><br>
     This simple applet helps users understand confidence intervals.
     <hr>
-    <div class ="container">
+    <div class ="main-container">
     95% Confidence Interval of Means (Normal Distribution)
-    <div class ="container">
+    <div class ="form-container">
     <form name = "CI_mean_normal">
     Population mean (&mu;) <input type ="text" name = "txtmu">
     <br>
@@ -185,16 +228,18 @@ function CI_normal() {
     <br>
     </form>
     </div>
+    <div class ="plots-container">
     <div class ="plot" id = "CI_plot_normal">
     </div>
     <div class ="plot" id = "sample_plot_normal">
     </div>
     </div>
+    </div>
 
     <hr>
-    <div class = "container">
+    <div class = "main-container">
     95% Confidence Interval of Proportions (Binomial Distribution)
-    <div class="container">
+    <div class="form-container">
     <form name = "CI_proportion_binomial">
       Population proportion (0 &lt; p &lt; 1)  <input type ="text" name = "txtp">
       <br>
@@ -205,9 +250,11 @@ function CI_normal() {
       <br>
     </form>
     </div>
+    <div class ="plots-container">
     <div class ="plot" id = "CI_plot_binomial">
     </div>
     <div class ="plot" id = "sample_plot_binomial">
+    </div>
     </div>
     </div>
 
