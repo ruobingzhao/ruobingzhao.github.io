@@ -26,7 +26,7 @@
 }
 
 .plots-container {
-  flex: 0 0 75%; /* Takes 75% of the width (leaving 5% for margins)
+  flex: 0 0 75%;
   display: flex;
   flex-direction: row;
   gap: 15px;
@@ -34,7 +34,7 @@
 }
 
 .plot {
-  flex: 1; /* Each plot takes equal space within plots-container
+  flex: 1;
   height: 350px;
 }
 */
@@ -101,7 +101,7 @@ html { background: white; margin:0;}
 <script>
 
 // CI for the mean of normal distribution
-let mu, sigsq, n_normal, num_sn;
+let mu, sigsq, n_normal, num_sn, sd;
 
 function randomNormal(mean, sd){
   const u1 = Math.random();
@@ -111,10 +111,6 @@ function randomNormal(mean, sd){
 }
 
 function generateNormalSample(last) {
-  mu = Number(document.CI_mean_normal.txtmu.value);
-  sigsq = Number(document.CI_mean_normal.txtsigsq.value);
-  n_normal = Number(document.CI_mean_normal.txtn_normal.value);
-  var sd = Math.sqrt(sigsq);
   var sum = 0;
   var sample_mean = 0;
 
@@ -141,10 +137,6 @@ function generateNormalSample(last) {
 
 }
 
-function IntervalPlot() {
-
-}
-
 function SamplePlot(values) {
   const trace = {
     x: values,
@@ -160,20 +152,140 @@ function SamplePlot(values) {
 }
 
 function CI_normal() {
+  mu = Number(document.CI_mean_normal.txtmu.value);
+  sigsq = Number(document.CI_mean_normal.txtsigsq.value);
+  n_normal = Number(document.CI_mean_normal.txtn_normal.value);
+  sd = Math.sqrt(sigsq);
   num_sn = Number(document.CI_mean_normal.txtnum_sn.value);
+  var L = new Array(num_sn);
+  var U = new Array(num_sn);
   var sampleMeans = new Array(num_sn);
+  var containsMu = new Array(num_sn);
   for (var k = 0; k < num_sn; k++) {
+    let currentMean;
     if (k == num_sn-1){
       // last sample
-      sampleMeans[k] = generateNormalSample(true);
+      currentMean = generateNormalSample(true);
     }
     else {
-      sampleMeans[k] = generateNormalSample(false);
+      currentMean = generateNormalSample(false);
     }
+    // Store sample mean
+    sampleMeans[k] = currentMean;
+
+    // Confidence Interval 95% Xbar +- 1.96*sd/sqrt(n)
+    L[k] = currentMean - 1.96*sd/Math.sqrt(n_normal);
+    U[k] = currentMean + 1.96*sd/Math.sqrt(n_normal);
+    // Check if interval contains the population mean
+    containsMu[k] = (L[k] <= mu && U[k] >= mu);
   }
   // Confidence interval plot
-  //IntervalPlot();
+  IntervalPlot(sampleMeans, L, U, containsMu, 1);
 
+}
+
+function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
+  // Create an array for y-axis positions (vertical stacking)
+  const yPositions = Array.from({length: num_sn}, (_, i) => i + 1);
+
+  // Create traces for intervals that contain the mean (green)
+  const containsData = [];
+  const notContainsData = [];
+
+  for (let i = 0; i < num_sn; i++) {
+    const intervalData = {
+      x: [lower[i], upper[i]],
+      y: [yPositions[i], yPositions[i]],
+      mode: 'lines',
+      line: {
+        width: 6,
+        color: contains[i] ? 'rgba(50, 171, 96, 0.7)' : 'rgba(219, 64, 82, 0.7)'
+      },
+      showlegend: false
+    };
+
+    // Add point for sample mean
+    const meanPoint = {
+      x: [xbar[i]],
+      y: [yPositions[i]],
+      mode: 'markers',
+      marker: {
+        color: contains[i] ? 'rgba(50, 171, 96, 1.0)' : 'rgba(219, 64, 82, 1.0)',
+        size: 8
+      },
+      showlegend: false
+    };
+
+    if (contains[i]) {
+      containsData.push(intervalData, meanPoint);
+    } else {
+      notContainsData.push(intervalData, meanPoint);
+    }
+  }
+
+  // Create population mean vertical line
+  const meanLine = {
+    x: [mu, mu],
+    y: [0, num_sn + 1],
+    mode: 'lines',
+    line: {
+      color: 'rgba(0, 0, 0, 0.8)',
+      width: 2,
+      dash: 'dash'
+    },
+    name: 'Population Mean'
+  };
+
+  // Combine all traces
+  const data = [...containsData, ...notContainsData, meanLine];
+
+  // Count how many intervals contain the mean
+  const count = contains.filter(Boolean).length;
+  const percentage = (count / num_sn * 100).toFixed(1);
+
+  // Layout configuration
+  const layout = {
+    title: `Confidence Intervals (95%) - ${count}/${num_sn} (${percentage}%) contain the true mean`,
+    xaxis: {
+      title: 'Value',
+      zeroline: false
+    },
+    yaxis: {
+      title: 'Sample Number',
+      zeroline: false,
+      range: [0, num_sn + 1]
+    },
+    showlegend: true,
+    annotations: [
+      {
+        x: mu,
+        y: num_sn + 0.5,
+        xref: 'x',
+        yref: 'y',
+        text: `&mu; = ${mu}`,
+        showarrow: false,
+        font: {
+          family: 'Arial',
+          size: 12,
+          color: 'black'
+        }
+      }
+    ],
+    margin: {
+      l: 60,
+      r: 40,
+      t: 50,
+      b: 60
+    },
+    height: Math.max(350, 100 + 20 * num_sn) // Dynamic height based on number of samples
+  };
+
+  // Plot using Plotly
+  if (m_or_p == 1){
+    Plotly.newPlot('CI_plot_normal', data, layout, {responsive: true});
+  } else if (m_or_p == 2) {
+    Plotly.newPlot('CI_plot_binomial', data, layout, {responsive: true});
+  }
 }
 
 </script>
