@@ -168,6 +168,37 @@ function randomNormal(mean, sd){
   return z0 * sd + mean
 }
 
+function bernoulli(prop) {
+  const randomValue = Math.random();
+  return randomValue < prop ? 1 : 0;
+}
+
+function generateBernoulli(last) {
+  var sum = 0;
+  var sample_prop = 0;
+
+  // generate a sample of size n
+  var currentSample = new Array(n_binomial);
+  for (var i = 0; i < n_binomial; i++ ){
+    currentSample[i] = bernoulli(p);
+  }
+
+  // Calculate the sample proportions
+  for (var j = 0; j < n_binomial; j++){
+    sum += currentSample[j];
+  }
+  sample_prop = sum/n_binomial;
+
+  // update sample plot (only for the last sample)
+  if (last) {
+    SamplePlot(currentSample,false);
+  }
+
+  // return the sample proportion
+  return sample_prop;
+
+}
+
 function generateNormalSample(last) {
   var sum = 0;
   var sample_mean = 0;
@@ -186,7 +217,7 @@ function generateNormalSample(last) {
 
   // update sample plot (only for the last sample)
   if (last) {
-    SamplePlot(currentSample);
+    SamplePlot(currentSample,true);
   }
 
   // return the sample mean
@@ -194,7 +225,7 @@ function generateNormalSample(last) {
 
 }
 
-function SamplePlot(values) {
+function SamplePlot(values, normdist) {
   const trace = {
     x: values,
     type: 'histogram',
@@ -205,7 +236,11 @@ function SamplePlot(values) {
   };
 
   // plotly for plotting
-  Plotly.newPlot('sample_plot_normal', [trace], layout);
+  if (normdist){
+    Plotly.newPlot('sample_plot_normal', [trace], layout);
+  } else {
+    Plotly.newPlot('sample_plot_binomial', [trace], layout);
+  }
 }
 
 function CI_normal() {
@@ -238,6 +273,38 @@ function CI_normal() {
   }
   // Confidence interval plot
   IntervalPlot(sampleMeans, L, U, containsMu, 1);
+
+}
+
+function CI_binomial() {
+  p = Number(document.getElementById("txtp").value);
+  n_binomial = Number(document.getElementById("txtn_binomial").value);
+  num_sp = Number(document.getElementById("txtnum_sp").value);
+  sd = Math.sqrt(sigsq);
+  var L = new Array(num_sp);
+  var U = new Array(num_sp);
+  var sampleProps = new Array(num_sp);
+  var containsP = new Array(num_sp);
+  for (var k = 0; k < num_sp; k++) {
+    let currentProp;
+    if (k == num_sp-1){
+      // last sample
+      currentProp = generateBernoulli(true);
+    }
+    else {
+      currentProp = generateBernoulli(false);
+    }
+    // Store sample prop
+    sampleProps[k] = currentProp;
+
+    // Confidence Interval 95% p_hat +- 1.96*sqrt(p_hat*(1-p_hat)/n)
+    L[k] = currentProp - 1.96*Math.sqrt(currentProp*(1-currentProp)/n_binomial);
+    U[k] = currentProp + 1.96*Math.sqrt(currentProp*(1-currentProp)/n_binomial);
+    // Check if interval contains the population mean
+    containsP[k] = (L[k] <= p && U[k] >= p);
+  }
+  // Confidence interval plot
+  IntervalPlot(sampleProps, L, U, containsP, 2);
 
 }
 
