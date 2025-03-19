@@ -120,6 +120,8 @@ html { background: white; margin:0;}
 // CI for the mean of normal distribution
 let mu, sigsq, n_normal, num_sn, sd, p, n_binomial, num_sp, num, param;
 
+const oldOnload = window.onload;
+
 // Set up the slider value displays
 window.onload = function() {
   // Initialize the displays with default values
@@ -159,6 +161,14 @@ window.onload = function() {
   document.getElementById("txtnum_sp").addEventListener("input", function() {
     document.getElementById("num_sp_value").textContent = this.value;
   });
+
+  if (oldOnload) oldOnload();
+  setupCanvases();
+
+}
+
+function setupCanvases() {
+  const canvasIds = ['sample_plot_normal', 'sample_plot_binomial', 'CI_plot_normal', 'CI_plot_binomial'];
 }
 
 function randomNormal(mean, sd){
@@ -225,23 +235,23 @@ function generateNormalSample(last) {
 
 }
 
-function SamplePlot(values, normdist) {
-  const trace = {
-    x: values,
-    type: 'histogram',
-  };
-
-  const layout = {
-    title: 'Last Sample',
-  };
-
-  // plotly for plotting
-  if (normdist){
-    Plotly.newPlot('sample_plot_normal', [trace], layout);
-  } else {
-    Plotly.newPlot('sample_plot_binomial', [trace], layout);
-  }
-}
+// function SamplePlot(values, normdist) {
+//   const trace = {
+//     x: values,
+//     type: 'histogram',
+//   };
+//
+//   const layout = {
+//     title: 'Last Sample',
+//   };
+//
+//   // plotly for plotting
+//   if (normdist){
+//     Plotly.newPlot('sample_plot_normal', [trace], layout);
+//   } else {
+//     Plotly.newPlot('sample_plot_binomial', [trace], layout);
+//   }
+// }
 
 function CI_normal() {
   mu = Number(document.getElementById("txtmu").value);
@@ -308,118 +318,427 @@ function CI_binomial() {
 
 }
 
+function SamplePlot(values, normdist) {
+  // Get the appropriate canvas element
+  const canvasId = normdist ? 'sample_plot_normal' : 'sample_plot_binomial';
+  const canvas = document.getElementById(canvasId);
+
+  // Clear existing canvas if any
+  if (!canvas.getContext) {
+    // Replace the div with a canvas element
+    const container = document.getElementById(canvasId);
+    const newCanvas = document.createElement('canvas');
+    newCanvas.id = canvasId;
+    newCanvas.width = 400;
+    newCanvas.height = 300;
+    container.innerHTML = '';
+    container.appendChild(newCanvas);
+  }
+
+  // Get the canvas context
+  const canvas2d = document.getElementById(canvasId);
+  const ctx = canvas2d.getContext('2d');
+  const width = canvas2d.width;
+  const height = canvas2d.height;
+
+  // Clear the canvas
+  ctx.clearRect(0, 0, width, height);
+
+  // Set background
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, width, height);
+
+  // Calculate histogram data
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min;
+  const binCount = Math.min(30, Math.ceil(Math.sqrt(values.length)));
+  const binWidth = range / binCount;
+
+  // const binCount = 20;
+  // const binWidth = range / binCount || 1; // Avoid division by zero
+
+  // Create bins
+  const bins = Array(binCount).fill(0);
+  values.forEach(value => {
+    const binIndex = Math.min(binCount - 1, Math.floor((value - min) / binWidth));
+    bins[binIndex]++;
+  });
+
+  // Find the max bin height for scaling
+  const maxBinHeight = Math.max(...bins);
+
+  // Draw title
+  ctx.fillStyle = 'black';
+  ctx.font = '16px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Last Sample', width / 2, 20);
+
+  // Set up margins
+  const marginLeft = 40;
+  const marginRight = 20;
+  const marginTop = 40;
+  const marginBottom = 40;
+  const plotWidth = width - marginLeft - marginRight;
+  const plotHeight = height - marginTop - marginBottom;
+
+  // Draw axes
+  ctx.beginPath();
+  ctx.moveTo(marginLeft, height - marginBottom);
+  ctx.lineTo(width - marginRight, height - marginBottom); // x-axis
+  ctx.moveTo(marginLeft, height - marginBottom);
+  ctx.lineTo(marginLeft, marginTop); // y-axis
+  ctx.strokeStyle = 'black';
+  ctx.stroke();
+
+  // Draw histogram bars
+  const barWidth = plotWidth / binCount;
+  ctx.fillStyle = 'rgba(70, 130, 180, 0.7)'; // Steel blue color
+
+  for (let i = 0; i < binCount; i++) {
+    const barHeight = bins[i] / maxBinHeight * plotHeight;
+    const x = marginLeft + i * barWidth;
+    const y = height - marginBottom - barHeight;
+
+    ctx.fillRect(x, y, barWidth - 1, barHeight);
+    ctx.strokeRect(x, y, barWidth - 1, barHeight);
+  }
+
+  // Draw x-axis labels (min, max values)
+  ctx.fillStyle = 'black';
+  ctx.font = '12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(min.toFixed(2), marginLeft, height - marginBottom + 15);
+  ctx.fillText(max.toFixed(2), width - marginRight, height - marginBottom + 15);
+
+  // Draw y-axis label (frequency)
+  ctx.save();
+  ctx.translate(15, height / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillText('Frequency', 0, 0);
+  ctx.restore();
+}
+
 function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
   // number of Intervals
-  num = num_sn;
-  // parameter: mu or p
-  param = mu;
-  if (m_or_p == 2) {
-    num = num_sp;
-    param = p;
-  }
+    num = m_or_p === 1 ? num_sn : num_sp;
 
-  // Create an array for y-axis positions (vertical stacking)
-  const yPositions = Array.from({length: num}, (_, i) => i + 1);
+    // parameter: mu or p
+    param = m_or_p === 1 ? mu : p;
 
-  // Create traces for intervals that contain the mean (green)
-  const containsData = [];
-  const notContainsData = [];
+    // Get the appropriate canvas element
+    const canvasId = m_or_p === 1 ? 'CI_plot_normal' : 'CI_plot_binomial';
+    const canvas = document.getElementById(canvasId);
 
-  for (let i = 0; i < num; i++) {
-    const intervalData = {
-      x: [lower[i], upper[i]],
-      y: [yPositions[i], yPositions[i]],
-      mode: 'lines',
-      line: {
-        width: 6,
-        color: contains[i] ? 'rgba(50, 171, 96, 0.7)' : 'rgba(219, 64, 82, 0.7)'
-      },
-      showlegend: false
-    };
-
-    // Add point for sample mean
-    const meanPoint = {
-      x: [xbar[i]],
-      y: [yPositions[i]],
-      mode: 'markers',
-      marker: {
-        color: contains[i] ? 'rgba(50, 171, 96, 1.0)' : 'rgba(219, 64, 82, 1.0)',
-        size: 8
-      },
-      showlegend: false
-    };
-
-    if (contains[i]) {
-      containsData.push(intervalData, meanPoint);
-    } else {
-      notContainsData.push(intervalData, meanPoint);
+    if (!canvas) {
+      console.error(`Canvas element with ID ${canvasId} not found`);
+      return;
     }
-  }
 
-  // Create population mean vertical line
-  const meanLine = {
-    x: [param, param],
-    y: [0, num + 1],
-    mode: 'lines',
-    line: {
-      color: 'rgba(0, 0, 0, 0.8)',
-      width: 2,
-      dash: 'dash'
-    },
-    name: 'Population Mean'
-  };
+    // Set canvas dimensions
+    canvas.width = 600;
+    canvas.height = Math.max(350, 100 + 20 * num);
 
-  // Combine all traces
-  const data = [...containsData, ...notContainsData, meanLine];
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error(`Could not get 2D context for canvas ${canvasId}`);
+      return;
+    }
 
-  // Count how many intervals contain the mean
-  const count = contains.filter(Boolean).length;
-  const percentage = (count / num * 100).toFixed(1);
+    const width = canvas.width;
+    const height = canvas.height;
 
-  // Layout configuration
-  const layout = {
-    title: `Confidence Intervals (95%) - ${count}/${num} (${percentage}%) contain the true value of the parameter`,
-    xaxis: {
-      title: 'Value',
-      zeroline: false
-    },
-    yaxis: {
-      title: 'Sample Number',
-      zeroline: false,
-      range: [0, num + 1]
-    },
-    showlegend: true,
-    annotations: [
-      {
-        x: mu,
-        y: num + 0.5,
-        xref: 'x',
-        yref: 'y',
-        text: `population parameter = ${param}`,
-        showarrow: false,
-        font: {
-          family: 'Arial',
-          size: 12,
-          color: 'black'
-        }
+    // Clear the canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Set background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+
+    // Set up margins
+    const marginLeft = 60;
+    const marginRight = 40;
+    const marginTop = 50;
+    const marginBottom = 60;
+    const plotWidth = width - marginLeft - marginRight;
+    const plotHeight = height - marginTop - marginBottom;
+
+    // Use completely fixed x-axis ranges based only on population parameters
+    let xMin, xMax;
+
+    if (m_or_p === 1) {
+      // For normal distribution (mu, sigsq)
+      // Fixed range based only on mu and sigma, independent of sample size
+      const populationSD = Math.sqrt(sigsq);
+      xMin = mu - 4 * populationSD;
+      xMax = mu + 4 * populationSD;
+    } else {
+      // For binomial proportion
+      // Fixed range for proportions, independent of sample size
+      // Always show full [0,1] range with some padding
+      if (p < 0.25) {
+        // For small p, focus on lower range
+        xMin = 0;
+        xMax = 0.5;
+      } else if (p > 0.75) {
+        // For large p, focus on upper range
+        xMin = 0.5;
+        xMax = 1;
+      } else {
+        // For middle p values, show full range
+        xMin = 0;
+        xMax = 1;
       }
-    ],
-    margin: {
-      l: 60,
-      r: 40,
-      t: 50,
-      b: 60
-    },
-    height: Math.max(350, 100 + 20 * num) // Dynamic height based on number of samples
-  };
+    }
 
-  // Plot using Plotly
-  if (m_or_p == 1){
-    Plotly.newPlot('CI_plot_normal', data, layout, {responsive: true});
-  } else if (m_or_p == 2) {
-    Plotly.newPlot('CI_plot_binomial', data, layout, {responsive: true});
-  }
+    // Ensure we have a reasonable range (absolute minimum)
+    const rangeX = xMax - xMin;
+    if (rangeX < 0.01) {
+      // If range is too small, expand it
+      xMin = param - 0.05;
+      xMax = param + 0.05;
+    }
+
+    // Function to convert data x to canvas x
+    const xScale = value => marginLeft + ((value - xMin) / (xMax - xMin)) * plotWidth;
+
+    // Create an array for y-axis positions (vertical stacking)
+    const yPositions = Array.from({length: num}, (_, i) => i + 1);
+    const yScale = position => marginTop + ((position - 0) / (num + 1)) * plotHeight;
+
+    // Draw axes
+    ctx.beginPath();
+    ctx.moveTo(marginLeft, height - marginBottom);
+    ctx.lineTo(width - marginRight, height - marginBottom); // x-axis
+    ctx.moveTo(marginLeft, height - marginBottom);
+    ctx.lineTo(marginLeft, marginTop); // y-axis
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Draw intervals and points
+    for (let i = 0; i < num; i++) {
+      const y = yScale(yPositions[i]);
+      const x1 = xScale(lower[i]);
+      const x2 = xScale(upper[i]);
+      const xPoint = xScale(xbar[i]);
+
+      // Draw interval line
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
+      ctx.strokeStyle = contains[i] ? 'rgba(50, 171, 96, 0.7)' : 'rgba(219, 64, 82, 0.7)';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // Draw sample mean/proportion point
+      ctx.beginPath();
+      ctx.arc(xPoint, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = contains[i] ? 'rgba(50, 171, 96, 1.0)' : 'rgba(219, 64, 82, 1.0)';
+      ctx.fill();
+    }
+
+    // Draw population parameter vertical line
+    ctx.beginPath();
+    ctx.moveTo(xScale(param), marginTop);
+    ctx.lineTo(xScale(param), height - marginBottom);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Count how many intervals contain the parameter
+    const count = contains.filter(Boolean).length;
+    const percentage = (count / num * 100).toFixed(1);
+
+    // Draw title
+    ctx.fillStyle = 'black';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Confidence Intervals (95%) - ${count}/${num} (${percentage}%) contain the true value of the parameter`,
+                width / 2, 25);
+
+    // Draw x-axis title
+    ctx.font = '12px Arial';
+    ctx.fillText('Value', width / 2, height - 15);
+
+    // Draw y-axis title
+    ctx.save();
+    ctx.translate(15, height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.fillText('Sample Number', 0, 0);
+    ctx.restore();
+
+    // Draw x-axis labels
+    ctx.textAlign = 'center';
+    const numTicks = 5;
+    for (let i = 0; i <= numTicks; i++) {
+      const value = xMin + (i / numTicks) * (xMax - xMin);
+      const x = xScale(value);
+      ctx.beginPath();
+      ctx.moveTo(x, height - marginBottom);
+      ctx.lineTo(x, height - marginBottom + 5);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillText(value.toFixed(2), x, height - marginBottom + 20);
+    }
+
+    // Draw y-axis labels
+    ctx.textAlign = 'right';
+    for (let i = 1; i <= num; i++) {
+      const y = yScale(i);
+      ctx.beginPath();
+      ctx.moveTo(marginLeft, y);
+      ctx.lineTo(marginLeft - 5, y);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillText(i.toString(), marginLeft - 10, y + 4);
+    }
+
+    // Draw parameter annotation
+    ctx.textAlign = 'center';
+    ctx.fillText(`population parameter = ${param}`, xScale(param), marginTop - 10);
+
+    // Draw legend
+    const legendX = width - marginRight - 150;
+    const legendY = marginTop + 20;
+
+    ctx.fillStyle = 'rgba(50, 171, 96, 0.7)';
+    ctx.fillRect(legendX, legendY, 20, 10);
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(legendX, legendY, 20, 10);
+
+    ctx.fillStyle = 'rgba(219, 64, 82, 0.7)';
+    ctx.fillRect(legendX, legendY + 20, 20, 10);
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(legendX, legendY + 20, 20, 10);
+
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'left';
+    ctx.fillText('Contains parameter', legendX + 30, legendY + 8);
+    ctx.fillText('Doesn\'t contain parameter', legendX + 30, legendY + 28);
+
 }
+
+// function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
+//   // number of Intervals
+//   num = num_sn;
+//   // parameter: mu or p
+//   param = mu;
+//   if (m_or_p == 2) {
+//     num = num_sp;
+//     param = p;
+//   }
+//
+//   // Create an array for y-axis positions (vertical stacking)
+//   const yPositions = Array.from({length: num}, (_, i) => i + 1);
+//
+//   // Create traces for intervals that contain the mean (green)
+//   const containsData = [];
+//   const notContainsData = [];
+//
+//   for (let i = 0; i < num; i++) {
+//     const intervalData = {
+//       x: [lower[i], upper[i]],
+//       y: [yPositions[i], yPositions[i]],
+//       mode: 'lines',
+//       line: {
+//         width: 6,
+//         color: contains[i] ? 'rgba(50, 171, 96, 0.7)' : 'rgba(219, 64, 82, 0.7)'
+//       },
+//       showlegend: false
+//     };
+//
+//     // Add point for sample mean
+//     const meanPoint = {
+//       x: [xbar[i]],
+//       y: [yPositions[i]],
+//       mode: 'markers',
+//       marker: {
+//         color: contains[i] ? 'rgba(50, 171, 96, 1.0)' : 'rgba(219, 64, 82, 1.0)',
+//         size: 8
+//       },
+//       showlegend: false
+//     };
+//
+//     if (contains[i]) {
+//       containsData.push(intervalData, meanPoint);
+//     } else {
+//       notContainsData.push(intervalData, meanPoint);
+//     }
+//   }
+//
+//   // Create population mean vertical line
+//   const meanLine = {
+//     x: [param, param],
+//     y: [0, num + 1],
+//     mode: 'lines',
+//     line: {
+//       color: 'rgba(0, 0, 0, 0.8)',
+//       width: 2,
+//       dash: 'dash'
+//     },
+//     name: 'Population Mean'
+//   };
+//
+//   // Combine all traces
+//   const data = [...containsData, ...notContainsData, meanLine];
+//
+//   // Count how many intervals contain the mean
+//   const count = contains.filter(Boolean).length;
+//   const percentage = (count / num * 100).toFixed(1);
+//
+//   // Layout configuration
+//   const layout = {
+//     title: `Confidence Intervals (95%) - ${count}/${num} (${percentage}%) contain the true value of the parameter`,
+//     xaxis: {
+//       title: 'Value',
+//       zeroline: false
+//     },
+//     yaxis: {
+//       title: 'Sample Number',
+//       zeroline: false,
+//       range: [0, num + 1]
+//     },
+//     showlegend: true,
+//     annotations: [
+//       {
+//         x: mu,
+//         y: num + 0.5,
+//         xref: 'x',
+//         yref: 'y',
+//         text: `population parameter = ${param}`,
+//         showarrow: false,
+//         font: {
+//           family: 'Arial',
+//           size: 12,
+//           color: 'black'
+//         }
+//       }
+//     ],
+//     margin: {
+//       l: 60,
+//       r: 40,
+//       t: 50,
+//       b: 60
+//     },
+//     height: Math.max(350, 100 + 20 * num) // Dynamic height based on number of samples
+//   };
+//
+//   // Plot using Plotly
+//   if (m_or_p == 1){
+//     Plotly.newPlot('CI_plot_normal', data, layout, {responsive: true});
+//   } else if (m_or_p == 2) {
+//     Plotly.newPlot('CI_plot_binomial', data, layout, {responsive: true});
+//   }
+// }
 
 </script>
 <div id="wrap">
@@ -475,7 +794,7 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
         </div>
         <div class="slidercontainer">
           <label for="txtn_normal">Sample size </label>
-          <input type="range" id="txtn_normal" name="txtn_normal" min="1" max="100" step="1" value="30">
+          <input type="range" id="txtn_normal" name="txtn_normal" min="5" max="100" step="1" value="30">
           <span id="n_normal_value" class="slider-value">30</span>
         </div>
         <div class="slidercontainer">
@@ -489,10 +808,10 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
       </form>
     </div>
     <div class ="plots-container">
-    <div class ="plot" id = "CI_plot_normal">
-    </div>
-    <div class ="plot" id = "sample_plot_normal">
-    </div>
+      <canvas id = "sample_plot_normal">
+      </canvas>
+    <canvas id = "CI_plot_normal">
+    </canvas>
     </div>
     </div>
 
@@ -509,7 +828,7 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
           </div>
           <div class="slidercontainer">
             <label for="txtn_binomial">Sample size </label>
-            <input type="range" id="txtn_binomial" name="txtn_binomial" min="1" max="100" step="1" value="30">
+            <input type="range" id="txtn_binomial" name="txtn_binomial" min="5" max="100" step="1" value="30">
             <span id="n_binomial_value" class="slider-value">30</span>
           </div>
           <div class="slidercontainer">
@@ -523,10 +842,10 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
       </form>
     </div>
     <div class ="plots-container">
-    <div class ="plot" id = "CI_plot_binomial">
-    </div>
-    <div class ="plot" id = "sample_plot_binomial">
-    </div>
+      <canvas id = "sample_plot_binomial">
+      </canvas>
+    <canvas id = "CI_plot_binomial">
+    </canvas>
     </div>
     </div>
 
