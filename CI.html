@@ -118,7 +118,7 @@ html { background: white; margin:0;}
 <script>
 
 // CI for the mean of normal distribution
-let mu, sigsq, n_normal, num_sn, sd, p, n_binomial, num_sp;
+let mu, sigsq, n_normal, num_sn, sd, p, n_binomial, num_sp, num, param;
 
 // Set up the slider value displays
 window.onload = function() {
@@ -171,7 +171,6 @@ function randomNormal(mean, sd){
 function generateNormalSample(last) {
   var sum = 0;
   var sample_mean = 0;
-
 
   // generate a sample of size n
   var currentSample = new Array(n_normal);
@@ -243,14 +242,23 @@ function CI_normal() {
 }
 
 function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
+  // number of Intervals
+  num = num_sn;
+  // parameter: mu or p
+  param = mu;
+  if (m_or_p == 2) {
+    num = num_sp;
+    param = p;
+  }
+
   // Create an array for y-axis positions (vertical stacking)
-  const yPositions = Array.from({length: num_sn}, (_, i) => i + 1);
+  const yPositions = Array.from({length: num}, (_, i) => i + 1);
 
   // Create traces for intervals that contain the mean (green)
   const containsData = [];
   const notContainsData = [];
 
-  for (let i = 0; i < num_sn; i++) {
+  for (let i = 0; i < num; i++) {
     const intervalData = {
       x: [lower[i], upper[i]],
       y: [yPositions[i], yPositions[i]],
@@ -283,8 +291,8 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
 
   // Create population mean vertical line
   const meanLine = {
-    x: [mu, mu],
-    y: [0, num_sn + 1],
+    x: [param, param],
+    y: [0, num + 1],
     mode: 'lines',
     line: {
       color: 'rgba(0, 0, 0, 0.8)',
@@ -299,11 +307,11 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
 
   // Count how many intervals contain the mean
   const count = contains.filter(Boolean).length;
-  const percentage = (count / num_sn * 100).toFixed(1);
+  const percentage = (count / num * 100).toFixed(1);
 
   // Layout configuration
   const layout = {
-    title: `Confidence Intervals (95%) - ${count}/${num_sn} (${percentage}%) contain the true mean`,
+    title: `Confidence Intervals (95%) - ${count}/${num} (${percentage}%) contain the true value of the parameter`,
     xaxis: {
       title: 'Value',
       zeroline: false
@@ -311,16 +319,16 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
     yaxis: {
       title: 'Sample Number',
       zeroline: false,
-      range: [0, num_sn + 1]
+      range: [0, num + 1]
     },
     showlegend: true,
     annotations: [
       {
         x: mu,
-        y: num_sn + 0.5,
+        y: num + 0.5,
         xref: 'x',
         yref: 'y',
-        text: `&mu; = ${mu}`,
+        text: `population parameter = ${param}`,
         showarrow: false,
         font: {
           family: 'Arial',
@@ -335,7 +343,7 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
       t: 50,
       b: 60
     },
-    height: Math.max(350, 100 + 20 * num_sn) // Dynamic height based on number of samples
+    height: Math.max(350, 100 + 20 * num) // Dynamic height based on number of samples
   };
 
   // Plot using Plotly
@@ -405,7 +413,7 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
         </div>
         <div class="slidercontainer">
           <label for="txtnum_sn">Number of samples </label>
-          <input type="range" id="txtnum_sn" name="txtnum_sn" min="5" max="200" step="5" value="5">
+          <input type="range" id="txtnum_sn" name="txtnum_sn" min="5" max="100" step="5" value="5">
           <span id="num_sn_value" class="slider-value">5</span>
         </div>
       </div>
@@ -439,7 +447,7 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
           </div>
           <div class="slidercontainer">
             <label for="txtnum_sp">Number of samples </label>
-            <input type="range" id="txtnum_sp" name="txtnum_sp" min="5" max="200" step="5" value="5">
+            <input type="range" id="txtnum_sp" name="txtnum_sp" min="5" max="100" step="5" value="5">
             <span id="num_sp_value" class="slider-value">5</span>
           </div>
         </div>
