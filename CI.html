@@ -11,7 +11,6 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
 <style type="text/css">
@@ -118,57 +117,96 @@ html { background: white; margin:0;}
 <script>
 
 // CI for the mean of normal distribution
-let mu, sigsq, n_normal, num_sn, sd, p, n_binomial, num_sp, num, param;
+let mu, sigsq, n_normal, num_sn, sd, p, n_bernoulli, num_sp, num, param, theta_hat;
 
-const oldOnload = window.onload;
-
-// Set up the slider value displays
 window.onload = function() {
   // Initialize the displays with default values
   document.getElementById("mu_value").textContent = document.getElementById("txtmu").value;
   document.getElementById("sigsq_value").textContent = document.getElementById("txtsigsq").value;
   document.getElementById("n_normal_value").textContent = document.getElementById("txtn_normal").value;
-  document.getElementById("num_sn_value").textContent = document.getElementById("txtnum_sn").value;
   document.getElementById("p_value").textContent = document.getElementById("txtp").value;
-  document.getElementById("n_binomial_value").textContent = document.getElementById("txtn_binomial").value;
-  document.getElementById("num_sp_value").textContent = document.getElementById("txtnum_sp").value;
+  document.getElementById("n_bernoulli_value").textContent = document.getElementById("txtn_bernoulli").value;
 
-  // Add event listeners
+  // Add event listeners for sliders
   document.getElementById("txtmu").addEventListener("input", function() {
     document.getElementById("mu_value").textContent = this.value;
   });
-
   document.getElementById("txtsigsq").addEventListener("input", function() {
     document.getElementById("sigsq_value").textContent = this.value;
   });
-
   document.getElementById("txtn_normal").addEventListener("input", function() {
     document.getElementById("n_normal_value").textContent = this.value;
   });
-
-  document.getElementById("txtnum_sn").addEventListener("input", function() {
-    document.getElementById("num_sn_value").textContent = this.value;
-  });
-
   document.getElementById("txtp").addEventListener("input", function() {
     document.getElementById("p_value").textContent = this.value;
   });
-
-  document.getElementById("txtn_binomial").addEventListener("input", function() {
-    document.getElementById("n_binomial_value").textContent = this.value;
+  document.getElementById("txtn_bernoulli").addEventListener("input", function() {
+    document.getElementById("n_bernoulli_value").textContent = this.value;
   });
 
-  document.getElementById("txtnum_sp").addEventListener("input", function() {
-    document.getElementById("num_sp_value").textContent = this.value;
-  });
+  // Set up canvases if that function exists
+  if (typeof setupCanvases == 'function') {
+    setupCanvases();
+  }
 
-  if (oldOnload) oldOnload();
-  setupCanvases();
+  // Radio button initialization for normal distribution samples
+  const selectedNormalRadio = document.querySelector('input[name="txtnum_sn"]:checked');
+  if (selectedNormalRadio) {
+    num_sn = Number(selectedNormalRadio.value);
 
+    // Update display if it exists
+    if (document.getElementById("num_sn_value")) {
+      document.getElementById("num_sn_value").textContent = num_sn;
+    }
+
+    // Add event listeners for radio buttons
+    const normalRadios = document.querySelectorAll('input[name="txtnum_sn"]');
+    normalRadios.forEach(radio => {
+      radio.addEventListener('change', function() {
+        num_sn = Number(this.value);
+        if (document.getElementById("num_sn_value")) {
+          document.getElementById("num_sn_value").textContent = num_sn;
+        }
+      });
+    });
+  }
+
+  // Radio button initialization for Bernoulli distribution samples
+  const selectedBernoulliRadio = document.querySelector('input[name="txtnum_sp"]:checked');
+  if (selectedBernoulliRadio) {
+    num_sp = Number(selectedBernoulliRadio.value);
+
+    // Update display if it exists
+    if (document.getElementById("num_sp_value")) {
+      document.getElementById("num_sp_value").textContent = num_sp;
+    }
+
+    // Add event listeners for radio buttons
+    const bernoulliRadios = document.querySelectorAll('input[name="txtnum_sp"]');
+    bernoulliRadios.forEach(radio => {
+      radio.addEventListener('change', function() {
+        num_sp = Number(this.value);
+        if (document.getElementById("num_sp_value")) {
+          document.getElementById("num_sp_value").textContent = num_sp;
+        }
+      });
+    });
+  } else if (document.getElementById("txtnum_sp")) {
+    // If there are no radio buttons but the old slider exists
+    document.getElementById("num_sp_value").textContent = document.getElementById("txtnum_sp").value;
+    document.getElementById("txtnum_sp").addEventListener("input", function() {
+      document.getElementById("num_sp_value").textContent = this.value;
+    });
+  }
+
+  // Initialize the population distribution plots if they exist
+  if (typeof updatePopulationPlots == 'function') {
+    updatePopulationPlots();
+  }
 }
 
 function setupCanvases() {
-  const canvasIds = ['sample_plot_normal', 'sample_plot_binomial', 'CI_plot_normal', 'CI_plot_binomial'];
+  const canvasIds = ['sample_plot_normal', 'sample_plot_bernoulli', 'CI_plot_normal', 'CI_plot_bernoulli'];
 }
 
 function randomNormal(mean, sd){
@@ -188,16 +226,16 @@ function generateBernoulli(last) {
   var sample_prop = 0;
 
   // generate a sample of size n
-  var currentSample = new Array(n_binomial);
-  for (var i = 0; i < n_binomial; i++ ){
+  var currentSample = new Array(n_bernoulli);
+  for (var i = 0; i < n_bernoulli; i++ ){
     currentSample[i] = bernoulli(p);
   }
 
   // Calculate the sample proportions
-  for (var j = 0; j < n_binomial; j++){
+  for (var j = 0; j < n_bernoulli; j++){
     sum += currentSample[j];
   }
-  sample_prop = sum/n_binomial;
+  sample_prop = sum/n_bernoulli;
 
   // update sample plot (only for the last sample)
   if (last) {
@@ -235,29 +273,12 @@ function generateNormalSample(last) {
 
 }
 
-// function SamplePlot(values, normdist) {
-//   const trace = {
-//     x: values,
-//     type: 'histogram',
-//   };
-//
-//   const layout = {
-//     title: 'Last Sample',
-//   };
-//
-//   // plotly for plotting
-//   if (normdist){
-//     Plotly.newPlot('sample_plot_normal', [trace], layout);
-//   } else {
-//     Plotly.newPlot('sample_plot_binomial', [trace], layout);
-//   }
-// }
-
 function CI_normal() {
   mu = Number(document.getElementById("txtmu").value);
   sigsq = Number(document.getElementById("txtsigsq").value);
   n_normal = Number(document.getElementById("txtn_normal").value);
-  num_sn = Number(document.getElementById("txtnum_sn").value);
+  const selectedRadio = document.querySelector('input[name="txtnum_sn"]:checked');
+num_sn = Number(selectedRadio.value);
   sd = Math.sqrt(sigsq);
   var L = new Array(num_sn);
   var U = new Array(num_sn);
@@ -281,20 +302,23 @@ function CI_normal() {
     // Check if interval contains the population mean
     containsMu[k] = (L[k] <= mu && U[k] >= mu);
   }
+  // Draw population Distribution
+  drawNormalDistribution(mu,sd);
   // Confidence interval plot
   IntervalPlot(sampleMeans, L, U, containsMu, 1);
 
 }
 
-function CI_binomial() {
+function CI_bernoulli() {
   p = Number(document.getElementById("txtp").value);
-  n_binomial = Number(document.getElementById("txtn_binomial").value);
-  num_sp = Number(document.getElementById("txtnum_sp").value);
-  sd = Math.sqrt(sigsq);
+  n_bernoulli = Number(document.getElementById("txtn_bernoulli").value);
+  const selectedRadio = document.querySelector('input[name="txtnum_sp"]:checked');
+num_sp = Number(selectedRadio.value);
   var L = new Array(num_sp);
   var U = new Array(num_sp);
   var sampleProps = new Array(num_sp);
   var containsP = new Array(num_sp);
+  var theta_hat = 0;
   for (var k = 0; k < num_sp; k++) {
     let currentProp;
     if (k == num_sp-1){
@@ -308,11 +332,13 @@ function CI_binomial() {
     sampleProps[k] = currentProp;
 
     // Confidence Interval 95% p_hat +- 1.96*sqrt(p_hat*(1-p_hat)/n)
-    L[k] = currentProp - 1.96*Math.sqrt(currentProp*(1-currentProp)/n_binomial);
-    U[k] = currentProp + 1.96*Math.sqrt(currentProp*(1-currentProp)/n_binomial);
+    L[k] = currentProp - 1.96*Math.sqrt(currentProp*(1-currentProp)/n_bernoulli);
+    U[k] = currentProp + 1.96*Math.sqrt(currentProp*(1-currentProp)/n_bernoulli);
     // Check if interval contains the population mean
     containsP[k] = (L[k] <= p && U[k] >= p);
   }
+  // Draw Bernoulli Distribution
+  drawBernoulliDistribution(p);
   // Confidence interval plot
   IntervalPlot(sampleProps, L, U, containsP, 2);
 
@@ -320,20 +346,12 @@ function CI_binomial() {
 
 function SamplePlot(values, normdist) {
   // Get the appropriate canvas element
-  const canvasId = normdist ? 'sample_plot_normal' : 'sample_plot_binomial';
+  const canvasId = normdist ? 'sample_plot_normal' : 'sample_plot_bernoulli';
   const canvas = document.getElementById(canvasId);
 
-  // Clear existing canvas if any
-  if (!canvas.getContext) {
-    // Replace the div with a canvas element
-    const container = document.getElementById(canvasId);
-    const newCanvas = document.createElement('canvas');
-    newCanvas.id = canvasId;
-    newCanvas.width = 400;
-    newCanvas.height = 300;
-    container.innerHTML = '';
-    container.appendChild(newCanvas);
-  }
+  // Set canvas dimensions
+  if (canvas.width != 300) canvas.width = 300;
+  if (canvas.height != 200) canvas.height = 200;
 
   // Get the canvas context
   const canvas2d = document.getElementById(canvasId);
@@ -352,11 +370,8 @@ function SamplePlot(values, normdist) {
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min;
-  const binCount = Math.min(30, Math.ceil(Math.sqrt(values.length)));
+  const binCount = Math.min(30, Math.ceil(2*Math.sqrt(values.length)));
   const binWidth = range / binCount;
-
-  // const binCount = 20;
-  // const binWidth = range / binCount || 1; // Avoid division by zero
 
   // Create bins
   const bins = Array(binCount).fill(0);
@@ -367,12 +382,6 @@ function SamplePlot(values, normdist) {
 
   // Find the max bin height for scaling
   const maxBinHeight = Math.max(...bins);
-
-  // Draw title
-  ctx.fillStyle = 'black';
-  ctx.font = '16px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText('Last Sample', width / 2, 20);
 
   // Set up margins
   const marginLeft = 40;
@@ -403,6 +412,19 @@ function SamplePlot(values, normdist) {
     ctx.fillRect(x, y, barWidth - 1, barHeight);
     ctx.strokeRect(x, y, barWidth - 1, barHeight);
   }
+  // Sample estimator
+  const sum = values.reduce((total, val) => total + val, 0);
+  if (normdist) {
+    theta_hat = sum/n_normal;
+  } else {
+    theta_hat = sum/n_bernoulli;
+  }
+
+  // Draw title
+  ctx.fillStyle = 'black';
+  ctx.font = '16px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Last Sample \u03B8\u0302 = ${theta_hat.toFixed(2)}`, width / 2, 20);
 
   // Draw x-axis labels (min, max values)
   ctx.fillStyle = 'black';
@@ -422,30 +444,20 @@ function SamplePlot(values, normdist) {
 
 function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
   // number of Intervals
-    num = m_or_p === 1 ? num_sn : num_sp;
+    num = m_or_p == 1 ? num_sn : num_sp;
 
     // parameter: mu or p
-    param = m_or_p === 1 ? mu : p;
+    param = m_or_p == 1 ? mu : p;
 
     // Get the appropriate canvas element
-    const canvasId = m_or_p === 1 ? 'CI_plot_normal' : 'CI_plot_binomial';
+    const canvasId = m_or_p == 1 ? 'CI_plot_normal' : 'CI_plot_bernoulli';
     const canvas = document.getElementById(canvasId);
 
-    if (!canvas) {
-      console.error(`Canvas element with ID ${canvasId} not found`);
-      return;
-    }
-
     // Set canvas dimensions
-    canvas.width = 600;
-    canvas.height = Math.max(350, 100 + 20 * num);
+    canvas.width = 500;
+    canvas.height = 400;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error(`Could not get 2D context for canvas ${canvasId}`);
-      return;
-    }
-
     const width = canvas.width;
     const height = canvas.height;
 
@@ -467,29 +479,16 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
     // Use completely fixed x-axis ranges based only on population parameters
     let xMin, xMax;
 
-    if (m_or_p === 1) {
+    if (m_or_p == 1) {
       // For normal distribution (mu, sigsq)
       // Fixed range based only on mu and sigma, independent of sample size
       const populationSD = Math.sqrt(sigsq);
       xMin = mu - 4 * populationSD;
       xMax = mu + 4 * populationSD;
     } else {
-      // For binomial proportion
-      // Fixed range for proportions, independent of sample size
-      // Always show full [0,1] range with some padding
-      if (p < 0.25) {
-        // For small p, focus on lower range
-        xMin = 0;
-        xMax = 0.5;
-      } else if (p > 0.75) {
-        // For large p, focus on upper range
-        xMin = 0.5;
-        xMax = 1;
-      } else {
-        // For middle p values, show full range
-        xMin = 0;
-        xMax = 1;
-      }
+      // For bernoulli proportion
+      xMin = 0;
+      xMax = 1;
     }
 
     // Ensure we have a reasonable range (absolute minimum)
@@ -529,12 +528,12 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
       ctx.moveTo(x1, y);
       ctx.lineTo(x2, y);
       ctx.strokeStyle = contains[i] ? 'rgba(50, 171, 96, 0.7)' : 'rgba(219, 64, 82, 0.7)';
-      ctx.lineWidth = 6;
+      ctx.lineWidth = 2;
       ctx.stroke();
 
       // Draw sample mean/proportion point
       ctx.beginPath();
-      ctx.arc(xPoint, y, 4, 0, Math.PI * 2);
+      ctx.arc(xPoint, y, 2, 0, Math.PI * 2);
       ctx.fillStyle = contains[i] ? 'rgba(50, 171, 96, 1.0)' : 'rgba(219, 64, 82, 1.0)';
       ctx.fill();
     }
@@ -557,8 +556,7 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
     ctx.fillStyle = 'black';
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(`Confidence Intervals (95%) - ${count}/${num} (${percentage}%) contain the true value of the parameter`,
-                width / 2, 25);
+    ctx.fillText(`Confidence Intervals (95%) - ${count}/${num} (${percentage}%) contain the true value of \u03B8`, width / 2, 25);
 
     // Draw x-axis title
     ctx.font = '12px Arial';
@@ -587,25 +585,12 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
       ctx.fillText(value.toFixed(2), x, height - marginBottom + 20);
     }
 
-    // Draw y-axis labels
-    ctx.textAlign = 'right';
-    for (let i = 1; i <= num; i++) {
-      const y = yScale(i);
-      ctx.beginPath();
-      ctx.moveTo(marginLeft, y);
-      ctx.lineTo(marginLeft - 5, y);
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillText(i.toString(), marginLeft - 10, y + 4);
-    }
-
     // Draw parameter annotation
     ctx.textAlign = 'center';
-    ctx.fillText(`population parameter = ${param}`, xScale(param), marginTop - 10);
+    ctx.fillText(`population \u03B8 = ${param}`, xScale(param), marginTop - 10);
 
     // Draw legend
-    const legendX = width - marginRight - 150;
+    const legendX = width - marginRight - 100;
     const legendY = marginTop + 20;
 
     ctx.fillStyle = 'rgba(50, 171, 96, 0.7)';
@@ -622,123 +607,237 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
 
     ctx.fillStyle = 'black';
     ctx.textAlign = 'left';
-    ctx.fillText('Contains parameter', legendX + 30, legendY + 8);
-    ctx.fillText('Doesn\'t contain parameter', legendX + 30, legendY + 28);
+    ctx.fillText('Contains \u03B8', legendX + 30, legendY + 8);
+    ctx.fillText('Doesn\'t contain \u03B8', legendX + 30, legendY + 28);
 
 }
 
-// function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
-//   // number of Intervals
-//   num = num_sn;
-//   // parameter: mu or p
-//   param = mu;
-//   if (m_or_p == 2) {
-//     num = num_sp;
-//     param = p;
-//   }
-//
-//   // Create an array for y-axis positions (vertical stacking)
-//   const yPositions = Array.from({length: num}, (_, i) => i + 1);
-//
-//   // Create traces for intervals that contain the mean (green)
-//   const containsData = [];
-//   const notContainsData = [];
-//
-//   for (let i = 0; i < num; i++) {
-//     const intervalData = {
-//       x: [lower[i], upper[i]],
-//       y: [yPositions[i], yPositions[i]],
-//       mode: 'lines',
-//       line: {
-//         width: 6,
-//         color: contains[i] ? 'rgba(50, 171, 96, 0.7)' : 'rgba(219, 64, 82, 0.7)'
-//       },
-//       showlegend: false
-//     };
-//
-//     // Add point for sample mean
-//     const meanPoint = {
-//       x: [xbar[i]],
-//       y: [yPositions[i]],
-//       mode: 'markers',
-//       marker: {
-//         color: contains[i] ? 'rgba(50, 171, 96, 1.0)' : 'rgba(219, 64, 82, 1.0)',
-//         size: 8
-//       },
-//       showlegend: false
-//     };
-//
-//     if (contains[i]) {
-//       containsData.push(intervalData, meanPoint);
-//     } else {
-//       notContainsData.push(intervalData, meanPoint);
-//     }
-//   }
-//
-//   // Create population mean vertical line
-//   const meanLine = {
-//     x: [param, param],
-//     y: [0, num + 1],
-//     mode: 'lines',
-//     line: {
-//       color: 'rgba(0, 0, 0, 0.8)',
-//       width: 2,
-//       dash: 'dash'
-//     },
-//     name: 'Population Mean'
-//   };
-//
-//   // Combine all traces
-//   const data = [...containsData, ...notContainsData, meanLine];
-//
-//   // Count how many intervals contain the mean
-//   const count = contains.filter(Boolean).length;
-//   const percentage = (count / num * 100).toFixed(1);
-//
-//   // Layout configuration
-//   const layout = {
-//     title: `Confidence Intervals (95%) - ${count}/${num} (${percentage}%) contain the true value of the parameter`,
-//     xaxis: {
-//       title: 'Value',
-//       zeroline: false
-//     },
-//     yaxis: {
-//       title: 'Sample Number',
-//       zeroline: false,
-//       range: [0, num + 1]
-//     },
-//     showlegend: true,
-//     annotations: [
-//       {
-//         x: mu,
-//         y: num + 0.5,
-//         xref: 'x',
-//         yref: 'y',
-//         text: `population parameter = ${param}`,
-//         showarrow: false,
-//         font: {
-//           family: 'Arial',
-//           size: 12,
-//           color: 'black'
-//         }
-//       }
-//     ],
-//     margin: {
-//       l: 60,
-//       r: 40,
-//       t: 50,
-//       b: 60
-//     },
-//     height: Math.max(350, 100 + 20 * num) // Dynamic height based on number of samples
-//   };
-//
-//   // Plot using Plotly
-//   if (m_or_p == 1){
-//     Plotly.newPlot('CI_plot_normal', data, layout, {responsive: true});
-//   } else if (m_or_p == 2) {
-//     Plotly.newPlot('CI_plot_binomial', data, layout, {responsive: true});
-//   }
-// }
+function drawNormalDistribution(mu, sd) {
+  // Get canvas element
+  const canvas = document.getElementById('normal_population_plot');
+
+  // Set canvas dimensions
+  if (canvas.width != 300) canvas.width = 300;
+  if (canvas.height != 200) canvas.height = 200;
+
+  // Get the canvas context
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Clear the canvas
+  ctx.clearRect(0, 0, width, height);
+
+  // Set background
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, width, height);
+
+  // Draw title
+  ctx.fillStyle = 'black';
+  ctx.font = '16px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Population Distribution \u03B8 = \u03BC', width / 2, 20);
+
+  // Set up margins
+  const marginLeft = 50;
+  const marginRight = 20;
+  const marginTop = 40;
+  const marginBottom = 40;
+  const plotWidth = width - marginLeft - marginRight;
+  const plotHeight = height - marginTop - marginBottom;
+
+  // Draw axes
+  ctx.beginPath();
+  ctx.moveTo(marginLeft, height - marginBottom);
+  ctx.lineTo(width - marginRight, height - marginBottom); // x-axis
+  ctx.moveTo(marginLeft, height - marginBottom);
+  ctx.lineTo(marginLeft, marginTop); // y-axis
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Determine range for x-axis (±4 standard deviations from mean)
+  const xMin = mu - 4 * sd;
+  const xMax = mu + 4 * sd;
+
+  // Function to convert x value to canvas x coordinate
+  const xToCanvas = x => marginLeft + ((x - xMin) / (xMax - xMin)) * plotWidth;
+
+  // Normal PDF function
+  function normalPDF(x, mean, stdDev) {
+    const variance = stdDev * stdDev;
+    return (1 / (Math.sqrt(2 * Math.PI * variance))) *
+    Math.exp(-((x - mean) * (x - mean)) / (2 * variance));
+  }
+
+  // Calculate maximum PDF value for scaling
+  const maxPDF = normalPDF(mu, mu, sd);
+
+  // Function to convert PDF value to canvas y coordinate
+  const pdfToCanvas = pdf => height - marginBottom - (pdf / maxPDF) * plotHeight;
+
+  // Draw PDF curve
+  ctx.beginPath();
+  ctx.moveTo(xToCanvas(xMin), pdfToCanvas(normalPDF(xMin, mu, sd)));
+
+  // Draw PDF curve with 200 points for smoothness
+  const step = (xMax - xMin) / 200;
+  for (let x = xMin + step; x <= xMax; x += step) {
+    const y = normalPDF(x, mu, sd);
+    ctx.lineTo(xToCanvas(x), pdfToCanvas(y));
+  }
+
+  ctx.strokeStyle = 'rgba(70, 130, 180, 0.9)'; // Steel blue color
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Fill area under the curve
+  ctx.lineTo(xToCanvas(xMax), height - marginBottom);
+  ctx.lineTo(xToCanvas(xMin), height - marginBottom);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(70, 130, 180, 0.2)';
+  ctx.fill();
+
+  // Draw mean line
+  ctx.beginPath();
+  ctx.moveTo(xToCanvas(mu), height - marginBottom);
+  ctx.lineTo(xToCanvas(mu), pdfToCanvas(maxPDF));
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label mean
+  ctx.fillStyle = 'red';
+  ctx.textAlign = 'center';
+  ctx.fillText(`\u03BC = ${mu}`, xToCanvas(mu), pdfToCanvas(maxPDF) - 3);
+
+  // Draw x-axis labels
+  ctx.fillStyle = 'black';
+  ctx.textAlign = 'center';
+  ctx.font = '12px Arial';
+
+  // Draw ticks at each standard deviation
+  for (let i = -3; i <= 3; i++) {
+    const x = mu + i * sd;
+    if (x >= xMin && x <= xMax) {
+      const xPos = xToCanvas(x);
+      ctx.beginPath();
+      ctx.moveTo(xPos, height - marginBottom);
+      ctx.lineTo(xPos, height - marginBottom + 5);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Label
+      ctx.fillText(`${(mu+i*sd).toFixed(2)}`, xPos, height - marginBottom + 20);
+    }
+  }
+
+  // Draw y-axis label (PDF)
+  ctx.save();
+  ctx.translate(15, height / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillText('Probability Density', 0, 0);
+  ctx.restore();
+}
+
+function drawBernoulliDistribution(p) {
+  // Get canvas element
+    const canvas = document.getElementById('bernoulli_population_plot');
+    // Set canvas dimensions
+    if (canvas.width != 300) canvas.width = 300;
+    if (canvas.height != 200) canvas.height = 200;
+
+    // Get the canvas context
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Clear the canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Set background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw title
+    ctx.fillStyle = 'black';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Bernoulli Distribution \u03B8 = p', width / 2, 20);
+
+    // Set up margins
+    const marginLeft = 50;
+    const marginRight = 20;
+    const marginTop = 40;
+    const marginBottom = 40;
+    const plotWidth = width - marginLeft - marginRight;
+    const plotHeight = height - marginTop - marginBottom;
+
+    // Draw axes
+    ctx.beginPath();
+    ctx.moveTo(marginLeft, height - marginBottom);
+    ctx.lineTo(width - marginRight, height - marginBottom); // x-axis
+    ctx.moveTo(marginLeft, height - marginBottom);
+    ctx.lineTo(marginLeft, marginTop); // y-axis
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Bar width and spacing
+    const barWidth = plotWidth / 12;
+    const xPositions = [marginLeft + plotWidth * 0.04, marginLeft + plotWidth * 0.96];
+
+    // Draw bars
+    const barHeights = [1 - p, p];
+    const maxHeight = Math.max(...barHeights);
+
+    // Draw bars for x=0 and x=1
+    for (let i = 0; i < 2; i++) {
+      const barHeight = (barHeights[i] / maxHeight) * plotHeight;
+      const x = xPositions[i] - barWidth / 2;
+      const y = height - marginBottom - barHeight;
+
+      // Draw bar
+      ctx.fillStyle = 'rgba(70, 130, 180, 0.7)'; // Steel blue color
+      ctx.fillRect(x, y, barWidth, barHeight);
+
+      // Draw border
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, barWidth, barHeight);
+
+      // Add probability text on bar
+      ctx.fillStyle = 'black';
+      ctx.textAlign = 'center';
+      ctx.font = '12px Arial';
+      const probabilityValue = i == 0 ? (1 - p).toFixed(2) : p.toFixed(1);
+      ctx.fillText(probabilityValue, xPositions[i], y - 5);
+    }
+
+    // Draw x-axis labels
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.font = '14px Arial';
+    ctx.fillText('0', xPositions[0], height - marginBottom + 20);
+    ctx.fillText('1', xPositions[1], height - marginBottom + 20);
+
+    // Draw y-axis label
+    ctx.save();
+    ctx.translate(15, height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.fillText('Probability', 0, 0);
+    ctx.restore();
+
+    // Add parameter text
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'left';
+    ctx.fillText(`p = ${p}`, marginLeft + 95, marginTop + 20);
+}
 
 </script>
 <div id="wrap">
@@ -778,7 +877,7 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
     This simple applet helps users understand confidence intervals.
     <hr>
     <div class ="main-container">
-    95% Confidence Interval of Means (Normal Distribution)
+    95% Confidence Interval of Means (Normal Distribution) &theta; = &mu;
     <div class ="form-container">
       <form name = "CI_mean_normal">
         <div class = "sliderrow">
@@ -797,17 +896,24 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
           <input type="range" id="txtn_normal" name="txtn_normal" min="5" max="100" step="1" value="30">
           <span id="n_normal_value" class="slider-value">30</span>
         </div>
-        <div class="slidercontainer">
-          <label for="txtnum_sn">Number of samples </label>
-          <input type="range" id="txtnum_sn" name="txtnum_sn" min="5" max="100" step="5" value="5">
-          <span id="num_sn_value" class="slider-value">5</span>
-        </div>
+        <div class="form-group">
+  <label>Number of samples:</label>
+  <div class="sample-options">
+    <label><input type="radio" name="txtnum_sn" value="5" checked> 5</label>
+    <label><input type="radio" name="txtnum_sn" value="10"> 10</label>
+    <label><input type="radio" name="txtnum_sn" value="50"> 50</label>
+    <label><input type="radio" name="txtnum_sn" value="100"> 100</label>
+    <label><input type="radio" name="txtnum_sn" value="1000"> 1000</label>
+  </div>
+</div>
       </div>
         <input type ="button" value = "Generate samples" onClick = "CI_normal()">
         <br>
       </form>
     </div>
     <div class ="plots-container">
+      <canvas id="normal_population_plot">
+      </canvas>
       <canvas id = "sample_plot_normal">
       </canvas>
     <canvas id = "CI_plot_normal">
@@ -817,9 +923,9 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
 
     <hr>
     <div class = "main-container">
-    95% Confidence Interval of Proportions (Binomial Distribution)
+    95% Confidence Interval of Proportions (Bernoulli Distribution) &theta; = p
     <div class="form-container">
-      <form name = "CI_proportion_binomial">
+      <form name = "CI_proportion_bernoulli">
         <div class = "sliderrow">
           <div class="slidercontainer">
             <label for="txtp">Population proportion (0 &lt; p &lt; 1)</label>
@@ -827,24 +933,29 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
             <span id="p_value" class="slider-value">0.5</span>
           </div>
           <div class="slidercontainer">
-            <label for="txtn_binomial">Sample size </label>
-            <input type="range" id="txtn_binomial" name="txtn_binomial" min="5" max="100" step="1" value="30">
-            <span id="n_binomial_value" class="slider-value">30</span>
+            <label for="txtn_bernoulli">Sample size </label>
+            <input type="range" id="txtn_bernoulli" name="txtn_bernoulli" min="5" max="100" step="1" value="30">
+            <span id="n_bernoulli_value" class="slider-value">30</span>
           </div>
-          <div class="slidercontainer">
-            <label for="txtnum_sp">Number of samples </label>
-            <input type="range" id="txtnum_sp" name="txtnum_sp" min="5" max="100" step="5" value="5">
-            <span id="num_sp_value" class="slider-value">5</span>
+          <label>Number of samples:</label>
+          <div class="sample-options">
+            <label><input type="radio" name="txtnum_sp" value="5" checked> 5</label>
+            <label><input type="radio" name="txtnum_sp" value="10"> 10</label>
+            <label><input type="radio" name="txtnum_sp" value="50"> 50</label>
+            <label><input type="radio" name="txtnum_sp" value="100"> 100</label>
+            <label><input type="radio" name="txtnum_sp" value="1000"> 1000</label>
           </div>
         </div>
-        <input type ="button" value = "Generate samples" onClick = "CI_binomial()">
+        <input type ="button" value = "Generate samples" onClick = "CI_bernoulli()">
         <br>
       </form>
     </div>
     <div class ="plots-container">
-      <canvas id = "sample_plot_binomial">
+      <canvas id="bernoulli_population_plot">
       </canvas>
-    <canvas id = "CI_plot_binomial">
+      <canvas id = "sample_plot_bernoulli">
+      </canvas>
+    <canvas id = "CI_plot_bernoulli">
     </canvas>
     </div>
     </div>
