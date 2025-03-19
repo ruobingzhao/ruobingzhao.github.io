@@ -144,11 +144,6 @@ window.onload = function() {
     document.getElementById("n_bernoulli_value").textContent = this.value;
   });
 
-  // Set up canvases if that function exists
-  if (typeof setupCanvases == 'function') {
-    setupCanvases();
-  }
-
   // Radio button initialization for normal distribution samples
   const selectedNormalRadio = document.querySelector('input[name="txtnum_sn"]:checked');
   if (selectedNormalRadio) {
@@ -203,10 +198,6 @@ window.onload = function() {
   if (typeof updatePopulationPlots == 'function') {
     updatePopulationPlots();
   }
-}
-
-function setupCanvases() {
-  const canvasIds = ['sample_plot_normal', 'sample_plot_bernoulli', 'CI_plot_normal', 'CI_plot_bernoulli'];
 }
 
 function randomNormal(mean, sd){
@@ -891,7 +882,7 @@ function drawBernoulliDistribution(p) {
           <span id="sigsq_value" class="slider-value">1</span>
         </div>
         <div class="slidercontainer">
-          <label for="txtn_normal">Sample size </label>
+          <label for="txtn_normal">Sample size (n) </label>
           <input type="range" id="txtn_normal" name="txtn_normal" min="5" max="100" step="1" value="30">
           <span id="n_normal_value" class="slider-value">30</span>
         </div>
@@ -932,7 +923,7 @@ function drawBernoulliDistribution(p) {
             <span id="p_value" class="slider-value">0.5</span>
           </div>
           <div class="slidercontainer">
-            <label for="txtn_bernoulli">Sample size </label>
+            <label for="txtn_bernoulli">Sample size (n) </label>
             <input type="range" id="txtn_bernoulli" name="txtn_bernoulli" min="5" max="100" step="1" value="30">
             <span id="n_bernoulli_value" class="slider-value">30</span>
           </div>
