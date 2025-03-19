@@ -38,6 +38,23 @@
   height: 350px;
 }
 */
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
 
 @media all and (min-width: 630px) {
   /* two column code */
@@ -101,7 +118,48 @@ html { background: white; margin:0;}
 <script>
 
 // CI for the mean of normal distribution
-let mu, sigsq, n_normal, num_sn, sd;
+let mu, sigsq, n_normal, num_sn, sd, p, n_binomial, num_sp;
+
+// Set up the slider value displays
+window.onload = function() {
+  // Initialize the displays with default values
+  document.getElementById("mu_value").textContent = document.getElementById("txtmu").value;
+  document.getElementById("sigsq_value").textContent = document.getElementById("txtsigsq").value;
+  document.getElementById("n_normal_value").textContent = document.getElementById("txtn_normal").value;
+  document.getElementById("num_sn_value").textContent = document.getElementById("txtnum_sn").value;
+  document.getElementById("p_value").textContent = document.getElementById("txtp").value;
+  document.getElementById("n_binomial_value").textContent = document.getElementById("txtn_binomial").value;
+  document.getElementById("num_sp_value").textContent = document.getElementById("txtnum_sp").value;
+
+  // Add event listeners
+  document.getElementById("txtmu").addEventListener("input", function() {
+    document.getElementById("mu_value").textContent = this.value;
+  });
+
+  document.getElementById("txtsigsq").addEventListener("input", function() {
+    document.getElementById("sigsq_value").textContent = this.value;
+  });
+
+  document.getElementById("txtn_normal").addEventListener("input", function() {
+    document.getElementById("n_normal_value").textContent = this.value;
+  });
+
+  document.getElementById("txtnum_sn").addEventListener("input", function() {
+    document.getElementById("num_sn_value").textContent = this.value;
+  });
+
+  document.getElementById("txtp").addEventListener("input", function() {
+    document.getElementById("p_value").textContent = this.value;
+  });
+
+  document.getElementById("txtn_binomial").addEventListener("input", function() {
+    document.getElementById("n_binomial_value").textContent = this.value;
+  });
+
+  document.getElementById("txtnum_sp").addEventListener("input", function() {
+    document.getElementById("num_sp_value").textContent = this.value;
+  });
+}
 
 function randomNormal(mean, sd){
   const u1 = Math.random();
@@ -152,11 +210,11 @@ function SamplePlot(values) {
 }
 
 function CI_normal() {
-  mu = Number(document.CI_mean_normal.txtmu.value);
-  sigsq = Number(document.CI_mean_normal.txtsigsq.value);
-  n_normal = Number(document.CI_mean_normal.txtn_normal.value);
+  mu = Number(document.getElementById("txtmu").value);
+  sigsq = Number(document.getElementById("txtsigsq").value);
+  n_normal = Number(document.getElementById("txtn_normal").value);
+  num_sn = Number(document.getElementById("txtnum_sn").value);
   sd = Math.sqrt(sigsq);
-  num_sn = Number(document.CI_mean_normal.txtnum_sn.value);
   var L = new Array(num_sn);
   var U = new Array(num_sn);
   var sampleMeans = new Array(num_sn);
@@ -328,17 +386,32 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
     <div class ="main-container">
     95% Confidence Interval of Means (Normal Distribution)
     <div class ="form-container">
-    <form name = "CI_mean_normal">
-    Population mean (&mu;) <input type ="text" name = "txtmu">
-    <br>
-    Population variance (&sigma;&sup2; &gt; 0) <input type ="text" name = "txtsigsq">
-    <br>
-    Sample size <input type ="number" name = "txtn_normal", value = "30" max = "100" min ="5" step = "5">
-    <br>
-    Number of samples <input type ="number" name = "txtnum_sn", value = "5" max = "100" min ="5" step = "5">
-    <input type ="button" value = "Generate samples" onClick = "CI_normal()">
-    <br>
-    </form>
+      <form name = "CI_mean_normal">
+        <div class = "sliderrow">
+        <div class="slidercontainer">
+          <label for="txtmu">Population mean (&mu;)</label>
+          <input type="range" id="txtmu" name="txtmu" min="-5" max="5" step="0.5" value="0">
+          <span id="mu_value" class="slider-value">0</span>
+        </div>
+        <div class="slidercontainer">
+          <label for="txtsigsq">Population variance (&sigma;&sup2; &gt; 0)</label>
+          <input type="range" id="txtsigsq" name="txtsigsq" min="0.5" max="5" step="0.5" value="1">
+          <span id="sigsq_value" class="slider-value">1</span>
+        </div>
+        <div class="slidercontainer">
+          <label for="txtn_normal">Sample size </label>
+          <input type="range" id="txtn_normal" name="txtn_normal" min="1" max="100" step="1" value="30">
+          <span id="n_normal_value" class="slider-value">30</span>
+        </div>
+        <div class="slidercontainer">
+          <label for="txtnum_sn">Number of samples </label>
+          <input type="range" id="txtnum_sn" name="txtnum_sn" min="5" max="200" step="5" value="5">
+          <span id="num_sn_value" class="slider-value">5</span>
+        </div>
+      </div>
+        <input type ="button" value = "Generate samples" onClick = "CI_normal()">
+        <br>
+      </form>
     </div>
     <div class ="plots-container">
     <div class ="plot" id = "CI_plot_normal">
@@ -352,15 +425,27 @@ function IntervalPlot(xbar, lower, upper, contains, m_or_p) {
     <div class = "main-container">
     95% Confidence Interval of Proportions (Binomial Distribution)
     <div class="form-container">
-    <form name = "CI_proportion_binomial">
-      Population proportion (0 &lt; p &lt; 1)  <input type ="text" name = "txtp">
-      <br>
-      Sample size <input type ="number" name = "txtn_binomial", value = "30" max = "100" min ="5" step = "5">
-      <br>
-      Number of samples <input type ="number" name = "txtnum_sn", value = "5" max = "100" min ="5" step = "5">
-      <input type ="button" value = "Generate samples" onClick = "CI_binomial()">
-      <br>
-    </form>
+      <form name = "CI_proportion_binomial">
+        <div class = "sliderrow">
+          <div class="slidercontainer">
+            <label for="txtp">Population proportion (0 &lt; p &lt; 1)</label>
+            <input type="range" id="txtp" name="txtp" min="0.1" max="0.9" step="0.05" value="0.5">
+            <span id="p_value" class="slider-value">0.5</span>
+          </div>
+          <div class="slidercontainer">
+            <label for="txtn_binomial">Sample size </label>
+            <input type="range" id="txtn_binomial" name="txtn_binomial" min="1" max="100" step="1" value="30">
+            <span id="n_binomial_value" class="slider-value">30</span>
+          </div>
+          <div class="slidercontainer">
+            <label for="txtnum_sp">Number of samples </label>
+            <input type="range" id="txtnum_sp" name="txtnum_sp" min="5" max="200" step="5" value="5">
+            <span id="num_sp_value" class="slider-value">5</span>
+          </div>
+        </div>
+        <input type ="button" value = "Generate samples" onClick = "CI_binomial()">
+        <br>
+      </form>
     </div>
     <div class ="plots-container">
     <div class ="plot" id = "CI_plot_binomial">
