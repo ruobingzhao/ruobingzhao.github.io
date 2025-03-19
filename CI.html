@@ -702,14 +702,14 @@ function drawNormalDistribution(mu, sd) {
   ctx.beginPath();
   ctx.moveTo(xToCanvas(mu), height - marginBottom);
   ctx.lineTo(xToCanvas(mu), pdfToCanvas(maxPDF));
-  ctx.strokeStyle = 'red';
+  ctx.strokeStyle = 'black';
   ctx.lineWidth = 2;
   ctx.setLineDash([5, 5]);
   ctx.stroke();
   ctx.setLineDash([]);
 
   // Label mean
-  ctx.fillStyle = 'red';
+  ctx.fillStyle = 'black';
   ctx.textAlign = 'center';
   ctx.fillText(`\u03BC = ${mu}`, xToCanvas(mu), pdfToCanvas(maxPDF) - 3);
 
@@ -734,7 +734,6 @@ function drawNormalDistribution(mu, sd) {
       ctx.fillText(`${(mu+i*sd).toFixed(2)}`, xPos, height - marginBottom + 20);
     }
   }
-
   // Draw y-axis label (PDF)
   ctx.save();
   ctx.translate(15, height / 2);
