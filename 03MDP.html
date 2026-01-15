@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="Code" />
+<meta name="keywords" content="Confidence Interval, Statistics, Numerical Methods" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numerical Methods Tutorial</title
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<style type="text/css">
+#transition-table td, #transition-table th {padding: 2px 2px; font-size: 12px }
+#weight-table td, #weight-table th {padding: 2px 2px; font-size: 12px }
+
+#returns-table td, #returns-table th {padding: 2px 2px; font-size: 12px }
+
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1;
+  height: 350px;
+}
+*/
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+</style>
+<script>
+
+// Constants: Returns of assets under market conditions and market condition transition matrix
+const RETURNS =  {
+  bear : { stocks: -25, bonds: 6, cash: 1},
+  normal: {stocks: 8, bonds: 4, cash: 2},
+  bull: {stocks: 25, bonds: 3, cash: 2}
+};
+
+// Transition matrix
+const Pr =  {
+  bear : { bear: 0.4, normal: 0.5, bull: 0.1},
+  normal: {bear: 0.2, normal: 0.6, bull: 0.2},
+  bull: {bear: 0.1, normal: 0.35, bull: 0.55}
+};
+
+const MARKET_COND = ["bear", "normal", "bull"];
+const RISK_FREE_RATE = 0.02;
+const DISCOUNT = Math.exp(-RISK_FREE_RATE*1);
+
+const STRATEGIES = {
+  "allStocks": {stocks: 1, bonds: 0, cash: 0},
+ "aggressive": {stocks: 0.7, bonds: 0.2, cash: 0.1},
+  "moderate": {stocks: 0.5, bonds: 0.3, cash: 0.2},
+  "conservative": {stocks: 0.3, bonds: 0.4, cash: 0.3},
+  "allCash": {stocks: 0, bonds: 0, cash: 1}};
+
+  const STRATEGY_NAME = ["allStocks", "aggressive", "moderate","conservative","allCash"];
+
+// Variables
+let lambda, init_cond, strategy, market, T_length;
+
+//////////// Display
+
+window.onload = function() {
+  // Display lambda, T duration values
+  const l_slider = document.getElementById("LambdaSlider");
+  const t_slider = document.getElementById("TimeSlider");
+  const radioButtons = document.querySelectorAll('input[name = "init_cond"]');
+
+  // Display lambda, T duration values
+  l_slider.addEventListener("input", function(){
+    document.getElementById("display_lambda").textContent = this.value
+  });
+  t_slider.addEventListener("input", function(){
+    document.getElementById("display_time").textContent = this.value;
+    document.getElementById("sim_T_length").textContent = this.value
+  });
+
+  // Radio button for market condition
+  radioButtons.forEach(radio => {
+    radio.addEventListener("change", function()
+    {
+      document.getElementById("display_cond").textContent = this.value;
+      document.getElementById("table_init_cond").textContent = this.value;
+    })
+  });
+
+}
+
+//////////// COMPUTATIONS
+
+function compare_strategy(){
+
+  const lambda = document.getElementById("LambdaSlider").value/10;
+  const market = document.querySelector('input[name="init_cond"]:checked').value;
+  const time = document.getElementById("TimeSlider").value;
+
+  // // Optimal Policy
+  // const bestIndex
+
+  // Run value iteration
+  const results = ValueIteration(lambda);
+  display = 0;
+
+  // if (market == "bear"){
+  //   display = results.values.bear;
+  // } else if (market == "normal") {
+  //   display = results.values.normal;
+  // } else if (market == "bull") {
+  //   display = results.values.bull;
+  // }
+
+  const optimal_policy = [STRATEGY_NAME[results.policy.bear],STRATEGY_NAME[results.policy.normal],STRATEGY_NAME[results.policy.bull]];
+
+  // Display results
+  // document.getElementById("ValueFunc_display").textContent = display;
+  document.getElementById("bear_policy").textContent = optimal_policy[0];
+  document.getElementById("normal_policy").textContent = optimal_policy[1];
+  document.getElementById("bull_policy").textContent = optimal_policy[2];
+  // document.getElementById("AllStocksVal_display").textContent = 1;
+  // document.getElementById("AggressiveVal_display").textContent = 2;
+  // document.getElementById("ModerateVal_display").textContent = 3;
+  // document.getElementById("ConservativeVal_display").textContent = 4;
+  // document.getElementById("AllCashVal_display").textContent = 5;
+
+  // Simulate path
+  simulate_path(lambda, market, time, optimal_policy);
+
+}
+
+// Portfolio return before risk adjustment
+function r_p(strategy, market){
+  // return of the portfolio given a strategy and known market condition
+  const w = STRATEGIES[strategy];
+  const r = RETURNS[market];
+  return (w.stocks*r.stocks + w.bonds*r.bonds + w.cash*r.cash)/100;
+}
+
+// Risk adjusted return
+function r_adj(strategy, market, lambda){
+
+let mean;
+let variance;
+
+  // given market in previous period
+  if (market == "bear"){
+  mean = r_p(strategy, "bear")*Pr.bear.bear + r_p(strategy, "normal")*Pr.bear.normal + r_p(strategy, "bull")*Pr.bear.bull;
+  variance = Pr.bear.bear*(r_p(strategy, "bear")-mean)**2 + Pr.bear.normal*(r_p(strategy, "normal")-mean)**2 + Pr.bear.bull*(r_p(strategy, "bull")-mean)**2;
+} else if (market == "normal"){
+mean = r_p(strategy, "bear")*Pr.normal.bear + r_p(strategy, "normal")*Pr.normal.normal + r_p(strategy, "bull")*Pr.normal.bull;
+variance = Pr.normal.bear*(r_p(strategy, "bear")-mean)**2 + Pr.normal.normal*(r_p(strategy, "normal")-mean)**2 + Pr.normal.bull*(r_p(strategy, "bull")-mean)**2;
+} else if (market == "bull"){
+mean = r_p(strategy, "bear")*Pr.bull.bear + r_p(strategy, "normal")*Pr.bull.normal + r_p(strategy, "bull")*Pr.bull.bull;
+variance = Pr.bull.bear*(r_p(strategy, "bear")-mean)**2 + Pr.bull.normal*(r_p(strategy, "normal")-mean)**2 + Pr.bull.bull*(r_p(strategy, "bull")-mean)**2;
+}
+
+// Return risk adjusted return
+return mean - lambda*variance;
+
+}
+
+function ValueIteration(lambda) {
+
+  // Initialize every value to zero
+  let V_bear = 0;
+  let V_normal = 0;
+  let V_bull = 0;
+  let policy = {bear: 0, normal: 0, bull: 0};
+  const w_states = ["allStocks", "aggressive", "moderate", "conservative", "allCash"];
+
+  // max_iter = 200, error = 0.001
+  for (var i = 0; i < 200; i++){
+    let V_old = [V_bear, V_normal, V_bull];
+
+    let bear_calc = [r_adj(w_states[0],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
+  r_adj(w_states[1],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
+r_adj(w_states[2],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
+r_adj(w_states[3],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
+r_adj(w_states[4],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull)];
+
+let normal_calc = [r_adj(w_states[0],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
+r_adj(w_states[1],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
+r_adj(w_states[2],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
+r_adj(w_states[3],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
+r_adj(w_states[4],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull)];
+
+let bull_calc = [r_adj(w_states[0],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
+r_adj(w_states[1],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
+r_adj(w_states[2],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
+r_adj(w_states[3],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
+r_adj(w_states[4],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull)];
+
+
+        V_bear = Math.max(...bear_calc);
+
+// Extract optimal policy
+policy.bear = bear_calc.indexOf(V_bear);
+
+        V_normal  = Math.max(...normal_calc);
+
+// Extract optimal Policy
+policy.normal  = normal_calc.indexOf(V_normal);
+
+        V_bull  = Math.max(...bull_calc);
+
+    // Extract optimal policy
+    policy.bull  = bull_calc.indexOf(V_bull);
+
+
+    let V_new = [V_bear, V_normal, V_bull];
+
+   // Break the iteration if converged
+   if (math.norm(math.subtract(V_new,V_old), 'inf') < 0.01){
+     break;
+   }
+
+  }
+
+  // return the value function
+  return { values: {bear: V_bear, normal: V_normal, bull: V_bull },
+policy: policy}
+}
+
+//////////// Simulation
+
+function simulate_path(lambda, market, time, opt_pol){
+  // For simulation table
+  const tbody = document.getElementById("simulation_body");
+  tbody.innerHTML = ""; // Clear previous results
+  let html = "";
+
+  let prevMarket = market;
+  let currentMarket = market;
+  let portfolio_value = 10000;
+  let current_strategy = "allCash";
+  let rand = 0;
+  let final_time = Number(time)+1;
+  let probs = Pr[prevMarket];
+  let mktColor = "black";
+
+  // Benchmark portfolios
+  let PV1 = 10000; // all stocks
+  let PV2 = 10000; // aggressive
+  let PV3 = 10000; // moderate
+  let PV4 = 10000; // conservative
+  let PV5 = 10000; // all cash
+
+  for( let t = 1; t < final_time; t++){
+    // adopt optimal strategy
+    if (prevMarket == "bear"){
+      current_strategy = opt_pol[0];
+    } else if (prevMarket == "normal"){
+      current_strategy = opt_pol[1];
+    } else if (prevMarket == "bull"){
+      current_strategy = opt_pol[2];
+    }
+
+    // market transition given previous mar;ket
+    rand = Math.random();
+    if (rand < probs.bear){
+      currentMarket = "bear";
+    } else if (rand < (probs.bear+probs.normal)){
+      currentMarket = "normal";
+    } else {
+      currentMarket = "bull";
+    }
+
+    // update probability
+    probs = Pr[currentMarket];
+
+    // update market color
+    if (currentMarket == "bear"){
+      mktColor = "red";
+    } else if (currentMarket == "normal"){
+      mktColor = "#ffcc00";
+    } else if (currentMarket == "bull"){
+      mktColor = "#00cc00";
+    }
+
+    // Compute portfolio value under current strategy and transitioned market
+    portfolio_value = (1+r_p(current_strategy,currentMarket))*portfolio_value;
+
+    // Compute benchmark portfolio values
+    PV1 = (1+r_p("allStocks",currentMarket))*PV1;
+    PV2 = (1+r_p("aggressive",currentMarket))*PV2;
+    PV3 = (1+r_p("moderate",currentMarket))*PV3;
+    PV4 = (1+r_p("conservative",currentMarket))*PV4;
+    PV5 = (1+r_p("allCash",currentMarket))*PV5;
+
+    // Update table
+    html += `<tr><td>${t}</td><td style = "color: ${mktColor}"; font-weight: bold;>${currentMarket}</td><td>${current_strategy}</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td>`;
+
+    // For next iteration
+    prevMarket = currentMarket;
+
+    }
+
+    tbody.innerHTML = html;
+
+  }
+
+
+
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "container">
+    <br>
+    <br>
+    <br>
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      4. Markov Decision Process Demo
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    This simple applet models investment portfolio management as a Markov Decision Process. In this problem, at the beginning of each trading period (1 year), the manager rebalances the portfolio based on their knowledge of the previous year's market condition (bear, normal, bull), adopting one of the following strategies: all stocks, aggressive, moderate, conservative, all cash. A risk-adjusted return function, \(E[\text{return}] - \lambda \sigma^2 [\text{return}]\), where \(\lambda\) is the risk-aversion level, is used to compute the Bellman equation. You can compare the optimal strategy against benchmark portfolios.
+    <br>
+    The transition probabilities between the market conditions, the weights of each asset under different strategies, and the returns of the assets are given in the tables.<br>
+    <div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
+      <div>
+      <table id = "transition-table" class = "table table-bordered table-condensed" style="width:auto;">
+        <thead>
+          <tr>
+          <th>Market</th>
+          <th>To Bear</th>
+          <th>To Normal</th>
+          <th>To Bull</th>
+        </tr>
+        <tr><td>Bear</td><td>0.4</td><td>0.5</td><td>0.1</td></tr>
+        <tr><td>Normal</td><td>0.2</td><td>0.6</td><td>0.2</td></tr>
+        <tr><td>Bull</td><td>0.1</td><td>0.35</td><td>0.55</td></tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+    <div>
+    <table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
+      <thead>
+        <tr>
+        <th>Strategy</th>
+        <th>Stocks (%)</th>
+        <th>Bonds (%)</th>
+        <th>Cash (%)</th>
+      </tr>
+      <tr><td>All Stocks</td><td>100</td><td>0</td><td>0</td></tr>
+      <tr><td>Aggressive</td><td>70</td><td>20</td><td>10</td></tr>
+      <tr><td>Moderate</td><td>50</td><td>30</td><td>20</td></tr>
+      <tr><td>Conservative</td><td>30</td><td>40</td><td>30</td></tr>
+      <tr><td>All cash</td><td>0</td><td>0</td><td>100</td></tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <table id = "returns-table" class = "table table-bordered table-condensed" style="width:auto;">
+      <thead>
+        <tr>
+        <th>Asset</th>
+        <th>Bear</th>
+        <th>Normal</th>
+        <th>Bull</th>
+      </tr>
+      <tr><td>Stocks</td><td>-25%</td><td>8%</td><td>25%</td></tr>
+      <tr><td>Bonds</td><td>6%</td><td>4%</td><td>3%</td></tr>
+      <tr><td>Cash</td><td>1%</td><td>2%</td><td>2%</td></tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+    <hr>
+    <div class ="main-container">
+    <label>Risk-aversion (&lambda;) level:</label>
+    <span id="display_lambda" class="slider-value">0</span>
+    <div class ="form-container">
+      <form name = "Risk_aversion">
+        <div class = "sliderrow">
+        <div class="slidercontainer">
+          Risk neutral
+          <input type="range" id="LambdaSlider" name="lambda" min="0" max="12" step="0.5" value="0">
+          Risk averse
+        </div>
+        <div class="form-group">
+  <label>Initial condition (market condition of the previous year): </label>
+  <span id = "display_cond">bear</span>
+  <div class="initial_condition">
+    <input type="radio" name="init_cond" value="bear" checked> bear
+    <input type="radio" name="init_cond" value="normal" > normal
+    <input type="radio" name="init_cond" value="bull" > bull
+  </div>
+  <label>Number of trading periods T = </label>
+  <span id = "display_time">24</span>
+  <div class="Time">
+    <div class="slidercontainer">
+      <input type="range" id="TimeSlider" min="10" max="50" step="1" value="24">
+    </div>
+  </div>
+</div>
+      </div>
+        <input type ="button" value = "Start Simulation" onClick = "compare_strategy()">
+        <br>
+      </form>
+    </div>
+    <div class = "Optimal policy">
+      Optimal policy given previous market condition:<br>
+      bear: <span id="bear_policy"></span><br>
+      normal: <span id="normal_policy"></span><br>
+      bull: <span id="bull_policy"></span><br>
+    </div>
+    <div class ="compare results">
+      <label>Compare results: Simulated course of <span id = "sim_T_length">24</span> years: optimal strategy vs. benchmark portfolios. Initial investment: $10000 </label>
+      <table class = "table table-striped" id = "sim_table">
+        <thead>
+          <tr>
+          <th>Year</th>
+          <th>Market Condition</th>
+          <th>Strategy Chosen</th>
+          <th>Portfolio Value (Optimal Policy)</th>
+          <th>All Stocks</th>
+          <th>Aggressive</th>
+          <th>Moderate</th>
+          <th>Conservative</th>
+          <th>All Cash</th>
+        </tr>
+        <tr><td>0</td><td><span id = "table_init_cond">bear</span></td><td>allCash</td><td>10000</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+        </thead>
+        <tbody id="simulation_body">
+        </tbody>
+      </table>
+
+      <!-- Optimal strategy: <span id="ValueFunc_display"></span><br>
+      All stocks: <span id="AllStocksVal_display"></span><br>
+      Aggressive: <span id="AggressiveVal_display"></span><br>
+      Moderate: <span id="ModerateVal_display"></span><br>
+      Conservative: <span id="ConservativeVal_display"></span><br>
+      All cash: <span id="AllCashVal_display"></span> -->
+    </div>
+
+    </div>
+
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+</body>
+</html>
