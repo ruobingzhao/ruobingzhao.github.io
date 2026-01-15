@@ -192,7 +192,7 @@ function compare_strategy(){
 
   // Run value iteration
   const results = ValueIteration(lambda);
-  display = 0;
+  // display = 0;
 
   // if (market == "bear"){
   //   display = results.values.bear;
@@ -216,7 +216,16 @@ function compare_strategy(){
   // document.getElementById("AllCashVal_display").textContent = 5;
 
   // Simulate path
-  simulate_path(lambda, market, time, optimal_policy);
+  const avg_performance = simulate_path(lambda, market, time, optimal_policy)
+
+    // Display average performance
+    document.getElementById("opt_perf").textContent = avg_performance.opt_avg.toFixed(2);
+    document.getElementById("allStocks_perf").textContent = avg_performance.allStocks_avg.toFixed(2);
+    document.getElementById("aggressive_perf").textContent = avg_performance.aggressive_avg.toFixed(2);
+    document.getElementById("moderate_perf").textContent = avg_performance.moderate_avg.toFixed(2);
+    document.getElementById("conservative_perf").textContent = avg_performance.conservative_avg.toFixed(2);
+    document.getElementById("allCash_perf").textContent = avg_performance.allCash_avg.toFixed(2);
+
 
 }
 
@@ -324,6 +333,7 @@ function simulate_path(lambda, market, time, opt_pol){
   let prevMarket = market;
   let currentMarket = market;
   let portfolio_value = 10000;
+  let portfolio_value_sum = 0; // for computing average
   let current_strategy = "allCash";
   let rand = 0;
   let final_time = Number(time)+1;
@@ -336,6 +346,28 @@ function simulate_path(lambda, market, time, opt_pol){
   let PV3 = 10000; // moderate
   let PV4 = 10000; // conservative
   let PV5 = 10000; // all cash
+
+  // for computing average
+  let PV1_sum = 0;
+  let PV2_sum = 0;
+  let PV3_sum = 0;
+  let PV4_sum = 0;
+  let PV5_sum = 0;
+
+// iterations to compute average
+for (let iter = 1; iter <= 50000; iter++){
+  html = "";// clear table (only display the last iteration)
+
+  // reset market initial condition
+  prevMarket = market;
+
+  // reset portfolio_value
+  portfolio_value = 10000;
+  PV1 = 10000;
+  PV2 = 10000;
+  PV3 = 10000;
+  PV4 = 10000;
+  PV5 = 10000;
 
   for( let t = 1; t < final_time; t++){
     // adopt optimal strategy
@@ -386,8 +418,26 @@ function simulate_path(lambda, market, time, opt_pol){
     prevMarket = currentMarket;
 
     }
+    // compute sums of portfolio values for each Strategy
+    portfolio_value_sum += portfolio_value;
+    PV1_sum += PV1;
+    PV2_sum += PV2;
+    PV3_sum += PV3;
+    PV4_sum += PV4;
+    PV5_sum += PV5;
+  }
 
     tbody.innerHTML = html;
+
+    // compute average portfolio values (50000 iterations)
+    portfolio_value_sum = portfolio_value_sum/50000;
+    PV1_sum = PV1_sum/50000;
+    PV2_sum = PV2_sum/50000;
+    PV3_sum = PV3_sum/50000;
+    PV4_sum = PV4_sum/50000;
+    PV5_sum = PV5_sum/50000;
+
+    return {opt_avg: portfolio_value_sum, allStocks_avg: PV1_sum, aggressive_avg: PV2_sum, moderate_avg: PV3_sum, conservative_avg: PV4_sum, allCash_avg : PV5_sum}
 
   }
 
@@ -528,7 +578,14 @@ function simulate_path(lambda, market, time, opt_pol){
       bull: <span id="bull_policy"></span><br>
     </div>
     <div class ="compare results">
-      <label>Compare results: Simulated course of <span id = "sim_T_length">24</span> years: optimal strategy vs. benchmark portfolios. Initial investment: $10000 </label>
+      <label>Compare results: Simulated course of <span id = "sim_T_length">24</span> years: optimal strategy vs. benchmark portfolios. Initial investment: $10000 </label><br>
+      Average Optimal Strategy Performance: $<span id="opt_perf"></span><br>
+      Average All Stocks Performance: $<span id="allStocks_perf"></span><br>
+      Average Aggressive Performance: $<span id="aggressive_perf"></span><br>
+      Average Moderate Performance: $<span id="moderate_perf"></span><br>
+      Average Conservative Performance: $<span id="conservative_perf"></span><br>
+      Average All Cash Performance: $<span id="allCash_perf"></span><br>
+      <label>Last iteration:</label>
       <table class = "table table-striped" id = "sim_table">
         <thead>
           <tr>
