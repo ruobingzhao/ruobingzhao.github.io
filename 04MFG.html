@@ -632,7 +632,7 @@ return {density: rho, control: u_opt};
     \[V(t,x) = \inf_u\bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\big]\bigg\}\]
     \[V(t,x) = G(x, \rho_T)\]
     \[u^* = \text{argmin}_u \bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\bigg]\big\}\]
-    The density satisfies the initial conditon \(\rho_0(x)\) and evolves forward in time following:
+    The density satisfies the initial condition \(\rho_0(x)\) and evolves forward in time following:
     \[\rho_{t+1}(x) = \sum_{x'}\rho_t(x')P(x|x', u^*(t,x'))\]
     where \(P(x|x', u^*(t,x'))\) is the transition probability from \(x'\) to \(x\) following control \(u^*\).
     An equilibrium pair \((V,\rho)\) satisfies both the Bellman equation and the density evolution equation. <br>
