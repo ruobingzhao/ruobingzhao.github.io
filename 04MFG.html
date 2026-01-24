@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="Code" />
+<meta name="keywords" content="Mean Field Games, Numerical Methods" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numerical Methods Tutorial</title
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<style type="text/css">
+#transition-table td, #transition-table th {padding: 2px 2px; font-size: 12px }
+#weight-table td, #weight-table th {padding: 2px 2px; font-size: 12px }
+
+#returns-table td, #returns-table th {padding: 2px 2px; font-size: 12px }
+
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1;
+  height: 350px;
+}
+*/
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+</style>
+<script>
+
+//////////// Display & Loading values from sliders
+
+window.onload = function() {
+  // Display lambda, T duration values
+  const grid_slider = document.getElementById("gridSlider");
+  // const t_slider = document.getElementById("TSlider");
+  // const lambda_slider = document.getElementById("lambdaSlider");
+  // const fail_slider = document.getElementById("failSlider");
+
+  // INitail display
+  document.getElementById("gridSliderValue").textContent = grid_slider.value;
+  // document.getElementById("TSliderValue").textContent = Math.floor(t_slider.value*grid_slider.value);
+
+  // if (lambda_slider.value == 0){
+  //   document.getElementById("lambdaSliderValue").textContent = "No";
+  // } else {
+  //   document.getElementById("lambdaSliderValue").textContent = "Yes";
+  // }
+  // document.getElementById("failSliderValue").textContent = fail_slider.value*(parseInt(grid_slider.value)+parseInt(lambda_slider.value));
+
+  // Display lambda, T duration values
+  grid_slider.addEventListener("input", function(){
+    document.getElementById("gridSliderValue").textContent = this.value;
+    // document.getElementById("TSliderValue").textContent = Math.floor(this.value*t_slider.value);
+    // document.getElementById("failSliderValue").textContent = (parseInt(this.value)+parseInt(lambda_slider.value))*fail_slider.value;
+  });
+  // t_slider.addEventListener("input", function(){
+  //   document.getElementById("TSliderValue").textContent = Math.floor(this.value*grid_slider.value);
+  // });
+  // lambda_slider.addEventListener("input", function(){
+  //   // document.getElementById("lambdaSliderValue").textContent = this.value;
+  //   if (lambda_slider.value == 0){
+  //     document.getElementById("lambdaSliderValue").textContent = "No";
+  //   } else {
+  //     document.getElementById("lambdaSliderValue").textContent = "Yes";
+  //   }
+  //   // document.getElementById("failSliderValue").textContent = fail_slider.value*(parseInt(this.value)+ parseInt(grid_slider.value));
+  // });
+  // fail_slider.addEventListener("input", function(){
+  //   document.getElementById("failSliderValue").textContent = this.value*(parseInt(grid_slider.value)+parseInt(lambda_slider.value));
+  // });
+}
+
+// GLOBAL VARIABLES
+let grid_size = 15;
+let lambda =  10; // roughly same as grid size L(x,u,rho) = c(u) + lambda*rho(x)
+let eps = 0.08; // probability of random movement
+let max_iter = 150;
+let fail = (lambda+grid_size)*4; // cost for failing to exit, larger grid size -> larger cost
+let T = Math.floor(2*grid_size); // T = multiplier*grid_size 1.5, 2, or 2.5
+const stay = 0, left = 1, right = 2, up = 3, down = 4, upleft = 5, upright = 6, downleft = 7, downright = 8;
+
+let SimResult = null;
+let SimResultNaive = null;
+
+//////////// HELPER FUNCTIONS
+
+// index for float Array
+function index(t, i, j) {
+  return t*grid_size*grid_size + i*grid_size + j;
+}
+
+// check if two cells are neighbors
+function isNeighbor(x,y,xnew, ynew){
+  let dx = Math.abs(x-xnew);
+  let dy = Math.abs(y-ynew);
+  return (dx <= 1 && dy <= 1 && (dx+dy)>0);
+}
+
+//////////// Initializing
+let V = new Float64Array(T*grid_size*grid_size);
+V.fill(0);
+let u_opt = new Uint8Array(T*grid_size*grid_size);
+u_opt.fill(0);// 0: stay, 1: left, 2: right, 3: up, 4: down
+let rho = new Float64Array(T*grid_size*grid_size);
+rho.fill(0);
+// rho[index(0,0,0)] = 1; // all agents at starting point
+initialDensity(rho); // random initial distribution
+
+// neighbors of each cell
+let neighbors = new Array(grid_size*grid_size);
+
+for (let i = 0; i < grid_size; i++){
+  for (let j = 0; j < grid_size; j++){
+    const nbrs = [];
+    if (i>0){
+      nbrs.push([i-1, j]); //left
+      if (j>0){
+        nbrs.push([i-1, j-1]); //upleft
+      }
+      if (j<grid_size-1){
+        nbrs.push([i-1, j+1]); //downleft
+      }
+    }
+    if (i < grid_size-1){
+      nbrs.push([i+1, j]); //right
+      if (j>0){
+        nbrs.push([i+1, j-1]); //upright
+      }
+      if(j<grid_size-1){
+        nbrs.push([i+1, j+1]); //downright
+      }
+    }
+    if (j>0){
+      nbrs.push([i, j-1]); //up
+    }
+    if (j < grid_size-1){
+      nbrs.push([i, j+1]); //down
+    }
+    neighbors[i*grid_size + j] = nbrs;
+  }
+}
+
+//////////// COMPUTATIONS
+
+// Initializing crowd density
+function initialDensity(rho){
+  let num_agents = 100;
+  let initTypeElement = document.querySelector('input[name = "initDist"]:checked');
+  let initType = initTypeElement ? initTypeElement.value : "one";// default one cluster
+
+  if (initType === "one"){
+    /////////// ONE CLUSTER
+
+    for (let a=0; a<num_agents; a++){
+      // away from the exit
+      let margin = Math.floor(grid_size*0.2);
+      // Pick a random cell
+      let i = Math.floor(Math.random() * grid_size);
+      let j = Math.floor(Math.random() * (grid_size - margin));
+
+      // Drop 1/num_agents mass onto that cell
+      rho[index(0,i,j)] += 1/num_agents;
+    }
+  } else if (initType == "two"){
+    /////////// TWO CLUSTERS
+    for (let a=0; a<num_agents; a++){
+      let clusterSize = Math.floor(grid_size*0.3);
+      if (Math.random()<0.5){
+        // CLuster 1: lower left
+        // Pick a random cell
+        let i = Math.floor(Math.random()*clusterSize);
+        let j = Math.floor(Math.random()*clusterSize);
+        // Drop 1/num_agents mass onto that cell
+        rho[index(0,i,j)] += 1/num_agents;
+      } else {
+        // Cluster 2: Upper right
+        let i = Math.floor(grid_size - clusterSize + Math.random()*clusterSize);
+        let j = Math.floor(Math.random()*clusterSize);
+        rho[index(0,i,j)] += 1/num_agents;
+      }
+    }
+  } else if (initType == "three"){
+    // all starting from (0,0)
+    rho[index(0,0,0)] = 1;
+  }
+
+  /////////// UNIFORM DISTRIBUTION
+  // for (let i = 0; i< grid_size; i++){
+  //   for (let j = 0; j < grid_size; j++){
+  //     rho[index(0,i,j)] = Math.random();
+  //   }
+  // }
+  //
+  // // Normalize to sum to 1
+  // let totalMass = 0;
+  // for (let i = 0; i<grid_size; i++){
+  //   for (let j = 0; j< grid_size; j++){
+  //     totalMass += rho[index(0,i,j)];
+  //   }
+  // }
+  // for (let i = 0; i<grid_size; i++){
+  //   for (let j = 0; j< grid_size; j++){
+  //     rho[index(0,i,j)] /= totalMass;
+  //   }
+  // }
+}
+
+// one step cost
+function L(x, y, u, rho_xy){
+
+  // L(x,y,u,rho) = c(u) + lambda*rho(x,y)
+  let cost = 0;
+
+  if (u == 0) {
+    cost = lambda*rho_xy; // plus 0.1 to discourage staying?
+  } else if (u>=5){
+    cost = 1.4 + lambda*rho_xy;// should i make diagonal move cost a little more?
+  } else {
+    cost = 1 + lambda*rho_xy;
+  }
+
+  return cost;
+}
+
+// terminal cost
+function G(x,y){
+  // // at exit
+  // if (x == grid_size-1 && y == grid_size-1){
+  //   return 0;
+  // } else {
+  //   return fail; // penalty for failing to exit
+  // }
+  //////////// EXIT AT LOWER RIGHT CORNER
+  // // farther from exit, higher cost
+  // return Math.pow(x-grid_size+1, 2) + Math.pow(y-grid_size+1, 2);
+
+  //////////// EXIT AT THE BOTTOM CENTER INSTEAD OF CORNER
+  let exitX = Math.floor(grid_size/2);
+  let exitY = grid_size-1;
+  return Math.pow(x-exitX, 2) + Math.pow(y-exitY, 2);
+}
+
+// Transition Probability
+// given (x,y) and new cell (xnew, ynew) after a transition
+function Pr(xnew, ynew, x, y, u){
+  let p = 0;
+  let nb = neighbors[x*grid_size+y]; // get list of neighbors for (x,y)
+  let num_options = nb.length+1; // neighbors + staying
+
+  // probability 1-epsilon: to destination
+  // probability epsilon: to random neighbor (or intending to leave but stays due to diffusion)
+  // probability zero: otherwise
+  let xIntend = x, yIntend = y;
+  if (u == stay){
+    xIntend = x;
+    yIntend = y;
+  } else if (u == left && x > 0){
+    xIntend = x-1;
+    yIntend = y;
+  } else if (u == right && x < grid_size-1){
+    xIntend = x+1;
+    yIntend = y;
+  } else if (u == up && y > 0){
+    xIntend = x;
+    yIntend = y-1;
+  } else if (u == down && y < grid_size-1){
+    xIntend = x;
+    yIntend = y+1;
+  } else if (u == upleft && x > 0 && y > 0){
+    xIntend = x-1;
+    yIntend = y-1;
+  } else if (u == upright && x < grid_size-1 && y > 0){
+    xIntend = x+1;
+    yIntend = y-1;
+  } else if (u == downleft && x > 0 && y < grid_size-1){
+    xIntend = x-1;
+    yIntend = y+1;
+  } else if (u == downright && x < grid_size-1 && y < grid_size-1){
+    xIntend = x+1;
+    yIntend = y+1;
+  }
+
+  let prob = 0;
+
+  // intended move
+  if (xnew == xIntend && ynew == yIntend){
+    prob += 1-eps;
+  }
+
+  // random diffusion: random neighbor + staying = eps
+  if (isNeighbor(x,y,xnew,ynew)||(xnew== x && ynew ==y)){
+    prob += eps/num_options;
+  }
+
+  return prob;
+}
+
+// Solve Bellman equation V(t,x,y) = min {L + E[V(t+1, x',y')]}
+function bellman(t, x, y){
+  let minVal = Infinity;
+  let bestU = stay;
+
+  for (let u = 0; u<9; u++){
+    let cost = L(x, y, u, rho[index(t, x, y)]) + expectedVal(t+1, x, y, u);
+    if (cost < minVal) {
+      minVal = cost;
+      bestU = u;
+    }
+  }
+  return {value: minVal, control: bestU};
+}
+
+// compute expected value E[V(t+1,x',y')] given x, y, u
+function expectedVal(tnext, x, y, u){
+  // expected value = sum_{neighbors of (x, y)} Pr(xnew, ynew, x, y, u)*V[index(t+1, xnew, ynew)]
+  let sum = 0;
+  // get neighbors of (x,y)
+  let nb = neighbors[x*grid_size + y];
+  // go through neighbors
+  for (let i = 0; i < nb.length; i++){
+    let P = Pr(nb[i][0], nb[i][1], x, y, u);
+    sum = sum + P*V[index(tnext, nb[i][0], nb[i][1])];
+  }
+  // for when staying at the same w_state
+  let P = Pr(x,y,x,y,u);
+  sum = sum + P*V[index(tnext, x, y)];
+
+return sum;
+}
+
+// MFG Main Iteration
+function MFGIteration() {
+  let rho_old = rho;
+  let rho_init = new Float64Array(grid_size*grid_size);// storing initial condition
+  for (let i = 0; i<grid_size; i++){
+    for(let j = 0; j<grid_size; j++){
+      rho_init[i*grid_size+j] = rho[index(0,i,j)];
+    }
+  }
+
+  // /// FOR debugging
+  // let testSum = 0;
+  // let testX = 5, testY = 5;
+  // let testU = downright;
+  // let testNb = neighbors[testX*grid_size+testY];
+  // testSum += Pr(testX, testY, testX, testY, testU);
+  // for (let n = 0; n<testNb.length; n++){
+  //   testSum += Pr(testNb[n][0], testNb[n][1], testX, testY, testU);
+  // }
+  // console.log("Probability sum test", testSum);
+
+  // Terminal condition
+  for (let i = 0; i < grid_size; i++){
+    for (let j = 0; j < grid_size; j++){
+      V[index(T-1, i, j)] = G(i,j);
+    }
+  }
+
+  // Iteration loop
+  let converged = false;
+  // // TIME AVERAGE THE LAST 20 ITERATIONS
+  // let min_iter = 100;
+  // let avgwindow = 20;
+  // let rho_sum = new Float64Array(T*grid_size*grid_size);
+  for (let k = 0; k < max_iter; k++){
+    // // copy control
+    // let u_opt_old = new Uint8Array(u_opt);
+
+    // given rho^k, solve Bellman backward
+    for (let time = T-2; time >= 0; time--){
+      for (let i = 0; i < grid_size; i++){
+        for (let j = 0; j < grid_size; j++){
+          // bellman
+          const result = bellman(time, i, j);
+          V[index(time, i, j)] = result.value;
+          u_opt[index(time, i, j)] = result.control;
+        }
+      }
+    }
+
+    // /////////// For debugging
+    // // check control change
+    // let controlDiff = 0;
+    // for (let i = 0; i< u_opt.length; i++){
+    //   if (u_opt[i] !== u_opt_old[i]){
+    //     controlDiff++;
+    //   }
+    // }
+    // console.log("Iteration", k, "control changes", controlDiff);
+
+    // Given u*, propagate rho forward to get rho^{k+1}
+    // rho(t+1, x',y') = sum_{(x,y)} rho(t,x,y)*Pr(x', y', x, y, u*)
+    // (x,y) neighbor of (x', y')
+    rho_old = new Float64Array(rho);
+    let rho_new = new Float64Array(T*grid_size*grid_size);
+    //rho_new[index(0,0,0)] = 1;
+    // set to intial distribution
+    for (let i = 0; i<grid_size; i++){
+      for(let j = 0; j<grid_size; j++){
+        rho_new[index(0,i,j)] = rho_init[i*grid_size+j];
+      }
+    }
+
+    for (let time = 0; time < T-1; time++){
+      for (let i = 0; i < grid_size; i++){
+        for (let j = 0; j < grid_size; j++){
+          ///////////////////// OLD (NO SLOWDOWN)
+          let sum = 0;
+          // get neighbors of (i,j)
+          let nb = neighbors[i*grid_size + j];
+          // go through neighbors
+          for (let n = 0; n < nb.length; n++){
+            // flowing in from neighbors
+            let P = Pr(i,j, nb[n][0], nb[n][1], u_opt[index(time, nb[n][0], nb[n][1])]);
+            sum = sum + P*rho[index(time, nb[n][0], nb[n][1])];
+          }
+          // add change when staying at the same spot
+          let P = Pr(i,j,i,j,u_opt[index(time, i, j)]);
+          sum = sum + P*rho[index(time, i, j)];
+
+          rho_new[index(time+1, i, j)] = sum;
+          ///////////////////// OLD (NO SLOWDOWN) END
+
+          // /////////////////////// NEW (with SLOWDOWN)
+          // let srcRho = rho[index(time, i,j)];
+          // if (srcRho===0) continue;
+          //
+          // let nb = neighbors[i*grid_size+j];
+          // let u = u_opt[index(time, i, j)];
+          //
+          // let totalP = 0;
+          // let P_stay = Pr(i,j,i,j,u);
+          // totalP += P_stay;
+          // rho_new[index(time+1,i,j)] += P_stay * srcRho;
+          //
+          // for (let n = 0; n<nb;n++){
+          //   let destX = nb[n][0];
+          //   let destY = nb[n][1];
+          //   let P = Pr(destX,destY,i,j,u);
+          //   totalP += P;
+          //   // let destRho = rho[index(time, destX, destY)];
+          //   // // let slowdown = 1/(1+ 10*destRho);
+          //   // let slowdown = 1;
+          //   // rho_new[index(time+1,destX,destY)] += P*slowdown*srcRho;
+          //   // rho_new[index(time+1,i,j)] += P*(1-slowdown)*srcRho;
+          //   rho_new[index(time+1, destX, destY)] += P*srcRho;
+          // }
+          // if (Math.abs(totalP-1)> 0.001){
+          //   console.log("Cell (" + i + "," + j + ") action =" + u +" totalP=" + totalP + "nb.length=" +nb.length);
+          // }
+          // /////////////////////// NEW (with SLOWDOWN) END
+        }
+      }
+      // // check total mass doesn't exceed 1
+      // let massAtTime = 0;
+      // for (let i = 0; i< grid_size; i++){
+      //   for (let j = 0; j< grid_size; j++){
+      //     massAtTime += rho_new[index(time+1, i, j)];
+      //   }
+      // }
+      // console.log("Time", time+1, "mass", massAtTime);
+      // END MASS CHECK
+    }
+
+    // copy rho_new to rho
+    for (let i = 0; i<rho.length; i++){
+      rho[i] = rho_new[i];
+    }
+
+    // Check convergence criterion
+    let diff = math.norm(math.subtract(Array.from(rho),Array.from(rho_old)), 'inf');
+    if ( diff < 0.001){
+      break;
+    }
+
+  }
+
+return {density: rho, control: u_opt};
+
+}
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "container">
+    <br>
+    <br>
+    <br>
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      4. Mean Field Games Demo
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    This is a simulation of crowd behavior in an evacuation (Click <a href="#sim">here</a> to jump to simulation). Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. The dynamics of an agent evolves in time: \[ dX_t = b(X_t, u_t,\rho_t)dt + \sigma dW_t\]
+    with the initial population density \(\rho_0(x)\) at time \(t=0\).
+    An agent at location \(x\), time \(t\), seeks to minimize the cost function:
+    \[J(t,x,u) = \mathbb{E}^{X_t=x}\bigg[\int_t^T L(X_s, u_s, \rho_s)ds + G(X_T, \rho_T)\bigg]\]
+    The value function is defined as:
+    \[V(t,x) = \inf_u J(t,x,u)\]
+    with terminal conditon \(V(T,x) = G(x,\rho_T)\). This value function solves the HJB equation:
+    \[\frac{\partial V}{\partial t} + \frac{\sigma^2}{2}\nabla^2 V = \inf_u \bigg\{b(x,t,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\}\]
+    and the optimal control is
+    \[u^* = \text{argmin}_u \bigg\{b(x,t,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\}\]
+    At the same time, the density function \(\rho_t(x)\) also evolves with time and satisfies the Fokker-Planck equation:
+    \[\frac{\partial \rho}{\partial t} - \frac{\sigma^2}{2}\nabla^2 \rho = \nabla \cdot \rho b(x,u^*,\rho)\]
+    An equilibrium pair \((V,\rho)\) satisfies both equations. The solution (existence and uniqueness given by Fixed-Point Theorems) can be found following an iterative algorithm: At iteration \(k\), given \(\rho^k\), solve the HJB equation ( propagates backward) to get \(V^k\) and extract \(u^*\), then use \(u^*\) to solve the Fokker-Planck equation (propagates forward), with initial condition \(\rho_0(x)\), to get \(\rho^{k+1}\). Repeat until a convergence criterion is satisfied.
+    <br>
+    This applet however, uses a discretized formulation of the MFG system. The agents dynamics follows:
+    \[X_{t+1} = f(X_t, u_t, \rho_t) + \sigma W_t\]
+    Agents at time \(t\), state \(x\), seeks to minimize
+    \[J(t,x,u) = \mathbb{E}^{X_t = x}\bigg[\sum_{s=t}^{T-1}L(X_s,u_s, \rho_s) + G(X_T, \rho_T)\bigg]\]
+    The value function is
+    \[V(t,x) = \inf_u J(t,x,u)\]
+    which satisfies the (backward) Bellman equation:
+    \[V(t,x) = \inf_u\bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\big]\bigg\}\]
+    \[V(t,x) = G(x, \rho_T)\]
+    \[u^* = \text{argmin}_u \bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\bigg]\big\}\]
+    The density satisfies the initial conditon \(\rho_0(x)\) and evolves forward in time following:
+    \[\rho_{t+1}(x) = \sum_{x'}\rho_t(x')P(x|x', u^*(t,x'))\]
+    where \(P(x|x', u^*(t,x'))\) is the transition probability from \(x'\) to \(x\) following control \(u^*\).
+    An equilibrium pair \((V,\rho)\) satisfies both the Bellman equation and the density evolution equation. <br>
+    <span id = "sim">This applet simulates such equilibrium.</span> The exit is located on one side of the room (highlighted in green). Click the button to start simulation.<br><br>
+    <div>
+    <div class="slidercontainer">
+      <div>
+      <label>Grid Size: </label> <span id ="gridSliderValue">  </span>
+    </div>
+      <div>
+      <input type="range" id="gridSlider" min="15" max="30" step="5" value="15">
+    </div>
+    </div>
+  </div>
+    <!-- <div class="slidercontainer">
+      <div>
+      <label>Time limit: </label> <span id ="TSliderValue">  </span>
+      </div>
+      <div>
+      <input type="range" id="TSlider" min="1.5" max="2.5" step="0.5" value="2">
+    </div>
+  </div> -->
+    <!-- <div class="slidercontainer">
+      <div>
+      <label>Congestion penalty: </label> <span id ="lambdaSliderValue">  </span>
+    </div>
+      <input type="range" id="lambdaSlider" min="0" max="1" step="1" value="1">
+    </div> -->
+    <!-- <div class="slidercontainer">
+      <div>
+      <label>Failure to exit penalty: </label> <span id ="failSliderValue">  </span>
+    </div>
+      <input type="range" id="failSlider" min="3" max="5" step="1" value="4">
+    </div> -->
+    <div>
+    <div class="slidercontainer">
+      <div>
+      <label>Initial distribution: </label>
+      </div>
+      <div>
+      <input type="radio" name="initDist" id="oneCluster" value="one" style = "margin-left: 10px;" checked>
+      One Cluster
+      <input type="radio" name="initDist" id="twoClusters" value="two" style = "margin-left: 15px;">
+      Two Clusters
+      <input type="radio" name="initDist" id="allCorner" value="three" style = "margin-left: 15px;">
+      All In Corner
+    </div>
+    </div>
+  </div>
+    <div>
+    <input type ="button" value = "Start Simulation" onClick = "Visualization()">
+    <input type ="button" value = "Reset" onClick = "Reset()">
+    </div>
+    <label>  Note: Click "Reset" to run with different parameters.</label>
+    <!-- Converged after <span id="convergeCount"> </span> iterations. -->
+    <br>
+</div>
+    <div class ="main-container">
+      <div class ="plots-container" style = "display: flex; gap: 20px">
+        <div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">With Congestion Penalty</div>
+          <canvas id="simulation_plot" style="border:2px solid #333;">
+          </canvas>
+        </div>
+        <div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">No Congestion Penalty</div>
+          <canvas id="simulation_naive_plot" style="border:2px solid #333;">
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+//////////// Visualization Script
+//////////// Setting up canvas
+
+const canvas = document.getElementById("simulation_plot");
+const canvas_naive = document.getElementById("simulation_naive_plot");
+
+// Set canvas dimensions
+if (canvas.width != 300) canvas.width = 300;
+if (canvas.height != 300) canvas.height = 300;
+if (canvas_naive.width != 300) canvas_naive.width = 300;
+if (canvas_naive.height != 300) canvas_naive.height = 300;
+
+// Get the canvas context
+const ctx = canvas.getContext('2d');
+const width = canvas.width;
+const height = canvas.height;
+
+const ctxnaive = canvas_naive.getContext('2d');
+
+let cellSize = width/grid_size;
+
+//////////// CANVAS PLOT
+let animationRunning = false;
+let animation = null;
+
+function Visualization() {
+
+  if(animationRunning) return;
+  animationRunning = true;
+
+  // Clear the canvas
+  ctx.clearRect(0, 0, width, height);
+  ctxnaive.clearRect(0, 0, width, height);
+
+  // First click: compute
+  if (SimResult === null){
+    // Set background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+
+    // // Run MFG Interation
+    // MFGIteration();
+
+    // Text message during computation
+    ctx.fillStyle = 'black';
+    ctx.font = '20px Arial';
+    ctx.fillText('Calculating...', width/2-50, height/2);
+    ctxnaive.fillStyle = 'black';
+    ctxnaive.font = '20px Arial';
+    ctxnaive.fillText('Calculating...', width/2-50, height/2);
+
+    // let SimResult;
+
+    // Initialize using slider values
+    initializeSliders();
+
+    // Animation
+    requestAnimationFrame(() =>{
+    setTimeout(()=> {
+      // Run MFG Interation
+      SimResult = MFGIteration();
+
+      // Do naive simulation
+      let savedlambda = lambda;
+      lambda = 0;
+      initializeSliders();
+      lambda = 0;
+      SimResultNaive = MFGIteration();
+      lambda = savedlambda;
+
+      runAnimation();
+    }, 0);
+  });
+  } else {
+    runAnimation();
+  }
+
+}
+
+function runAnimation(){
+  let currentTime = 0;
+
+  animation = setInterval(() => {
+    // Stop animation
+    if (currentTime >= T){
+      clearInterval(animation);
+      animationRunning = false;
+      return;
+    }
+
+    drawGrid(ctx, SimResult.density, currentTime);
+    drawGrid(ctxnaive, SimResultNaive.density, currentTime);
+    currentTime = currentTime + 1;
+  }, 300);
+}
+
+// draw cells given given a density distribution at time t
+function drawGrid(context, rho, t) {
+  // find max density for color intensity
+  let maxRho = 1;
+  // for (let i = 0; i < grid_size; i++){
+  //   for (let j = 0; j < grid_size; j++){
+  //     maxRho = Math.max(maxRho, rho[index(t,i,j)]);
+  //   }
+  // }
+
+  // draw rectangles for cells
+  for (let i = 0; i < grid_size; i++){
+    for (let j = 0; j < grid_size; j++){
+      let intensity = maxRho> 0? rho[index(t, i, j)]/maxRho : 0;
+
+      // compress intensity
+      // higher value, small density more visible
+      let adj_intensity = Math.log(1+ 50*intensity) / Math.log(1+50);
+
+      // From shades of blue to white
+      const r = Math.floor(255*(1-adj_intensity));
+      const g = Math.floor(255*(1-adj_intensity));
+      const b = 255;
+
+      context.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      context.fillRect(i*cellSize, j*cellSize, cellSize, cellSize);
+    }
+  }
+
+  // Highlight target cell
+  let exitX = Math.floor(grid_size/2);
+  let exitY = grid_size-1;
+  ctx.strokeStyle = `green`;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(exitX*cellSize, exitY*cellSize, cellSize, cellSize);
+  // Highlight target cell
+  ctxnaive.strokeStyle = `green`;
+  ctxnaive.lineWidth = 2;
+  ctxnaive.strokeRect(exitX*cellSize, exitY*cellSize, cellSize, cellSize);
+}
+
+function Reset(){
+
+  // Stop running animation
+  if (animation){
+    clearInterval(animation);
+    animation = null;
+  }
+
+  // Reinitialize from slider values
+  initializeSliders();
+
+  SimResult = null;
+  animationRunning = false;
+  // Clear the canvas
+  ctx.clearRect(0, 0, width, height);
+  ctxnaive.clearRect(0,0,width,height);
+
+}
+
+function initializeSliders(){
+  // Read slider values
+  grid_size = parseInt(document.getElementById("gridSlider").value);
+  // lambda = parseInt(document.getElementById("lambdaSlider").value);
+  // let t_mult = parseFloat(document.getElementById("TSlider").value);
+  T = Math.floor(2*grid_size);
+  // let fail_mult = parseInt(document.getElementById("failSlider").value);
+  // fail = fail_mult*(grid_size+lambda);
+
+  // UPdate cell size
+  cellSize = width/grid_size;
+
+  // Reinitialize
+  V = new Float64Array(T*grid_size*grid_size);
+  u_opt = new Uint8Array(T*grid_size*grid_size);
+  rho = new Float64Array(T*grid_size*grid_size);
+
+  // Reset rho, V, u_opt
+  rho.fill(0);
+  // rho[index(0,0,0)] = 1; // all agents at starting point
+  initialDensity(rho);
+  V.fill(0);
+  u_opt.fill(0);
+
+  // Rebuild neighbors
+  neighbors = new Array(grid_size*grid_size);
+
+  for (let i = 0; i < grid_size; i++){
+    for (let j = 0; j < grid_size; j++){
+      const nbrs = [];
+      if (i>0){
+        nbrs.push([i-1, j]); //left
+        if (j>0){
+          nbrs.push([i-1, j-1]); //upleft
+        }
+        if (j<grid_size-1){
+          nbrs.push([i-1, j+1]); //downleft
+        }
+      }
+      if (i < grid_size-1){
+        nbrs.push([i+1, j]); //right
+        if (j>0){
+          nbrs.push([i+1, j-1]); //upright
+        }
+        if(j<grid_size-1){
+          nbrs.push([i+1, j+1]); //downright
+        }
+      }
+      if (j>0){
+        nbrs.push([i, j-1]); //up
+      }
+      if (j < grid_size-1){
+        nbrs.push([i, j+1]); //down
+      }
+      neighbors[i*grid_size + j] = nbrs;
+    }
+  }
+}
+
+</script>
+
+</body>
+</html>
