@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="description" content="Code" />
-<meta name="keywords" content="Mean Field Games, Numerical Methods" />
+<meta name="keywords" content="Mean Field Games, Numerical Methods, Hamilton-Jacobi-Bellman Equation, Fokker-Planck Equation, Optimal Control, Stochastic Processes" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Numerical Methods Tutorial</title
 <meta name="author" content="Ruobing Zhao">
@@ -609,8 +609,8 @@ return {density: rho, control: u_opt};
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
     This is a simulation of crowd behavior in an evacuation (Click <a href="#sim">here</a> to jump to simulation). Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. The trajectory of an agent, \(X_t\), evolves in time: \[ dX_t = b(X_t, u_t,\rho_t)dt + \sigma dW_t\]
-    where \(u_t\) is the control (action) the agent adopts at time \(t\), and \(\rho_t = \rho_t(x)\) is the population density at time \(t\) and location \(x\). The initial population density distribution at time \(t=0\) is given by \(\rho_0(x)\) for all \(x\).
-    An agent at location \(x\), time \(t\), seeks to minimize the cost function:
+    where \(u_t\) is the control (action) the agent adopts at time \(t\), \(\rho_t = \rho_t(x)\) is the population density at time \(t\) and location \(x\), and \(W_t\) is a Brownian motion that accounts for random noises. The initial population density distribution at time \(t=0\) is given by \(\rho_0(x)\) for all \(x\).
+    An agent at location \(x\), time \(t\), seeks to minimize the cost-to-go function:
     \[J(t,x,u) = \mathbb{E}^{X_t=x}\bigg[\int_t^T L(X_s, u_s, \rho_s)ds + G(X_T, \rho_T)\bigg]\]
     The value function is defined as:
     \[V(t,x) = \inf_u J(t,x,u)\]
