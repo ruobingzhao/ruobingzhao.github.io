@@ -614,7 +614,7 @@ return {density: rho, control: u_opt};
     \[J(t,x,u) = \mathbb{E}^{X_t=x}\bigg[\int_t^T L(X_s, u_s, \rho_s)ds + G(X_T, \rho_T)\bigg]\]
     The value function is defined as:
     \[V(t,x) = \inf_u J(t,x,u)\]
-    with terminal conditon \(V(T,x) = G(x,\rho_T)\). This value function solves the HJB equation:
+    with terminal conditon \(V(T,x) = G(x,\rho_T)\). This value function solves the Hamilton-Jacobi-Bellman (HJB) equation:
     \[-\frac{\partial V}{\partial t} - \frac{\sigma^2}{2}\nabla^2 V = \inf_u \bigg\{b(x,t,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\} \]
     and the optimal control is
     \[u^* = \text{argmin}_u \bigg\{b(x,t,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\}\]
