@@ -619,19 +619,19 @@ return {density: rho, control: u_opt};
     and the optimal control is
     \[u^* = \text{argmin}_u \bigg\{b(x,t,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\}\]
     At the same time, the density function \(\rho_t(x)\) also evolves with time and satisfies the Fokker-Planck equation:
-    \[\frac{\partial \rho}{\partial t} - \frac{\sigma^2}{2}\nabla^2 \rho = -\nabla \cdot \rho b(x,u^*,\rho)\]
+    \[\frac{\partial \rho}{\partial t} - \frac{\sigma^2}{2}\nabla^2 \rho = -\nabla \cdot (\rho b(x,u^*,\rho))\]
     An equilibrium pair \((V,\rho)\) satisfies both equations. The solution (existence and uniqueness given by Fixed-Point Theorems) can be found following an iterative algorithm: At iteration \(k\), given \(\rho^k\), solve the HJB equation ( propagates backward) to get \(V^k\) and extract \(u^*\), then use \(u^*\) to solve the Fokker-Planck equation (propagates forward), with initial condition \(\rho_0(x)\), to get \(\rho^{k+1}\). Repeat until a convergence criterion is satisfied.
     <br>
     This applet however, uses a discretized formulation of the MFG system. The agents dynamics follows:
     \[X_{t+1} = f(X_t, u_t, \rho_t) + \sigma W_t\]
-    Agents at time \(t\), state \(x\), seeks to minimize
+    Agents at time \(t\), state \(x\), seek to minimize
     \[J(t,x,u) = \mathbb{E}^{X_t = x}\bigg[\sum_{s=t}^{T-1}L(X_s,u_s, \rho_s) + G(X_T, \rho_T)\bigg]\]
     The value function is
     \[V(t,x) = \inf_u J(t,x,u)\]
     which satisfies the (backward) Bellman equation:
     \[V(t,x) = \inf_u\bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\big]\bigg\}\]
     \[V(t,x) = G(x, \rho_T)\]
-    \[u^* = \text{argmin}_u \bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\bigg]\big\}\]
+    \[u^* = \text{argmin}_u \bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\big]\bigg\}\]
     The density satisfies the initial condition \(\rho_0(x)\) and evolves forward in time following:
     \[\rho_{t+1}(x) = \sum_{x'}\rho_t(x')P(x|x', u^*(t,x'))\]
     where \(P(x|x', u^*(t,x'))\) is the transition probability from \(x'\) to \(x\) following control \(u^*\).
