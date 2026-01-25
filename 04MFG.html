@@ -622,7 +622,7 @@ return {density: rho, control: u_opt};
     \[\frac{\partial \rho}{\partial t} - \frac{\sigma^2}{2}\nabla^2 \rho = -\nabla \cdot (\rho b(x,u^*,\rho))\]
     An equilibrium pair \((V,\rho)\) satisfies both equations. The solution (existence and uniqueness given by Fixed-Point Theorems) can be found following an iterative algorithm: At iteration \(k\), given \(\rho^k\), solve the HJB equation ( propagates backward) to get \(V^k\) and extract \(u^*\), then use \(u^*\) to solve the Fokker-Planck equation (propagates forward), with initial condition \(\rho_0(x)\), to get \(\rho^{k+1}\). Repeat until a convergence criterion is satisfied.
     <br>
-    This applet however, uses a discretized formulation of the MFG system. The agents dynamics follows:
+    This demo however, uses a discretized formulation of the MFG system. The agents dynamics follows:
     \[X_{t+1} = f(X_t, u_t, \rho_t) + \sigma W_t\]
     Agents at time \(t\), state \(x\), seek to minimize
     \[J(t,x,u) = \mathbb{E}^{X_t = x}\bigg[\sum_{s=t}^{T-1}L(X_s,u_s, \rho_s) + G(X_T, \rho_T)\bigg]\]
