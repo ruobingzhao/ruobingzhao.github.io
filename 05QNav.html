@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="Code" />
+<meta name="keywords" content="Q-Learning, Numerical Methods, Reinforcement Learning, Robotics, Optimal Control, Mars Rover, Pathfinding" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numerical Methods Tutorial</title
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<style type="text/css">
+#transition-table td, #transition-table th {padding: 2px 2px; font-size: 12px }
+#weight-table td, #weight-table th {padding: 2px 2px; font-size: 12px }
+
+#returns-table td, #returns-table th {padding: 2px 2px; font-size: 12px }
+
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1;
+  height: 350px;
+}
+*/
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+</style>
+<script>
+
+// GLOBAL VARIABLES
+let grid_size = 10;
+// let alpha =  1; // learning rate, start with 1
+let alpha = new Float64Array(grid_size*grid_size*4); // alpha(x,y,u)
+let visit_count = new Float64Array(grid_size*grid_size*4); // count number of visits per state action pair
+alpha.fill(1);
+visit_count.fill(0);
+let epsilon = 1; // epsilon greedy exploration, start with 1
+let gamma = 1 // discount factor (could set to 1 for finite grid)
+const left = 0, right = 1, up = 2, down = 3;
+let map = new Uint8Array(grid_size*grid_size); // contains terrains for each (i,j)
+const road = 0, grass = 1, mud = 2, wall = 3, pond = 4, exit = 5;
+let t = 0; // length of episode
+let max_episodes = 1000;
+let max_episode_length = 500;
+let current_episode = 1;
+
+let SimResult = null;
+
+//////////// HELPER FUNCTIONS
+
+// index for Array
+function index(i, j, l) {
+  return (i*grid_size + j)*4 + l;
+}
+
+// infinity norm
+function norm_diff(array1, array2){
+  let maxDiff = 0;
+  for (let i = 0; i< array1.length; i++){
+    let diff = Math.abs(array1[i]-array2[i]);
+    if (diff > maxDiff){
+      maxDiff = diff;
+    }
+  }
+  return maxDiff
+}
+
+//////////// Initializing
+let Q = new Float64Array(4*grid_size*grid_size);
+Q.fill(50000);
+let u_opt = new Uint8Array(grid_size*grid_size);
+u_opt.fill(0);// 0: stay, 1: left, 2: right, 3: up, 4: down
+
+//////////// COMPUTATIONS
+// Initializing map: assign which cell is what terrain
+function initialMap(){
+
+  for (let i = 0; i< grid_size; i++){
+    for (let j = 0; j< grid_size; j++){
+      let r = Math.random();
+      if (r < 0.225){
+        map[i*grid_size+j] = road;
+      } else if (r >=0.225 && r< 0.45){
+        map[i*grid_size+j] = grass;
+      } else if (r >= 0.45 && r < 0.675){
+        map[i*grid_size + j] = mud;
+      } else if (r >= 0.675 && r <0.9){
+        map[i*grid_size+j] = pond;
+      } else {
+        map[i*grid_size + j] = wall;
+      }
+    }
+  }
+
+  // manually set (0,0) to "road" and (grid_size-1,grid_size-1) to "exit"
+  map[0] = road;
+  map[grid_size*grid_size-1] = exit;
+
+  // ensure map is solvable
+  // clear left column
+  for (let j = 0; j< grid_size; j++){
+    if (map[0*grid_size + j] == wall){
+      map[0*grid_size + j] = grass;
+    }
+  }
+  // clear bottom row
+  for (let i = 0; i <grid_size; i++){
+    if (map[i*grid_size + grid_size -1]== wall){
+      map[i*grid_size + grid_size -1] = grass;
+    }
+  }
+
+}
+
+// cost to enter for each cell of different terrains
+function L(terrain){
+
+  let cost = 0;
+  if (terrain == road) {
+    cost = 0.3;
+  } else if (terrain == grass){
+    cost = 1;
+  } else if (terrain == mud){
+    cost = 3;
+  } else if (terrain == pond){
+    cost = 5;
+  } else if (terrain == wall){
+    cost = Infinity;
+  } else if (terrain == exit){
+    cost = 0;
+  }
+  return cost;
+}
+
+function find_minQ(x, y){
+  let bestU = 0;
+  let minVal = Infinity;
+  // loop over actions
+  for (let u = 0; u< 4; u++){
+    let cost = Q[index(x, y, u)];
+    if (cost < minVal) {
+      minVal = cost;
+      bestU = u;
+    }
+  }
+
+  return {minQ: minVal, bestU: bestU};
+}
+
+// Update Q function Q(x,y,u) = Q(x,y,u) + alpha*[cost + gamma*min_u'{Q(x',y',u')} - Q(x,y,u)]
+function updateQ(x, y, u){
+
+    let xnew = x;
+    let ynew = y;
+
+    // get new cell
+    if (u == left && x>=1){
+      xnew = x-1;
+      ynew = y;
+    } else if (u == right && x< grid_size-1){
+      xnew = x+1;
+      ynew = y;
+    } else if (u == up && y >=1){
+      xnew = x;
+      ynew = y-1;
+    } else if (u == down && y < grid_size-1){
+      xnew = x;
+      ynew = y+1;
+    }
+
+    // find min_{u'}Q(x', u')
+    let minQ_xnew_unew = 0;
+    minQ_xnew_unew = find_minQ(xnew, ynew).minQ;
+
+    // Update Q-function
+    Q[index(x,y,u)] = Q[index(x,y,u)] + alpha[index(x,y,u)]*(L(map[xnew*grid_size+ynew]) + gamma*minQ_xnew_unew - Q[index(x,y,u)]);
+
+    // decay alpha
+    visit_count[index(x,y,u)] += 1;
+    alpha[index(x,y,u)] = Math.max( 0.1, 1/(1+visit_count[index(x,y,u)]));
+
+}
+
+function explore(x,y){
+
+  let r = Math.random();
+  let u = 0;
+  if (Math.random() < epsilon){
+    // take a random move
+    if (r < 0.25){
+      u = left;
+    } else if (r>= 0.25 && r<0.5){
+      u = right;
+    } else if (r>=0.5 && r < 0.75){
+      u = up;
+    } else {
+      u = down;
+    }
+  } else {
+    // take optimal move so far
+    u = find_minQ(x,y).bestU;
+  }
+
+  //////////////// NO LONGER NEEDED SWITCHED TO COST TO ENTER
+  // // not sides or corners
+  // if (x >0 && x< grid_size-1 && y>0 && y<grid_size-1){
+  //   // take action: epsilon-greedy exploration
+  //   if (Math.random() < epsilon){
+  //     if (r < 0.25){
+  //       u = left;
+  //     } else if (r >= 0.25 && r < 0.5){
+  //       u = right;
+  //     } else if (r >= 0.5 && r< 0.75){
+  //       u = up;
+  //     } else {
+  //       u = down;
+  //     }
+  //   } else {
+  //     u = find_minQ(x,y).bestU;
+  //   }
+  // } else if (x == 0) {
+  //   // left side
+  //   if (y == 0) {
+  //     // upper left corner
+  //     // take action: epsilon-greedy exploration
+  //     if (Math.random() < epsilon){
+  //       if (r < 0.5){
+  //         u = right;
+  //       } else {
+  //         u = down;
+  //       }
+  //     } else {
+  //       u = find_minQ(x,y).bestU;
+  //     }
+  //   } else if (y == grid_size-1){
+  //     // lower left corner
+  //     if (Math.random() < epsilon){
+  //       if (r < 0.5){
+  //         u = right;
+  //       } else {
+  //         u = up;
+  //       }
+  //     } else {
+  //       u = find_minQ(x,y).bestU;
+  //     }
+  //   } else {
+  //     // left side not corners
+  //     if (Math.random() < epsilon){
+  //       if (r < 1/3){
+  //         u = right;
+  //       } else if (r >= 1/3 && r < 2/3) {
+  //         u = up;
+  //       } else {
+  //         u = down;
+  //       }
+  //     } else {
+  //       u = find_minQ(x,y).bestU;
+  //     }
+  //   }
+  // } else if (x == grid_size-1){
+  //   // right side
+  //   if (y == 0) {
+  //     // upper right corner
+  //     if (Math.random() < epsilon){
+  //       if (r < 0.5){
+  //         u = left;
+  //       } else {
+  //         u = down;
+  //       }
+  //     } else {
+  //       u = find_minQ(x,y).bestU;
+  //     }
+  //   } else if (y == grid_size-1){
+  //     // lower right corner (exit)
+  //     u = 0; // doesn't matter
+  //   } else {
+  //     // right side not corners
+  //     if (Math.random() < epsilon){
+  //       if (r < 1/3){
+  //         u = left;
+  //       } else if (r >= 1/3 && r < 2/3){
+  //         u = up;
+  //       } else {
+  //         u = down;
+  //       }
+  //     } else {
+  //       u = find_minQ(x,y).bestU;
+  //     }
+  //   }
+  // } else if (y == 0){
+  //   // top excluding corners
+  //   if (Math.random() < epsilon){
+  //     if (r < 1/3){
+  //       u = left;
+  //     } else if (r >= 1/3 && r < 2/3) {
+  //       u = down;
+  //     } else {
+  //       u = right;
+  //     }
+  //   } else {
+  //     u = find_minQ(x,y).bestU;
+  //   }
+  // } else if (y == grid_size-1){
+  //   // bottom excluding corners
+  //   if (Math.random() < epsilon){
+  //     if (r < 1/3){
+  //       u = left;
+  //     } else if (r >= 1/3 && r < 2/3) {
+  //       u = up;
+  //     } else {
+  //       u = right;
+  //     }
+  //   } else {
+  //     u = find_minQ(x,y).bestU;
+  //   }
+  // }
+
+  return u
+}
+
+// Q-Learning Main Iteration
+function QLearn(){
+
+  let error = 100;
+  let Q_old = new Float64Array(Q.length);
+  let Q_new = new Float64Array(Q.length);
+  Q_old.fill(50000);
+  Q_new.fill(50000);
+
+  // set goal Q = 0
+  for (let u = 0; u< 4; u++){
+    Q[index(grid_size-1, grid_size-1, u)] = 0;
+  }
+
+  for (let k = 0; k< max_episodes; k++){
+    let finish = false
+    // starting from (0,0)
+    let x = 0;
+    let y = 0;
+    t = 0;// reset per period length count
+
+    // fill Q_old array with old Q values
+    for (let i = 0; i<Q_old.length; i++){
+      Q_old[i] = Q[i];
+    }
+
+    while (!finish && t < max_episode_length){
+
+      // check if stuck or at exit
+      if (L(map[x*grid_size+y]) == Infinity){ // wall
+        finish = true;
+        continue; // skip the rest of the code
+      }
+      if (x == grid_size-1 && y == grid_size-1){ // exit
+        finish = true;
+        continue; // skip the rest of the code
+      }
+
+      let u = 0;
+      // take action: epsilon-greedy exploration
+      u = explore(x,y);
+
+      // interact with environment, observe cost and update Q function
+      updateQ(x,y,u);
+
+      // update new state
+      let xnew =x, ynew = y;
+      if (u == left){
+        xnew = x-1;
+      } else if (u == right){
+        xnew = x+1;
+      } else if (u == up){
+        ynew = y-1;
+      } else if (u == down){
+        ynew = y+1;
+      }
+
+      // update x,y if xnew ynew is a not wall and within bounds
+      if (xnew>= 0 && xnew < grid_size && ynew >= 0 && ynew<grid_size && map[xnew*grid_size+ynew] !=wall){
+        // update x,y to xnew ynew
+        x = xnew;
+        y = ynew;
+      }
+
+      // increment episode length
+      t += 1;
+    }
+    // decay epsilon
+    epsilon = Math.max(0,epsilon - (1/max_episodes));
+    // increment episode count
+    current_episode +=1;
+    // fill Q_new array with new Q values
+    for (let i = 0; i<Q_new.length; i++){
+      Q_new[i] = Q[i];
+    }
+    // // computes Q value change, stop learning when converged
+    // if (norm_diff(Q_old, Q_new)< 0.001) break;
+
+  }
+
+  // after learning, find optimal u for all cells
+  for (let i = 0; i<grid_size; i++){
+    for (let j = 0; j<grid_size; j++){
+      u_opt[i*grid_size+j] = find_minQ(i,j).bestU;
+    }
+  }
+
+  // return {Qvalues: Q, control: u_opt};
+
+}
+
+function start_simulation(){
+  // run Q learning
+  QLearn();
+  // draw optimal control in map cells
+  draw_control();
+}
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "container">
+    <br>
+    <br>
+    <br>
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      5. Navigating Unknown Terrain via Q-Learning
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    This is a simulation of an agent exploring an unfamiliar environment. The agent starts out with zero knowledge about the map, the different terrains, and the difficulty (cost) to cross each type of terrain. The agent learns from experience and finds an optimal path, which minimizes the total cost to reach the goal (lower right corner). The arrows indicate learned optimal control in each cell. The agent can follow the arrows to reach the goal.
+    <div>
+    <input type ="button" value = "Train Agent" onClick = "start_simulation()">
+    <input type ="button" value = "New Map" onClick = "Reset()">
+    </div>
+</div>
+    <div class ="main-container">
+      <div class ="map-container" style = "display: flex; gap: 20px">
+        <div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">gray = road, green = grass, brown = mud, blue = pond, black = wall/pit, white = goal</div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">cost-to-enter: road 0.5, grass 1, mud 3, pond 5, wall/pit = Infinity, goal 0</div>
+          <canvas id="Map" style="border:2px solid #333;">
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+//////////// Visualization Script
+//////////// Setting up canvas
+
+const canvas = document.getElementById("Map");
+
+// Set canvas dimensions
+if (canvas.width != 600) canvas.width = 600;
+if (canvas.height != 600) canvas.height = 600;
+
+// Get the canvas context
+const ctx = canvas.getContext('2d');
+const width = canvas.width;
+const height = canvas.height;
+
+let cellSize = width/grid_size;
+
+//////////// CANVAS PLOT
+let animationRunning = false;
+let animation = null;
+
+function Reset() {
+
+  // initialize Map
+  initialMap();
+  // draw new map
+  drawMap();
+
+  // re-initialize everything
+  Q.fill(50000);
+  for (let u = 0; u< 4; u++){
+    Q[index(grid_size-1,grid_size-1,u)] = 0;// exit Q = 0
+  }
+  u_opt.fill(0);
+  alpha.fill(1);
+  visit_count.fill(0);
+  epsilon = 1;
+  current_episode = 1;
+}
+
+// draw new map
+function drawMap() {
+
+  // clear canvas
+  ctx.clearRect(0,0,width,height);
+
+  // draw rectangles for cells
+  for (let i = 0; i < grid_size; i++){
+    for (let j = 0; j < grid_size; j++){
+
+      if (map[i*grid_size+j] == road){
+        ctx.fillStyle = '#A6A6A6'; // grey
+      }
+      else if (map[i*grid_size+j] == grass){
+        ctx.fillStyle = '#5CD65C'; // green
+      } else if (map[i*grid_size+j] == mud){
+        ctx.fillStyle = '#996633'; // brown
+      } else if (map[i*grid_size+j] == pond){
+        ctx.fillStyle = '#0099FF'; // blue
+      } else {
+        ctx.fillStyle = '#000000'; // black
+      }
+      // fill cell
+      ctx.fillRect(i*cellSize, j*cellSize, cellSize, cellSize);
+
+      // draw grid lines
+      ctx.strokeStyle = '#CCCCCC';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(i*cellSize, j*cellSize, cellSize, cellSize);
+    }
+  }
+  // exit cell
+  ctx.fillStyle = 'white';
+  ctx.fillRect((grid_size-1)*cellSize, (grid_size-1)*cellSize, cellSize, cellSize);
+
+  // Highlight target cell
+  ctx.strokeStyle = 'lime';
+  ctx.lineWidth = 2;
+  ctx.strokeRect((grid_size-1)*cellSize, (grid_size-1)*cellSize, cellSize, cellSize);
+
+  // Highlight starting cell
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, cellSize, cellSize);
+}
+
+function draw_control(){
+  for (let i = 0; i < grid_size; i++){
+    for (let j = 0; j< grid_size; j++){
+      // skip walls
+      if (map[i*grid_size+j] == wall) continue;
+
+      let action = u_opt[i*grid_size+j];
+
+      ctx.strokeStyle = 'white';
+      ctx.fillStyle = 'white';
+      ctx.lineWidth = 2;
+
+      // find center
+      let centerX = i*cellSize + cellSize/2;
+      let centerY = j*cellSize + cellSize/2;
+      ctx.font = "30px Arial";
+
+      let arrow = "";
+      if (action == left) arrow = "\u2190";
+      else if (action == right) arrow = "\u2192";
+      else if (action == up) arrow = "\u2191";
+      else if (action == down) arrow = "\u2193";
+      ctx.fillText(arrow, centerX-0.2*cellSize, centerY+0.1*cellSize);
+    }
+  }
+}
+
+//////////// Display & Loading values from sliders
+
+window.onload = function() {
+  // initialize Map
+  initialMap();
+  // draw new map
+  drawMap();
+
+}
+
+
+</script>
+
+</body>
+</html>
