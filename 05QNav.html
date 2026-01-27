@@ -61,6 +61,16 @@ input[type="range"] {
   margin: 0 5px;
 }
 
+#terrain-table th, #terrain-table td {
+  padding: 2px, 2px;
+  font-size: 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+#terrain-table th {
+  text-align: center;
+}
+
 @media all and (min-width: 630px) {
   /* two column code */
   #container {
@@ -129,16 +139,17 @@ let visit_count = new Float64Array(grid_size*grid_size*4); // count number of vi
 alpha.fill(1);
 visit_count.fill(0);
 let epsilon = 1; // epsilon greedy exploration, start with 1
+let eps_decay_rate = 0.998;
 let gamma = 1 // discount factor (could set to 1 for finite grid)
 const left = 0, right = 1, up = 2, down = 3;
 let map = new Uint8Array(grid_size*grid_size); // contains terrains for each (i,j)
-const road = 0, grass = 1, mud = 2, wall = 3, pond = 4, exit = 5;
+const road = 0, grass = 1, sand = 2, mud = 3, wall = 4, pond = 5, ice = 6, exit = 7;
 let t = 0; // length of episode
-let max_episodes = 1000;
+let max_episodes = 4000;
 let max_episode_length = 500;
 let current_episode = 1;
 
-let SimResult = null;
+let cost_history = []; // stores cost history of every episode
 
 //////////// HELPER FUNCTIONS
 
@@ -172,14 +183,18 @@ function initialMap(){
   for (let i = 0; i< grid_size; i++){
     for (let j = 0; j< grid_size; j++){
       let r = Math.random();
-      if (r < 0.225){
+      if (r < 0.15){
         map[i*grid_size+j] = road;
-      } else if (r >=0.225 && r< 0.45){
+      } else if (r< 0.3){
         map[i*grid_size+j] = grass;
-      } else if (r >= 0.45 && r < 0.675){
+      } else if (r < 0.45){
         map[i*grid_size + j] = mud;
-      } else if (r >= 0.675 && r <0.9){
+      } else if (r < 0.6){
         map[i*grid_size+j] = pond;
+      } else if (r < 0.75){
+        map[i*grid_size+j] = sand;
+      } else if (r < 0.9){
+        map[i*grid_size+j] = ice;
       } else {
         map[i*grid_size + j] = wall;
       }
@@ -193,14 +208,14 @@ function initialMap(){
   // ensure map is solvable
   // clear left column
   for (let j = 0; j< grid_size; j++){
-    if (map[0*grid_size + j] == wall){
+    if (map[0*grid_size + j] == wall || map[0*grid_size + j] == ice){
       map[0*grid_size + j] = grass;
     }
   }
   // clear bottom row
   for (let i = 0; i <grid_size; i++){
-    if (map[i*grid_size + grid_size -1]== wall){
-      map[i*grid_size + grid_size -1] = grass;
+    if (map[i*grid_size + grid_size -1]== wall || map[i*grid_size + grid_size -1] == ice){
+      map[i*grid_size + grid_size -1] = mud;
     }
   }
 
@@ -214,10 +229,14 @@ function L(terrain){
     cost = 0.3;
   } else if (terrain == grass){
     cost = 1;
+  } else if (terrain == sand){
+    cost = 2;
   } else if (terrain == mud){
     cost = 3;
   } else if (terrain == pond){
     cost = 5;
+  } else if (terrain == ice){
+    cost = 0.1;
   } else if (terrain == wall){
     cost = Infinity;
   } else if (terrain == exit){
@@ -241,33 +260,68 @@ function find_minQ(x, y){
   return {minQ: minVal, bestU: bestU};
 }
 
-// Update Q function Q(x,y,u) = Q(x,y,u) + alpha*[cost + gamma*min_u'{Q(x',y',u')} - Q(x,y,u)]
-function updateQ(x, y, u){
+// returns next state given control u, included for slipping on ice
+function get_next_state(x,y,u){
+  let actual_u = u;
 
-    let xnew = x;
-    let ynew = y;
-
-    // get new cell
-    if (u == left && x>=1){
-      xnew = x-1;
-      ynew = y;
-    } else if (u == right && x< grid_size-1){
-      xnew = x+1;
-      ynew = y;
-    } else if (u == up && y >=1){
-      xnew = x;
-      ynew = y-1;
-    } else if (u == down && y < grid_size-1){
-      xnew = x;
-      ynew = y+1;
+  // On ice: 30% chance of slipping to a different square than the intended move
+  if (map[x*grid_size+y] === ice){
+    if (Math.random() <0.3){
+      let slip_options = [left, right, up, down].filter(d => d !== u);
+      actual_u = slip_options[Math.floor(Math.random()*slip_options.length)];
     }
+  }
+
+  // new coordinates
+  let xnew = x, ynew = y;
+  if (actual_u === left && x>=1){
+    xnew = x-1;
+  } else if (actual_u === right && x< grid_size-1){
+    xnew = x+1;
+  } else if (actual_u === up && y>=1){
+    ynew = y-1;
+  } else if (actual_u === down && y<grid_size-1){
+    ynew = y+1;
+  }
+
+  let collision = false;
+  if (xnew <0 || xnew>= grid_size || ynew <0 || ynew >= grid_size || map[xnew*grid_size + ynew] == wall){
+    collision = true;
+    xnew = x;
+    ynew = y;
+  }
+
+  return {x:xnew, y:ynew, u_taken: actual_u, collision: collision};
+}
+
+// Update Q function Q(x,y,u) = Q(x,y,u) + alpha*[cost + gamma*min_u'{Q(x',y',u')} - Q(x,y,u)]
+function updateQ(x, y, u, xnew, ynew, collision){
+
+    // if (u == left && x>=1){
+    //   xnew = x-1;
+    //   ynew = y;
+    // } else if (u == right && x< grid_size-1){
+    //   xnew = x+1;
+    //   ynew = y;
+    // } else if (u == up && y >=1){
+    //   xnew = x;
+    //   ynew = y-1;
+    // } else if (u == down && y < grid_size-1){
+    //   xnew = x;
+    //   ynew = y+1;
+    // }
 
     // find min_{u'}Q(x', u')
     let minQ_xnew_unew = 0;
     minQ_xnew_unew = find_minQ(xnew, ynew).minQ;
 
-    // Update Q-function
-    Q[index(x,y,u)] = Q[index(x,y,u)] + alpha[index(x,y,u)]*(L(map[xnew*grid_size+ynew]) + gamma*minQ_xnew_unew - Q[index(x,y,u)]);
+    let cost = L(map[xnew*grid_size+ynew]);
+    if (collision){
+      cost += 500; // collision penalty for hitting the wall/border
+    }
+
+    // Update Q-function (based on where we actually end up)
+    Q[index(x,y,u)] = Q[index(x,y,u)] + alpha[index(x,y,u)]*(cost + gamma*minQ_xnew_unew - Q[index(x,y,u)]);
 
     // decay alpha
     visit_count[index(x,y,u)] += 1;
@@ -415,12 +469,6 @@ function explore(x,y){
 // Q-Learning Main Iteration
 function QLearn(){
 
-  let error = 100;
-  let Q_old = new Float64Array(Q.length);
-  let Q_new = new Float64Array(Q.length);
-  Q_old.fill(50000);
-  Q_new.fill(50000);
-
   // set goal Q = 0
   for (let u = 0; u< 4; u++){
     Q[index(grid_size-1, grid_size-1, u)] = 0;
@@ -433,15 +481,14 @@ function QLearn(){
     let y = 0;
     t = 0;// reset per period length count
 
-    // fill Q_old array with old Q values
-    for (let i = 0; i<Q_old.length; i++){
-      Q_old[i] = Q[i];
-    }
+    let episode_cost = 0; // track cost of this episode
 
     while (!finish && t < max_episode_length){
 
+      let current_terrain_cost = L(map[x*grid_size+y]);
+
       // check if stuck or at exit
-      if (L(map[x*grid_size+y]) == Infinity){ // wall
+      if (current_terrain_cost == Infinity){ // wall
         finish = true;
         continue; // skip the rest of the code
       }
@@ -450,45 +497,51 @@ function QLearn(){
         continue; // skip the rest of the code
       }
 
+      // add current cost to episode cost
+      episode_cost += current_terrain_cost;
+
       let u = 0;
       // take action: epsilon-greedy exploration
       u = explore(x,y);
 
-      // interact with environment, observe cost and update Q function
-      updateQ(x,y,u);
-
-      // update new state
+      // update new state (use helper function because added slipping)
       let xnew =x, ynew = y;
-      if (u == left){
-        xnew = x-1;
-      } else if (u == right){
-        xnew = x+1;
-      } else if (u == up){
-        ynew = y-1;
-      } else if (u == down){
-        ynew = y+1;
-      }
+      let next = get_next_state(x,y,u);
+      xnew = next.x;
+      ynew = next.y;
+
+      // interact with environment, observe cost and update Q function
+      updateQ(x,y,u,xnew,ynew,next.collision);
+
+      // if (u == left){
+      //   xnew = x-1;
+      // } else if (u == right){
+      //   xnew = x+1;
+      // } else if (u == up){
+      //   ynew = y-1;
+      // } else if (u == down){
+      //   ynew = y+1;
+      // }
 
       // update x,y if xnew ynew is a not wall and within bounds
-      if (xnew>= 0 && xnew < grid_size && ynew >= 0 && ynew<grid_size && map[xnew*grid_size+ynew] !=wall){
-        // update x,y to xnew ynew
-        x = xnew;
-        y = ynew;
-      }
+      x = xnew;
+      y = ynew; // collision handled by get_next_state()
+      // if (xnew>= 0 && xnew < grid_size && ynew >= 0 && ynew<grid_size && map[xnew*grid_size+ynew] !=wall){
+      //   // update x,y to xnew ynew
+      //   x = xnew;
+      //   y = ynew;
+      // }
 
       // increment episode length
       t += 1;
     }
-    // decay epsilon
-    epsilon = Math.max(0,epsilon - (1/max_episodes));
+    // decay epsilon (exponential decay)
+    epsilon = epsilon*eps_decay_rate;
+
+    // add episode cost to cost history array
+    cost_history.push(episode_cost);
     // increment episode count
     current_episode +=1;
-    // fill Q_new array with new Q values
-    for (let i = 0; i<Q_new.length; i++){
-      Q_new[i] = Q[i];
-    }
-    // // computes Q value change, stop learning when converged
-    // if (norm_diff(Q_old, Q_new)< 0.001) break;
 
   }
 
@@ -508,6 +561,10 @@ function start_simulation(){
   QLearn();
   // draw optimal control in map cells
   draw_control();
+  // draw cost history chart
+  drawChart();
+  // draw optimal path
+  draw_optimal_path();
 }
 
 </script>
@@ -545,20 +602,46 @@ function start_simulation(){
       5. Navigating Unknown Terrain via Q-Learning
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    This is a simulation of an agent exploring an unfamiliar environment. The agent starts out with zero knowledge about the map, the different terrains, and the difficulty (cost) to traverse each type of terrain. The agent learns from experience and finds an optimal path, which minimizes the total cost to reach the goal (lower right corner). The arrows indicate learned optimal control in each cell. The agent can follow the arrows to reach the goal.
+    This is a simulation of an agent (located in the upper left corner, highlighted in red) exploring an unfamiliar environment. The agent starts out with zero knowledge about the map, the different terrains, and the difficulty (cost) to traverse each type of terrain. The agent learns from experience and finds an optimal path, which minimizes the total cost to reach the goal (lower right corner, highlighted in green), while balancing the risk of hitting obstacles. The arrows indicate learned optimal control in each cell. The agent can follow the arrows to reach the goal. The learning curve helps visualize the agent's learning process. It records the total cost of each learning episode. The total cost per episode decreases with more episodes until it stabilizes near the minimum value, when the agent has found the optimal path (highlighted in magenta).
+    <br>
+    In this simulation, the map may contain these types of terrains:<br> <i>(Note: Hitting the borders or a wall incurs a collision penalty (+500).)</i>
+    <br>
+    <table id = "terrain-table" class = "table table-bordered table-condensed" style="width:auto; max-width: 300px">
+      <thead>
+        <tr>
+        <th>Terrain</th>
+        <th>Color</th>
+        <th>Cost-To-Enter</th>
+      </tr>
+      <tr><td>Road</td><td>Gray</td><td>0.5</td></tr>
+      <tr><td>Grass</td><td>Green</td><td>1</td></tr>
+      <tr><td>Sand</td><td>Yellow</td><td>2</td></tr>
+      <tr><td>Mud</td><td>Brown</td><td>3</td></tr>
+      <tr><td>Pond</td><td>Blue</td><td>5</td></tr>
+      <tr><td>Ice</td><td>Light Blue</td><td>0.1, but with 30% chance of slipping into an unintended neighboring cell</td></tr>
+      <tr><td>Wall</td><td>Black</td><td>\(\infty\) (Impassable)</td></tr>
+      </thead>
+    </table>
     <div>
     <input type ="button" value = "Train Agent" onClick = "start_simulation()">
     <input type ="button" value = "New Map" onClick = "Reset()">
     </div>
 </div>
     <div class ="main-container">
-      <div class ="map-container" style = "display: flex; gap: 20px">
+      <div class ="map-container" style = "display: flex; flex-wrap: wrap; justify-content: left; gap: 20px; align-items: flex-start;">
+
         <div>
-          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">gray = road, green = grass, brown = mud, blue = pond, black = wall/pit, white = goal</div>
-          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">cost-to-enter: road 0.5, grass 1, mud 3, pond 5, wall/pit = Infinity, goal 0</div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">Map</div>
           <canvas id="Map" style="border:2px solid #333;">
           </canvas>
         </div>
+
+        <div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">Learning Curve: episode cost</div>
+          <canvas id="cost_chart" style="border:2px solid #333">
+          </canvas>
+        </div>
+
       </div>
     </div>
 
@@ -573,15 +656,21 @@ function start_simulation(){
 //////////// Setting up canvas
 
 const canvas = document.getElementById("Map");
+const chart = document.getElementById("cost_chart");
 
 // Set canvas dimensions
-if (canvas.width != 600) canvas.width = 600;
-if (canvas.height != 600) canvas.height = 600;
+if (canvas.width != 400) canvas.width = 400;
+if (canvas.height != 400) canvas.height = 400;
+if (chart.width != 400) chart.width = 400;
+if (chart.height != 200) chart.height = 200;
 
 // Get the canvas context
 const ctx = canvas.getContext('2d');
 const width = canvas.width;
 const height = canvas.height;
+const ctxChart = chart.getContext('2d');
+const cwidth = chart.width;
+const cheight = chart.height;
 
 let cellSize = width/grid_size;
 
@@ -595,6 +684,8 @@ function Reset() {
   initialMap();
   // draw new map
   drawMap();
+  // // clear old Q history chart
+  // ctxChart.clearRect(0,0,cwidth, cheight);
 
   // re-initialize everything
   Q.fill(50000);
@@ -606,6 +697,7 @@ function Reset() {
   visit_count.fill(0);
   epsilon = 1;
   current_episode = 1;
+  cost_history = [];
 }
 
 // draw new map
@@ -613,6 +705,7 @@ function drawMap() {
 
   // clear canvas
   ctx.clearRect(0,0,width,height);
+  ctxChart.clearRect(0,0,cwidth,cheight);
 
   // draw rectangles for cells
   for (let i = 0; i < grid_size; i++){
@@ -620,13 +713,19 @@ function drawMap() {
 
       if (map[i*grid_size+j] == road){
         ctx.fillStyle = '#A6A6A6'; // grey
-      }
-      else if (map[i*grid_size+j] == grass){
+      } else if (map[i*grid_size+j] == grass){
         ctx.fillStyle = '#5CD65C'; // green
+      } else if (map[i*grid_size+j] == sand){
+        ctx.fillStyle = '#FFE680'; // yellow
+        // #FFEB99 lighter yellow
       } else if (map[i*grid_size+j] == mud){
         ctx.fillStyle = '#996633'; // brown
+        // #996600 different brown
       } else if (map[i*grid_size+j] == pond){
         ctx.fillStyle = '#0099FF'; // blue
+      } else if (map[i*grid_size+j] == ice){
+        ctx.fillStyle = '#B3E6FF'; // light blue
+        // #CCEEFF lighter blue
       } else {
         ctx.fillStyle = '#000000'; // black
       }
@@ -645,12 +744,12 @@ function drawMap() {
 
   // Highlight target cell
   ctx.strokeStyle = 'lime';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 4;
   ctx.strokeRect((grid_size-1)*cellSize, (grid_size-1)*cellSize, cellSize, cellSize);
 
   // Highlight starting cell
   ctx.strokeStyle = 'red';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 4;
   ctx.strokeRect(0, 0, cellSize, cellSize);
 }
 
@@ -662,14 +761,14 @@ function draw_control(){
 
       let action = u_opt[i*grid_size+j];
 
-      ctx.strokeStyle = 'white';
+      // ctx.strokeStyle = 'white';
       ctx.fillStyle = 'white';
       ctx.lineWidth = 2;
 
       // find center
       let centerX = i*cellSize + cellSize/2;
       let centerY = j*cellSize + cellSize/2;
-      ctx.font = "30px Arial";
+      ctx.font = "20px Arial";
 
       let arrow = "";
       if (action == left) arrow = "\u2190";
@@ -681,6 +780,109 @@ function draw_control(){
   }
 }
 
+function draw_optimal_path(){
+  let i = 0, j = 0;
+  let at_exit = false;
+  let step_count = 0;
+  let max_steps = grid_size*3;
+  while (!at_exit && step_count< max_steps){
+
+    let action = u_opt[i*grid_size+j];
+    if (action == left) i--;
+    else if (action == right) i++;
+    else if (action == up) j--;
+    else if (action == down) j++;
+
+    ctx.strokeStyle = '#FF33CC'; // pink
+    ctx.lineWidth = 4;
+
+    // highlight optimal next cell
+    ctx.strokeRect(i*cellSize, j*cellSize, cellSize, cellSize);
+
+    //increment step_count
+    step_count += 1;
+
+    // check exit condition
+    if (i == grid_size-1 && j == grid_size-1){
+      at_exit = true;
+    }
+  }
+}
+
+function drawChart(){
+  // clear chart canvas
+  ctxChart.clearRect(0,0,cwidth, cheight);
+
+  const padding = 40;// space for labels
+  const graphTop = padding/2;
+  const graphBottom = cheight-padding/2;
+  const graphLeft = padding;
+  const graphRight = cwidth - padding;
+  const graphwidth = graphRight - graphLeft;
+  const graphheight = graphBottom - graphTop;
+
+  // draw axis
+  ctxChart.strokeStyle = "black";
+  ctxChart.lineWidth = 1;
+  ctxChart.beginPath();
+  // y-axis
+  ctxChart.moveTo(graphLeft, graphTop);
+  ctxChart.lineTo(graphLeft, graphBottom);
+  // x-axis
+  ctxChart.lineTo(graphRight, graphBottom);
+  ctxChart.stroke();
+  // axes labels
+  ctxChart.fillStyle = "black";
+  ctxChart.textAlign = "right";
+  ctxChart.font = "12px Arial";
+  ctxChart.textBaseline = "middle";
+  // y-label
+  ctxChart.fillText(200 + "+", graphLeft -5, graphTop);
+  ctxChart.fillText("0", graphLeft -5, graphBottom);
+  // x-label
+  ctxChart.textAlign = "center";
+  ctxChart.textBaseline = "top";
+  ctxChart.fillText("Episode 1", graphLeft, graphBottom+5);
+  ctxChart.fillText("Episode " + max_episodes/2, graphLeft+graphwidth/2, graphBottom+5);
+  ctxChart.fillText("Episode " + max_episodes, graphRight, graphBottom+5);
+  // y-label
+  ctxChart.save();
+  ctxChart.translate(10,cheight/2);
+  ctxChart.rotate(-Math.PI/2);
+  ctxChart.textAlign = "center";
+  ctxChart.fillText("Cost", 0,0);
+  ctxChart.restore();
+
+  if (cost_history.length === 0){
+    return;
+  }
+
+  // draw the line
+  ctxChart.strokeStyle = "#0066FF";
+  ctxChart.lineWidth = 1.5;
+  ctxChart.beginPath();
+
+  let stepX = graphwidth/cost_history.length;
+
+  for (let i = 0; i<cost_history.length; i++){
+    let val = cost_history[i];
+    // map value to height
+    // cap at 200
+    let plotVal = Math.min(val, 200);
+    let y = graphBottom - (plotVal/200)*graphheight;
+    let x = graphLeft+ i*stepX;
+
+    if(i === 0){
+      ctxChart.moveTo(x,y);
+    } else {
+      ctxChart.lineTo(x,y);
+    }
+
+    ctxChart.stroke();
+  }
+
+}
+
 //////////// Display & Loading values from sliders
 
 window.onload = function() {
@@ -688,6 +890,8 @@ window.onload = function() {
   initialMap();
   // draw new map
   drawMap();
+  // draw (empty) cost chart
+  drawChart();
 
 }
 
