@@ -602,7 +602,11 @@ function start_simulation(){
       5. Navigating Unknown Terrain via Q-Learning
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    This is a simulation of an agent (located in the upper left corner, highlighted in <span style="color:red">red</span>) exploring an unfamiliar environment. The agent starts out with zero knowledge about the map, the different terrains, and the difficulty (cost) to traverse each type of terrain. The agent learns from experience and finds an optimal path, which minimizes the total cost to reach the goal (lower right corner, highlighted in <span style="color:lime">green</span>), while balancing the risk of hitting obstacles. The arrows indicate learned optimal control in each cell. The agent can follow the arrows to reach the goal. The learning curve helps visualize the agent's learning process. It records the total cost of each learning episode. The total cost per episode decreases with more episodes until it stabilizes near the minimum value, when the agent has found the optimal path (highlighted in <span style ="color:#FF33CC">magenta</span>).
+    This is a simulation of an agent (located in the upper left corner, highlighted in <span style="color:red">red</span>) exploring an unfamiliar environment. The agent starts out with zero knowledge about the map, the different terrains, and the difficulty (cost) to traverse each type of terrain. The agent learns from experience and finds an optimal path, which minimizes the total cost to reach the goal (lower right corner, highlighted in <span style="color:lime">green</span>), while balancing the risk of hitting obstacles. The arrows indicate learned optimal control in each cell. The agent can follow the arrows to reach the goal. The learning curve helps visualize the agent's learning process. It records the total cost of each learning episode. The total cost per episode decreases with more episodes until it stabilizes near the minimum value, when the agent has found the optimal path (highlighted in <span style ="color:#FFAA00">orange</span>).
+    <br>In classical discrete-time optimal control, the agent solves for the value function (minimum cost-to-go from state \(x\) over control \(u\)) using backward dynamic programming \[V(x) = \min_u \{L(x,u) +\gamma V(x')\}\] where \(L(x,u)\) is the one-step cost of taking action \(u\) from state \(x\), \(\gamma\) is the discount factor (set to \(1\) for finite grid), and \(x'\) is the next state after taking action \(u\).
+    In the Q-Learning approach, the agent evaluates the quality of each state-action pair \((x,u)\), which is defined as \[Q(x,u) = L(x,u) + \gamma\min_{u'}Q(x',u').\]
+    The agent does not need to know anything about the environment, but only interacts and observes. Under an \(\epsilon\)-greedy exploration policy, it updates the \(Q\)-table using temporal difference between visits to the state-action pair:
+    \[Q(x,u)\leftarrow Q(x,u) + \alpha[L(x,u)+ \gamma\min_{u'}Q(x',u') - Q(x,u)]\] with learning rate \(\alpha\), until the optimal path is found.
     <br>
     In this simulation, the map may contain these types of terrains:<br> <i>(Note: Hitting the borders or a wall incurs a collision penalty (+500).)</i>
     <br>
@@ -793,7 +797,15 @@ function draw_optimal_path(){
     else if (action == up) j--;
     else if (action == down) j++;
 
-    ctx.strokeStyle = '#FF33CC'; // pink
+    // ctx.strokeStyle = '#FF33CC'; // pink
+    // ctx.strokeStyle = '#00008B'; // dark blue
+    ctx.strokeStyle = '#00FF00'; // lime
+    ctx.strokeStyle = '#ffcc00'; // gold
+    ctx.strokeStyle = '#e6b800'; // darker gold
+    ctx.strokeStyle = '#cca300'; // darker gold/olive
+    ctx.strokeStyle = '#FF9933'; // orange
+    ctx.strokeStyle = '#FFAA00'; // yellowish orange
+    // ctx.strokeStyle = '#000066'; // dark blue 2
     ctx.lineWidth = 4;
 
     // highlight optimal next cell
