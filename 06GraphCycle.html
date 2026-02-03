@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="Code" />
+<meta name="keywords" content="Graph Theory, Arbitrage, Cryptocurrencies, Forex, Johnson's Algorithm" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numerical Methods Tutorial</title
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+</head>
+<body>
+<style type="text/css">
+#transition-table td, #transition-table th {padding: 2px 2px; font-size: 12px }
+#weight-table td, #weight-table th {padding: 2px 2px; font-size: 12px }
+
+#returns-table td, #returns-table th {padding: 2px 2px; font-size: 12px }
+
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1;
+  height: 350px;
+}
+*/
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
+
+#terrain-table th, #terrain-table td {
+  padding: 2px, 2px;
+  font-size: 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+#terrain-table th {
+  text-align: center;
+}
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+</style>
+<script>
+
+// GLOBAL VARIABLES
+// graph
+const graph = {
+  "USDT": ["BTC", "ETH", "ADA", "XRP", "DOGE", "SOL"],
+  "BTC": ["USDT", "ETH", "ADA", "XRP", "DOGE", "SOL"],
+  "ETH": ["USDT", "BTC", "ADA", "SOL"],
+  "ADA": ["USDT", "BTC", "ETH"],
+  "XRP": ["USDT", "BTC"],
+  "DOGE": ["USDT", "BTC"],
+  "SOL": ["USDT", "BTC", "ETH"]
+};
+
+
+//////////// HELPER FUNCTIONS
+
+//////////// Initializing
+let stack = []; // stack for current path
+const nodes = Object.keys(graph).sort();
+let cycles = [];
+let blocked = {};
+let B = {}; // watch list
+let s = null; // current start node
+
+let animationTimer = null; // stores id of the active timer
+
+//////////// COMPUTATIONS
+// CIRCUIT
+function circuit(v){
+  let f = false;
+  stack.push(v);
+  blocked[v] = true;
+
+  // copy global variable graph
+  const graphA = graph[v]||[];
+  for( let w of graphA ){
+    if (w<s) continue;
+
+    if (w == s) { // found a cycle
+      cycles.push([...stack,s]);
+      f = true;
+    } else if (!blocked[w]){
+      if (circuit(w)){
+        f = true;
+      }
+    }
+  }
+
+  if (f) {
+    unblock(v);
+  } else {
+    for (let w of graphA){
+      if (w<s) continue;
+
+      // add v to watch list of w
+      if (!B[w]) B[w] = [];
+      if (!B[w].includes(v)) {
+        B[w].push(v);
+      }
+    }
+  }
+  stack.pop(); // removes the last element of array
+  return f;
+}
+
+// UNBLOCKING
+function unblock(u){
+  blocked[u] = false;
+
+  // crash safety guard
+  // copy and wipe waiting list of u
+  current_Bu = B[u]||[];
+  B[u] = [];
+
+  current_Bu.forEach(w => {
+    if (blocked[w]){
+      unblock(w);
+    }
+  });
+
+}
+
+// MAIN FUNCTION FOR JOHNSON'S ALGORITHM
+function johnson() {
+  // reset global cycles
+  cycles = [];
+  stack = [];
+
+  for (let i = 0; i< nodes.length; i++){
+    s = nodes[i]; // update global s
+    // reset blocked list and watch list
+    nodes.forEach(n => {
+      blocked[n] = false;
+      B[n] = [];
+    });
+
+    circuit(s); // run circuit
+
+  }
+  // output results to console
+  console.log(`Found ${cycles.length} cycles`);
+  console.log(cycles);
+}
+
+///////////////// PSEUDOCODE BASED ON JOHNSON PAPER ////////////////
+// integer list arrays:
+// A adjacency list, A(n), for node n, contains node indices going from n to those nodes
+// B(n), watch list for node n
+// logical array:
+// blocked(n), true if n is currently blocked
+
+
+// MAIN FUNCTION
+// function johnson() {
+// s = 1
+// while s < n do
+//   if A is non empty {
+//     s = smallest vertex index
+//     for i in vertex set {
+//       blocked(i) = false;
+//       wipe B(i);
+//     }
+//     dummy = circuit(s);
+//     s = s+1;
+// }
+//   else s = n
+// end
+// }
+
+// CIRCUIT
+// integer value v
+// function circuit(v) {
+  // f = false;
+  // stack v;
+  // blocked(v) = true;
+  // for w in A(v) {
+    // if w < s, continue // skip earlier starting nodes
+    // if w = s (start node) {
+      // output circuit composed of stack followed by s;
+      // f = true;
+    //} else if blocked(w) false {
+        // if circuit(w) true {
+          // f = true;
+        //}
+    //}
+  //}
+
+  // if f true {
+    // unblock v
+  //} else {
+    // for w in A(v) {
+      // if v is not in B(w), put v in B(w)
+
+      // example: S-A-B dead end, SAB blocked because they are in the stack
+      // B blocked, but B adds A to watch list
+      // backtracks to A, finds S-A-S, A unblocked
+      // backtracks to S, try different second node
+      // finds S-D-B-A-S (can find this path because A is now free)
+    //}
+  //}
+
+  // unstack v;
+  // circuit = f;
+//}
+
+// UNBLOCKING
+// integer u
+// function unblock(u){
+  // blocked(u) = false;
+
+  // crash safety guard
+  // current_Bu = copy (B(u));
+  // clear B(u);
+
+  // for w in current_Bu {
+    // delete w from B(u); (no longer need this after adding safety guard)
+    // if blocked(w) true {
+      // unblock(w);
+    //}
+  //}
+//}
+///////////////// END PSEUDOCODE ////////////////
+
+// get exchange rate for a pair
+function get_rate(fromCoin, toCoin, priceList){
+  let pair = fromCoin + "/" + toCoin;
+  if (priceList[pair]){
+    return priceList[pair];
+  }
+
+  // check other direction (1/rate)
+  pair = toCoin + "/" + fromCoin;
+  if (priceList[pair]){
+    return 1.0/priceList[pair];
+  }
+
+  return 0;
+}
+
+// CHECK FOR ARBITRAGE OPPORTUNITIES
+function profit_check(historyData){
+  console.log("Starting analysis on " + historyData.length + " time stamps");
+
+  let profitableCount = 0;
+  // clear previous results
+  let tableBody = document.querySelector("#resultsTable tbody");
+  tableBody.innerHTML = "";
+
+
+  // loop over timestamps
+  for (let i = 0; i< historyData.length; i++){
+    const snapshot = historyData[i];
+    const currentPrices = snapshot.prices;
+    const time = snapshot.time;
+
+    // go through list of cycles (from johnson)
+    for (let cycle of cycles){
+      let amount = 1.0;
+      let pathString = "";
+      let validCycle = true;
+
+      // go through nodes in a single cycle
+      for (let j = 0; j < cycle.length-1; j++){
+        const fromNode = cycle[j];
+        const toNode = cycle[j+1];
+        const rate = get_rate(fromNode, toNode, currentPrices);
+
+        if (rate === 0){
+          validCycle = false;
+          break;
+        }
+
+        amount = amount*rate;
+      }
+
+      // check amount compare to profit threshold (1+ 0.1% commission)
+      if (validCycle && amount > 1.001){
+        console.log(`[${time}] Profit: ${amount.toFixed(4)} on cycle: ${cycle.join('->')}`);
+        profitableCount++;
+        // log cycle into string to pass to cytoscape
+        const cycleString = JSON.stringify(cycle);
+
+        // convert to percentage
+        const percentage = ((amount-1)*100).toFixed(2)+ "%";
+        // update resultsTable
+        const row = `<tr style="cursor: pointer;" onclick = 'animation(${cycleString})'>
+        <td>${time}</td>
+        <td>${cycle.join('->')}</td>
+        <td>+${percentage}</td>
+        <td>${amount.toFixed(5)}</td>
+        </tr>`;
+        tableBody.innerHTML += row;
+      }
+    }
+  }
+  alert(`Analysis completed. Found ${profitableCount} profitable trades.`);
+}
+
+// button start simulation
+async function start_simulation(){
+  // run johnson's algo to log all cycles
+  johnson();
+
+  // load data
+  console.log("Downloading data from github");
+  const url = "https://raw.githubusercontent.com/ruobingzhao/ruobingzhao.github.io/refs/heads/master/binance_data.json";
+  try {
+    const response = await fetch(url);
+    const historyData = await response.json();
+    console.log(`Loaded ${historyData.length} timestamps.`);
+    alert("Data loaded. Starting loop.");
+
+    // run profitability analysis
+    profit_check(historyData);
+
+  } catch (error){
+    console.error(error);
+    alert("Cound not find the file");
+  }
+}
+
+// button reset
+function reset(){
+  // stop any running animation
+  if (animationTimer){
+    clearTimeout(animationTimer);
+    animationTimer = null;
+  }
+
+  // clear graph styles (remove yellow)
+  cy.elements().removeClass('highlighted');
+
+  // clear table
+  const tableBody = document.querySelector('#resultsTable tbody');
+  if (tableBody){
+    tableBody.innerHTML = "";
+  }
+
+}
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "container">
+    <br>
+    <br>
+    <br>
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      6. Finding Arbitrage Opportunities in Cryptocurrencies Using Johnson's Algorithm
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    Arbitrage essentially means "free lunch" or a risk-free profit opportunity. In forex such an opportunity appears when the product of exchange rates in a cycle of currencies (e.g. USD - EUR - GBP - USD) is greater than 1 + possible commission. This demo uses <b>Johnson's Algorithm</b> to efficiently enumerate all cycles in a graph representing exchanges between currencies. After the cycles are identified, a trade signal is flagged when the product of exchange rates of a cycle exceeds the profit threshold. This demo collects historical price data of several cryptocurrencies (for ease of accessing price data) and performs backtesting for this strategy. In this demo, a 0.1% commission fee is assumed (profitability threshold = 1.001). This demo uses real historical price data loaded from Binance. About 8 hours of price data is included.
+    <br>
+    <br><i>Note (1): There are two famous graph Algorithms called "Johnson's". This demo is about the one that finds all elementary cycles of a directed graph. Here's Donald B. Johnson's original <a href="https://www.cs.tufts.edu/comp/150GA/homeworks/hw1/Johnson%2075.PDF">paper</a> from 1975. Johnson's Algorithm is faster than traditional Depth-First-Search (DFS), because it prevents redundant searches by keeping an active "blocked list" of nodes that are already visited or lead to dead ends during the current path starting from node \(s\). Each node also maintains a "watch list" containing nodes that were blocked because they were visited earlier in the current path and may become unblocked later in another search.</i>
+    <br><i>Note (2): On crypto exchanges, most smaller currencies do not directly trade between each other but only through a top currency like USDT, BTC, or (occasionally) ETH. Thus using an algorithm to find all cycles among a few coins might be overkill. For forex, most top currencies (USD, EUR, JPY, GBP, CNY, AUD, CAD, CHF) can be traded between one another, forming a highly connected clique that may warrant the use of this algorithm, while smaller currencies also only trade through USD or EUR.</i>
+    <span id = "simulation"><br></span>
+    <br>
+    <div>
+    <input type ="button" value = "Start Backtesting" onClick = "start_simulation()">
+    <input type ="button" value = "Reset" onClick = "reset()">
+    </div>
+</div>
+    <div class ="graph-container">
+      <div class ="graph-container" style = "display: flex; flex-wrap: wrap; justify-content: left; gap: 20px; align-items: flex-start;">
+
+        <div id = "cyto" style = "width: 500px; height: 400px; border: 1px solid #333; background-color: white;">
+        </div>
+
+        <div class = "row">
+          <div class = "col-md-12">
+            <label>Backtest Results</label>
+            <br> You can click on a profitable cycle to see it highlighted in the graph!
+            <div style = "height: 300px; overflow-y: scroll; border: 1px solid #ccc;">
+              <table class = "table table-striped" id = "resultsTable">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Cycle Path</th>
+                    <th>Profit %</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+
+      </div>
+    </div>
+
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+//////////// Visualization Script
+
+
+//////////// Display
+
+// window.onload = function() {
+//
+//
+// }
+// convert to cytoscape list
+function  toCytoscape(adjList){
+  const elements = [];
+  Object.keys(adjList).forEach(source => {
+    elements.push({data:{id: source}}) // nodes
+
+    adjList[source].forEach(target => {
+      elements.push({data: {source: source, target: target}})
+    }) //edges
+  });
+  return elements;
+}
+
+const cy = cytoscape(
+  {
+    container:
+    document.getElementById("cyto"),
+    elements:
+    toCytoscape(graph),
+    userZoomingEnabled: false,
+    userPanningEnabled: false,
+    layout: { name: "circle" },
+    style: [
+      { selector: "node", style: {"label": "data(id)", "background-color": "#3399ff"}},
+      { selector: "edge", style: {"width": 2, "line-color": "#ccc", "target-arrow-shape": "triangle"}},
+
+      // highlighted look
+      { selector: '.highlighted', style: {
+        // "width": "30px", "height": "30px",
+        'background-color': "#ff9900",
+         "line-color": "#ffcc00",
+         "target-arrow-color": "#ffcc00",
+         "z-index": 9999,
+         "transition-property": "background-color, line-color, width",
+         "transition-duration": "0.05s"
+      }}
+    ]
+  }
+);
+
+// animation for highlighting cycles
+function animation(cyclePath){
+  // reset
+  cy.elements().removeClass('highlighted');
+
+  // clear existing animation if one is running
+  if (animationTimer) clearTimeout(animationTimer);
+  // reset style
+  cy.elements().removeClass('highlighted');
+
+  let i = 0;
+
+  // next step function
+  function nextStep(){
+    if (i>=cyclePath.length - 1) return;
+
+    const source = cyclePath[i];
+    const target = cyclePath[i+1];
+    // highlight nodes
+    cy.getElementById(source).addClass('highlighted');
+    cy.edges(`[source = "${source}"][target = "${target}"]`).addClass('highlighted');
+
+    i++;
+    // save timer ID to global variable
+    animationTimer = setTimeout(nextStep, 100); // 100ms per frame
+  }
+
+  nextStep();
+}
+
+</script>
+
+</body>
+</html>
