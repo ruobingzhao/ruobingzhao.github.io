@@ -401,7 +401,7 @@ async function start_simulation(){
     const response = await fetch(url);
     const historyData = await response.json();
     console.log(`Loaded ${historyData.length} timestamps.`);
-    // alert("Data loaded. Starting loop.");
+    alert("Data loaded. Close to start analysis.");
 
     // run profitability analysis
     profit_check(historyData);
