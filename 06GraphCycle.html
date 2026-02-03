@@ -396,7 +396,7 @@ async function start_simulation(){
 
   // load data
   console.log("Downloading data from github");
-  const url = "https://raw.githubusercontent.com/ruobingzhao/ruobingzhao.github.io/refs/heads/master/binance_data.json";
+  const url = "https://raw.githubusercontent.com/ruobingzhao/ruobingzhao.github.io/refs/heads/master/binance_data_2h.json";
   try {
     const response = await fetch(url);
     const historyData = await response.json();
@@ -466,11 +466,11 @@ function reset(){
       6. Finding Arbitrage Opportunities in Cryptocurrencies Using Johnson's Algorithm
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    Arbitrage essentially means "free lunch" or a risk-free profit opportunity. In forex such an opportunity appears when the product of exchange rates in a cycle of currencies (e.g. USD - EUR - GBP - USD) is greater than 1 + possible commission. This demo uses <b>Johnson's Algorithm</b> to efficiently enumerate all cycles in a graph representing exchanges between currencies. After the cycles are identified, a trade signal is flagged when the product of exchange rates of a cycle exceeds the profit threshold. This demo collects historical price data of several cryptocurrencies (for ease of accessing price data) and performs backtesting for this strategy. In this demo, a 0.1% commission fee is assumed (profitability threshold = 1.001). This demo uses real historical price data loaded from Binance. About 8 hours of price data is included.
+    Arbitrage essentially means "free lunch" or a risk-free profit opportunity. In forex such an opportunity appears when the product of exchange rates in a cycle of currencies (e.g. USD - EUR - GBP - USD) is greater than 1 + possible commission. This demo uses <b>Johnson's Algorithm</b> to efficiently enumerate all cycles in a graph representing exchanges between currencies. After the cycles are identified, a trade signal is flagged when the product of exchange rates of a cycle exceeds the profit threshold. This demo collects historical price data of several cryptocurrencies (for ease of accessing price data) and performs backtesting for this strategy. In this demo, a 0.1% commission fee is assumed (profitability threshold = 1.001). This demo uses real historical price data loaded from Binance. About 2 hours of price data is included.
     <br>
     <br><i>Note (1): There are two famous graph Algorithms called "Johnson's". This demo is about the one that finds all elementary cycles of a directed graph. Here's Donald B. Johnson's original <a href="https://www.cs.tufts.edu/comp/150GA/homeworks/hw1/Johnson%2075.PDF">paper</a> from 1975. Johnson's Algorithm is faster than traditional Depth-First-Search (DFS), because it prevents redundant searches by keeping an active "blocked list" of nodes that are already visited or lead to dead ends during the current path starting from node \(s\). Each node also maintains a "watch list" containing nodes that were blocked because they were visited earlier in the current path and may become unblocked later in another search.</i>
     <br><i>Note (2): On crypto exchanges, most smaller currencies do not directly trade between each other but only through a top currency like USDT, BTC, or (occasionally) ETH. Thus using an algorithm to find all cycles among a few coins might be overkill. For forex, most top currencies (USD, EUR, JPY, GBP, CNY, AUD, CAD, CHF) can be traded between one another, forming a highly connected clique that may warrant the use of this algorithm, while smaller currencies also only trade through USD or EUR.</i>
-    <br><i>Note (3): Because this demo uses 8 hours of (historical) live data from Binance, calculation could take a minute.</i>
+    <!-- <br><i>Note (3): Because this demo uses 2 hours of (historical) live data from Binance, calculation could take a minute.</i> -->
     <span id = "simulation"><br></span>
     <br>
     <div>
