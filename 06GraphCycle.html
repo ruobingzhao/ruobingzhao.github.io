@@ -473,7 +473,7 @@ function reset_calc(){
     <br>
     <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
     <h4>
-      6. Finding Arbitrage Opportunities in Cryptocurrencies Using Johnson's Algorithm
+      6. Finding Arbitrage in Cryptocurrencies Using Johnson's Algorithm
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
     Arbitrage essentially means "free lunch" or a risk-free profit opportunity. In forex such an opportunity appears when the product of exchange rates in a cycle of currencies (e.g. USD - EUR - GBP - USD) is greater than 1 + possible commission. This demo uses <b>Johnson's Algorithm</b> to efficiently enumerate all cycles in a graph representing exchanges between currencies. After the cycles are identified, a trade signal is flagged when the product of exchange rates of a cycle exceeds the profit threshold. This demo collects historical price data of several cryptocurrencies (for ease of accessing price data) and performs backtesting for this strategy. In this demo, a 0.1% commission fee per trade is assumed (profitability threshold = \((1-0.001)^n\), where \(n\) is the number of trades in a cycle). This demo uses real historical price data loaded from Binance. About 1 hour of price data is included.
