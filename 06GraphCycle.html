@@ -555,6 +555,7 @@ const cy = cytoscape(
     toCytoscape(graph),
     userZoomingEnabled: false,
     userPanningEnabled: false,
+    autoungrabify: true,
     layout: { name: "circle" },
     style: [
       { selector: "node", style: {"label": "data(id)", "background-color": "#3399ff"}},
