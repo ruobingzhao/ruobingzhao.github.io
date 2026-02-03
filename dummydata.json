@@ -1,0 +1,35 @@
+[
+{
+"time": "09:00:00",
+"prices": {
+"BTC/USDT": 50000,
+"ETH/USDT": 3000,
+"ETH/BTC": 0.06,
+"ADA/USDT": 1.20,
+"ADA/BTC": 0.000024,
+"ADA/ETH": 0.0004
+}
+},
+{
+"time": "09:01:00",
+"prices": {
+"BTC/USDT": 50100,
+"ETH/USDT": 3005,
+"ETH/BTC": 0.05998,
+"ADA/USDT": 1.25,
+"ADA/BTC": 0.000024,
+"ADA/ETH": 0.0004
+}
+},
+{
+"time": "09:02:00",
+"prices": {
+"BTC/USDT": 50050,
+"ETH/USDT": 3002,
+"ETH/BTC": 0.06,
+"ADA/USDT": 1.21,
+"ADA/BTC": 0.0000241,
+"ADA/ETH": 0.000401
+}
+}
+]
