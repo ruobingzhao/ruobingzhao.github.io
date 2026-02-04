@@ -606,7 +606,7 @@ function unblock(u){
   }
 }
 </pre></div>
-    <br><i><b>Note (2):</b> On crypto exchanges, most smaller currencies do not directly trade between each other but only through a top currency like USDT, BTC, or (occasionally) ETH. Thus using an algorithm to find all cycles among a few coins might be overkill. For forex, most top currencies (USD, EUR, JPY, GBP, CNY, AUD, CAD, CHF) can be traded between one another, forming a highly connected clique that may warrant the use of this algorithm, while smaller currencies also only trade through USD or EUR.</i>
+    <br><i><b>Note (2):</b> On crypto exchanges, most smaller currencies do not directly trade between each other but only through a top currency like USDT, BTC, or (occasionally) ETH. For forex, most top currencies (USD, EUR, JPY, GBP, CNY, AUD, CAD, CHF) can be traded between one another, while smaller currencies only trade through USD or EUR. Even in this demo with 7 crypto coins, the graph contains 99 elementary cycles, which warrants the use of an algorithm such as Johnson's.</i>
     <span id = "simulation"><br></span>
     <br>
     <div>
