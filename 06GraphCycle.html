@@ -558,7 +558,7 @@ function circuit(v) {
       // explanation for watch list:
       // there are two kinds of blocked nodes
       // either they are currently in the stack
-      // or they lead to dead end
+      // or they lead to dead end because an earlier node in the path is blocked
       // example:
       // consider a graph where there are cycles 1-2-1 and 1-3-2-1
       // 1-2-3 is a dead end
@@ -567,8 +567,9 @@ function circuit(v) {
       // agent tries node 1, finds a cycle
       // agent looks at non-blocked neighbors of 2
       // agent tries to find cycle through 3
+      // 3 is added to the stack and blocked
       // cannot find 3-2-1 back to 1 because 2 is in the stack (blocked)
-      // 3 is a dead end, 3 is blocked
+      // 3 is a dead end, 3 remains blocked
       // but if 2 is not in stack, then 3 may use 2 to find a way back to 1
       // 3 is added to watch list B[2]
       // because 1-2-1 is found by the agent
