@@ -504,7 +504,7 @@ function johnson() {
   clear cycles
   clear stack
 
-  for i from 0 to nodes.length-1: {
+  for i from 0 to number of nodes-1: {
     // update current start node
     set s to nodes[i]
     // reset blocked list and watch list for all nodes
@@ -523,7 +523,8 @@ function circuit(v) {
   add node v to stack
   set blocked[v] to true
 
-  for node w that is connected to v: {
+  // go through neighbors of node v
+  for w in A[v]: {
     // if w is a node that has been a start node before, skip
     // to avoid searching node 1 again after we've already found
     // all cycles that contain node 1
@@ -543,8 +544,10 @@ function circuit(v) {
     // if found a cycle involving node v, unblock node v
     unblock(v)
   } else {
-    for node w connected to v {
+    // go through neighbors of node v
+    for w in A[v] {
       // if w is a node that has been a start node before, skip
+      // prevents redundant searches
       if w < s continue
 
       // add v to watch list of w
