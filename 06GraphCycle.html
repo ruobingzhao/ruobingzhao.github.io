@@ -536,7 +536,9 @@ function circuit(v) {
       set f to true
     } else if w is currently not blocked {
       // recursively search for cycles
-      if circuit(w) returns true set f to true
+      if circuit(w) returns true, set f to true
+
+      if circuit(w) returns false, do nothing
     }
   }
 
@@ -558,20 +560,23 @@ function circuit(v) {
       // either they are currently in the stack
       // or they lead to dead end
       // example:
-      // consider a graph where there are cycles 1-2-4-1 and 1-5-3-2-4-1
+      // consider a graph where there are cycles 1-2-1 and 1-3-2-1
       // 1-2-3 is a dead end
-      // node 1, 2 are in the stack thus blocked
+      // agent starts from node 1, explores the path 1-2-...
+      // nodes 1, 2 are in the stack thus blocked
+      // agent tries node 1, finds a cycle
+      // agent looks at non-blocked neighbors of 2
       // agent tries to find cycle through 3
-      // cannot find 3-2-4-1 back to 1 because 2 is in the stack (blocked)
+      // cannot find 3-2-1 back to 1 because 2 is in the stack (blocked)
       // 3 is a dead end, 3 is blocked
       // but if 2 is not in stack, then 3 may use 2 to find a way back to 1
       // 3 is added to watch list B[2]
-      // backtracks to 2, looks at other neighbors of 2
-      // agent finds 1-2-4-1, 2 unblocked
-      // because 3 is on 2's watch list, 3 is unblocked
-      // backtracks to 1, tries different second node
-      // later finds 1-5-3-2-4-1
-      // this path can be found because 2 and 3 are free now
+      // because 1-2-1 is found by the agent
+      // after exploring all paths 1-2-..., 2 is unblocked
+      // because 3 is on 2's watch list, 3 is also unblocked
+      // backtracks to 1, tries different second node, 1-3-...
+      // finds 1-3-2-1
+      // this path can be found because both 2 and 3 are free now
     }
   }
 
