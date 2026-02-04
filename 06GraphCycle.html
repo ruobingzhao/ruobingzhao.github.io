@@ -484,108 +484,108 @@ function reset_calc(){
     <br>
     <br><i><b>Note (1):</b> There are two famous graph Algorithms called "Johnson's". This demo is about the one that finds all elementary cycles of a directed graph. Here's Donald B. Johnson's original <a href="https://www.cs.tufts.edu/comp/150GA/homeworks/hw1/Johnson%2075.PDF">paper</a> from 1975. Johnson's Algorithm is faster than traditional Depth-First-Search (DFS), because it prevents redundant searches by keeping an active "blocked list" of nodes that are already visited or lead to dead ends during the current path starting from node \(s\). Each node also maintains a "watch list" containing nodes that were blocked because they were visited earlier in the current path and may become unblocked later in another search. <a href="#johnsons_pseudocode" onclick="toggle_vis('johnsons_pseudocode')">View/hide pseudocode</a></i>
     <div id="johnsons_pseudocode"><pre>
-      //// This pseudocode is based on the one in Johnson's 1975 paper.
-      //// I cleaned it up and added comments to make it easier to understand.
+//// This pseudocode is based on the one in Johnson's 1975 paper.
+//// I cleaned it up and added comments to make it easier to understand.
 
-      // GLOBAL VARIABLES
-      nodes: sorted list of all vertices of the graph
-      A[i]: adjacency list, contains neighbors of node i
-      B[i]: watch list for node i
-      blocked: list of booleans, blocked[i] is true if node i is currently blocked
-      stack: stack for current path
-      cycles: to store all cycles found in the search
-      s: current start node
+// GLOBAL VARIABLES
+nodes: sorted list of all vertices of the graph
+A[i]: adjacency list, contains neighbors of node i
+B[i]: watch list for node i
+blocked: list of booleans, blocked[i] is true if node i is currently blocked
+stack: stack for current path
+cycles: to store all cycles found in the search
+s: current start node
 
-      // MAIN FUNCTION FOR JOHNSON'S ALGORITHM
-      function johnson() {
-        // reset global variables
-        clear cycles
-        clear stack
+// MAIN FUNCTION FOR JOHNSON'S ALGORITHM
+function johnson() {
+  // reset global variables
+  clear cycles
+  clear stack
 
-        for i from 0 to nodes.length-1: {
-          // update current start node
-          set s to nodes[i]
-          // reset blocked list and watch list for all nodes
-          set blocked to false for all nodes
-          clear B[] for all nodes
+  for i from 0 to nodes.length-1: {
+    // update current start node
+    set s to nodes[i]
+    // reset blocked list and watch list for all nodes
+    set blocked to false for all nodes
+    clear B[] for all nodes
 
-          // run circuit function
-          circuit(s)
-        }
+    // run circuit function
+    circuit(s)
+  }
 
-      }
+}
 
-      // CIRCUIT FUNCTION
-      function circuit(v) {
-        set boolean f to false
-        add node v to stack
-        set blocked[v] to true
+// CIRCUIT FUNCTION
+function circuit(v) {
+  set boolean f to false
+  add node v to stack
+  set blocked[v] to true
 
-        for node w that is connected to v: {
-          // if w is a node that has been a start node before, skip
-          // to avoid searching node 1 again after we've already found
-          // all cycles that start and end at node 1
-          if w < s continue;
+  for node w that is connected to v: {
+    // if w is a node that has been a start node before, skip
+    // to avoid searching node 1 again after we've already found
+    // all cycles that start and end at node 1
+    if w < s continue;
 
-          if w == s {
-            // back to start node of current stack, found a cycle
-            add current stack to list of cycles
-            set f to true
-          } else if w is currently not blocked {
-            // recursively search for cycles
-            if circuit(w) returns true set f to true
-          }
-        }
+    if w == s {
+      // back to start node of current stack, found a cycle
+      add current stack to list of cycles
+      set f to true
+    } else if w is currently not blocked {
+      // recursively search for cycles
+      if circuit(w) returns true set f to true
+    }
+  }
 
-        if f is true {
-          // if found a cycle involving node v, unblock node v
-          unblock(v)
-        } else {
-          for node w connected to v {
-            // if w is a node that has been a start node before, skip
-            if w < s continue
+  if f is true {
+    // if found a cycle involving node v, unblock node v
+    unblock(v)
+  } else {
+    for node w connected to v {
+      // if w is a node that has been a start node before, skip
+      if w < s continue
 
-            // add v to watch list of w
-            add v to B[w]
+      // add v to watch list of w
+      add v to B[w]
 
-            // explanation for last step:
-            // there are two kinds of blocked nodes
-            // either they are currently in the stack
-            // or they lead to dead end
-            // example: 1-2-3 dead end
-            // 123 all blocked because 12 are in the stack and 3 leads to dead end
-            // but if 2 is not in stack, then 3 may use 2 to find a way back to 1
-            // 3 is blocked for now, but 3 adds 2 to watch list
-            // backtracks to 2, if later finds 121, 2 unblocked
-            // backtracks to 1, try different second node
-            // later finds 1-4-3-2-1 (can find this path because 2 is now free)
-          }
-        }
+      // explanation for last step:
+      // there are two kinds of blocked nodes
+      // either they are currently in the stack
+      // or they lead to dead end
+      // example: 1-2-3 dead end
+      // 123 all blocked because 12 are in the stack and 3 leads to dead end
+      // but if 2 is not in stack, then 3 may use 2 to find a way back to 1
+      // 3 is blocked for now, but 3 adds 2 to watch list
+      // backtracks to 2, if later finds 121, 2 unblocked
+      // backtracks to 1, try different second node
+      // later finds 1-4-3-2-1 (can find this path because 2 is now free)
+    }
+  }
 
-        removes node v from stack
+  removes node v from stack
 
-        return boolean f
-      }
+  return boolean f
+}
 
-      // UNBLOCK FUNCTION
-      function unblock(u){
-        // unblock u
-        set blocked[u] to false
+// UNBLOCK FUNCTION
+function unblock(u){
+  // unblock u
+  set blocked[u] to false
 
-        // check watch list of u
-        for node w in B[u] {
-          // remove node w from watch list of u
-          delete w from B[u]
+  // check watch list of u
+  for node w in B[u] {
+    // remove node w from watch list of u
+    delete w from B[u]
 
-          // if node w is blocked
-          if blocked[w] is true {
-            // unblock w as well
-            unblock(w)
-          }
-          // Note: may add a crash safety guard in case u and w
-          // are on watch lists of each other
-        }
-      }
+    // if node w is blocked
+    if blocked[w] is true {
+      // unblock w as well
+      unblock(w)
+    }
+    // Note: may add a crash safety guard in case u and w
+    // are on watch lists of each other
+  }
+}
 </pre></div>
     <br><i><b>Note (2):</b> On crypto exchanges, most smaller currencies do not directly trade between each other but only through a top currency like USDT, BTC, or (occasionally) ETH. Thus using an algorithm to find all cycles among a few coins might be overkill. For forex, most top currencies (USD, EUR, JPY, GBP, CNY, AUD, CAD, CHF) can be traded between one another, forming a highly connected clique that may warrant the use of this algorithm, while smaller currencies also only trade through USD or EUR.</i>
     <span id = "simulation"><br></span>
