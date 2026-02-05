@@ -1,0 +1,1856 @@
+[
+  {
+    "time": "20:08:00",
+    "prices": {
+      "BTC/USDT": 66193.52,
+      "ETH/USDT": 1934.21,
+      "ADA/USDT": 0.2563,
+      "XRP/USDT": 1.2443,
+      "DOGE/USDT": 0.09197,
+      "SOL/USDT": 82.45,
+      "ETH/BTC": 0.02923,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.881e-05,
+      "DOGE/BTC": 1.38e-06,
+      "SOL/BTC": 0.0012458,
+      "ADA/ETH": 0.0001325,
+      "SOL/ETH": 0.04264
+    }
+  },
+  {
+    "time": "20:09:00",
+    "prices": {
+      "BTC/USDT": 66142.54,
+      "ETH/USDT": 1932.99,
+      "ADA/USDT": 0.2561,
+      "XRP/USDT": 1.2433,
+      "DOGE/USDT": 0.09198,
+      "SOL/USDT": 82.42,
+      "ETH/BTC": 0.02923,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.88e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012459,
+      "ADA/ETH": 0.0001325,
+      "SOL/ETH": 0.04263
+    }
+  },
+  {
+    "time": "20:10:00",
+    "prices": {
+      "BTC/USDT": 66211.7,
+      "ETH/USDT": 1936.82,
+      "ADA/USDT": 0.2564,
+      "XRP/USDT": 1.2429,
+      "DOGE/USDT": 0.09206,
+      "SOL/USDT": 82.48,
+      "ETH/BTC": 0.02925,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.877e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012462,
+      "ADA/ETH": 0.0001324,
+      "SOL/ETH": 0.0426
+    }
+  },
+  {
+    "time": "20:11:00",
+    "prices": {
+      "BTC/USDT": 66357.57,
+      "ETH/USDT": 1943.51,
+      "ADA/USDT": 0.2572,
+      "XRP/USDT": 1.2479,
+      "DOGE/USDT": 0.0924,
+      "SOL/USDT": 82.79,
+      "ETH/BTC": 0.02929,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.881e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012476,
+      "ADA/ETH": 0.0001323,
+      "SOL/ETH": 0.04261
+    }
+  },
+  {
+    "time": "20:12:00",
+    "prices": {
+      "BTC/USDT": 66331.58,
+      "ETH/USDT": 1942.8,
+      "ADA/USDT": 0.2572,
+      "XRP/USDT": 1.2484,
+      "DOGE/USDT": 0.09241,
+      "SOL/USDT": 82.82,
+      "ETH/BTC": 0.02929,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.882e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012485,
+      "ADA/ETH": 0.0001323,
+      "SOL/ETH": 0.04262
+    }
+  },
+  {
+    "time": "20:13:00",
+    "prices": {
+      "BTC/USDT": 66255.97,
+      "ETH/USDT": 1939.92,
+      "ADA/USDT": 0.2566,
+      "XRP/USDT": 1.2457,
+      "DOGE/USDT": 0.09224,
+      "SOL/USDT": 82.69,
+      "ETH/BTC": 0.02927,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.88e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012478,
+      "ADA/ETH": 0.0001323,
+      "SOL/ETH": 0.04262
+    }
+  },
+  {
+    "time": "20:14:00",
+    "prices": {
+      "BTC/USDT": 66300.03,
+      "ETH/USDT": 1937.17,
+      "ADA/USDT": 0.2564,
+      "XRP/USDT": 1.243,
+      "DOGE/USDT": 0.09212,
+      "SOL/USDT": 82.59,
+      "ETH/BTC": 0.02922,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.876e-05,
+      "DOGE/BTC": 1.38e-06,
+      "SOL/BTC": 0.0012459,
+      "ADA/ETH": 0.0001323,
+      "SOL/ETH": 0.04263
+    }
+  },
+  {
+    "time": "20:15:00",
+    "prices": {
+      "BTC/USDT": 66444.61,
+      "ETH/USDT": 1942.59,
+      "ADA/USDT": 0.2574,
+      "XRP/USDT": 1.2502,
+      "DOGE/USDT": 0.09248,
+      "SOL/USDT": 82.92,
+      "ETH/BTC": 0.02924,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.882e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012477,
+      "ADA/ETH": 0.0001324,
+      "SOL/ETH": 0.04268
+    }
+  },
+  {
+    "time": "20:16:00",
+    "prices": {
+      "BTC/USDT": 66483.71,
+      "ETH/USDT": 1945.11,
+      "ADA/USDT": 0.2575,
+      "XRP/USDT": 1.2531,
+      "DOGE/USDT": 0.09251,
+      "SOL/USDT": 82.98,
+      "ETH/BTC": 0.02925,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.884e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012476,
+      "ADA/ETH": 0.0001324,
+      "SOL/ETH": 0.04266
+    }
+  },
+  {
+    "time": "20:17:00",
+    "prices": {
+      "BTC/USDT": 66488.42,
+      "ETH/USDT": 1944.64,
+      "ADA/USDT": 0.2574,
+      "XRP/USDT": 1.2527,
+      "DOGE/USDT": 0.09248,
+      "SOL/USDT": 82.89,
+      "ETH/BTC": 0.02924,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.884e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012466,
+      "ADA/ETH": 0.0001324,
+      "SOL/ETH": 0.04262
+    }
+  },
+  {
+    "time": "20:18:00",
+    "prices": {
+      "BTC/USDT": 66279.91,
+      "ETH/USDT": 1937.5,
+      "ADA/USDT": 0.2565,
+      "XRP/USDT": 1.2473,
+      "DOGE/USDT": 0.09224,
+      "SOL/USDT": 82.59,
+      "ETH/BTC": 0.02923,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.881e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.001246,
+      "ADA/ETH": 0.0001324,
+      "SOL/ETH": 0.04263
+    }
+  },
+  {
+    "time": "20:19:00",
+    "prices": {
+      "BTC/USDT": 66416.02,
+      "ETH/USDT": 1941.15,
+      "ADA/USDT": 0.2572,
+      "XRP/USDT": 1.2525,
+      "DOGE/USDT": 0.09244,
+      "SOL/USDT": 82.85,
+      "ETH/BTC": 0.02922,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.886e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012472,
+      "ADA/ETH": 0.0001325,
+      "SOL/ETH": 0.04267
+    }
+  },
+  {
+    "time": "20:20:00",
+    "prices": {
+      "BTC/USDT": 66189.3,
+      "ETH/USDT": 1933.57,
+      "ADA/USDT": 0.2563,
+      "XRP/USDT": 1.2461,
+      "DOGE/USDT": 0.09207,
+      "SOL/USDT": 82.54,
+      "ETH/BTC": 0.02922,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.883e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012472,
+      "ADA/ETH": 0.0001325,
+      "SOL/ETH": 0.04269
+    }
+  },
+  {
+    "time": "20:21:00",
+    "prices": {
+      "BTC/USDT": 66168.39,
+      "ETH/USDT": 1935.9,
+      "ADA/USDT": 0.2563,
+      "XRP/USDT": 1.2447,
+      "DOGE/USDT": 0.09209,
+      "SOL/USDT": 82.52,
+      "ETH/BTC": 0.02926,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.881e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012473,
+      "ADA/ETH": 0.0001324,
+      "SOL/ETH": 0.04263
+    }
+  },
+  {
+    "time": "20:22:00",
+    "prices": {
+      "BTC/USDT": 66076.94,
+      "ETH/USDT": 1937.47,
+      "ADA/USDT": 0.2559,
+      "XRP/USDT": 1.2437,
+      "DOGE/USDT": 0.09214,
+      "SOL/USDT": 82.39,
+      "ETH/BTC": 0.02933,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.882e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012466,
+      "ADA/ETH": 0.0001322,
+      "SOL/ETH": 0.04253
+    }
+  },
+  {
+    "time": "20:23:00",
+    "prices": {
+      "BTC/USDT": 66029.45,
+      "ETH/USDT": 1936.12,
+      "ADA/USDT": 0.2557,
+      "XRP/USDT": 1.2407,
+      "DOGE/USDT": 0.09201,
+      "SOL/USDT": 82.25,
+      "ETH/BTC": 0.02934,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.88e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012461,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04249
+    }
+  },
+  {
+    "time": "20:24:00",
+    "prices": {
+      "BTC/USDT": 65983.51,
+      "ETH/USDT": 1936.0,
+      "ADA/USDT": 0.2552,
+      "XRP/USDT": 1.2376,
+      "DOGE/USDT": 0.09189,
+      "SOL/USDT": 82.23,
+      "ETH/BTC": 0.02934,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.876e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012464,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04247
+    }
+  },
+  {
+    "time": "20:25:00",
+    "prices": {
+      "BTC/USDT": 65696.36,
+      "ETH/USDT": 1929.0,
+      "ADA/USDT": 0.2544,
+      "XRP/USDT": 1.23,
+      "DOGE/USDT": 0.0916,
+      "SOL/USDT": 81.84,
+      "ETH/BTC": 0.02936,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.872e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012457,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04242
+    }
+  },
+  {
+    "time": "20:26:00",
+    "prices": {
+      "BTC/USDT": 65757.48,
+      "ETH/USDT": 1933.36,
+      "ADA/USDT": 0.2552,
+      "XRP/USDT": 1.2315,
+      "DOGE/USDT": 0.09175,
+      "SOL/USDT": 81.98,
+      "ETH/BTC": 0.0294,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.873e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012469,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.0424
+    }
+  },
+  {
+    "time": "20:27:00",
+    "prices": {
+      "BTC/USDT": 65777.39,
+      "ETH/USDT": 1935.98,
+      "ADA/USDT": 0.2554,
+      "XRP/USDT": 1.2325,
+      "DOGE/USDT": 0.09181,
+      "SOL/USDT": 82.03,
+      "ETH/BTC": 0.02943,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.874e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012471,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04237
+    }
+  },
+  {
+    "time": "20:28:00",
+    "prices": {
+      "BTC/USDT": 65801.74,
+      "ETH/USDT": 1935.59,
+      "ADA/USDT": 0.2554,
+      "XRP/USDT": 1.2287,
+      "DOGE/USDT": 0.09179,
+      "SOL/USDT": 82.05,
+      "ETH/BTC": 0.02941,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.868e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012468,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04239
+    }
+  },
+  {
+    "time": "20:29:00",
+    "prices": {
+      "BTC/USDT": 65864.3,
+      "ETH/USDT": 1937.79,
+      "ADA/USDT": 0.2556,
+      "XRP/USDT": 1.2322,
+      "DOGE/USDT": 0.0919,
+      "SOL/USDT": 82.18,
+      "ETH/BTC": 0.02942,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.871e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012479,
+      "ADA/ETH": 0.000132,
+      "SOL/ETH": 0.04241
+    }
+  },
+  {
+    "time": "20:30:00",
+    "prices": {
+      "BTC/USDT": 65774.95,
+      "ETH/USDT": 1936.82,
+      "ADA/USDT": 0.2555,
+      "XRP/USDT": 1.2325,
+      "DOGE/USDT": 0.09204,
+      "SOL/USDT": 82.17,
+      "ETH/BTC": 0.02945,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.874e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012495,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04243
+    }
+  },
+  {
+    "time": "20:31:00",
+    "prices": {
+      "BTC/USDT": 66002.21,
+      "ETH/USDT": 1944.8,
+      "ADA/USDT": 0.2562,
+      "XRP/USDT": 1.2379,
+      "DOGE/USDT": 0.09233,
+      "SOL/USDT": 82.67,
+      "ETH/BTC": 0.02947,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.876e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012524,
+      "ADA/ETH": 0.0001318,
+      "SOL/ETH": 0.0425
+    }
+  },
+  {
+    "time": "20:32:00",
+    "prices": {
+      "BTC/USDT": 65700.33,
+      "ETH/USDT": 1932.82,
+      "ADA/USDT": 0.2548,
+      "XRP/USDT": 1.2276,
+      "DOGE/USDT": 0.09187,
+      "SOL/USDT": 82.2,
+      "ETH/BTC": 0.02942,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.869e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012511,
+      "ADA/ETH": 0.0001318,
+      "SOL/ETH": 0.04253
+    }
+  },
+  {
+    "time": "20:33:00",
+    "prices": {
+      "BTC/USDT": 65850.07,
+      "ETH/USDT": 1936.88,
+      "ADA/USDT": 0.2554,
+      "XRP/USDT": 1.2305,
+      "DOGE/USDT": 0.09212,
+      "SOL/USDT": 82.43,
+      "ETH/BTC": 0.02942,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.869e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012521,
+      "ADA/ETH": 0.0001318,
+      "SOL/ETH": 0.04256
+    }
+  },
+  {
+    "time": "20:34:00",
+    "prices": {
+      "BTC/USDT": 65972.36,
+      "ETH/USDT": 1940.49,
+      "ADA/USDT": 0.2558,
+      "XRP/USDT": 1.2349,
+      "DOGE/USDT": 0.09231,
+      "SOL/USDT": 82.6,
+      "ETH/BTC": 0.02942,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.872e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012521,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04255
+    }
+  },
+  {
+    "time": "20:35:00",
+    "prices": {
+      "BTC/USDT": 65967.78,
+      "ETH/USDT": 1940.98,
+      "ADA/USDT": 0.2561,
+      "XRP/USDT": 1.2361,
+      "DOGE/USDT": 0.09234,
+      "SOL/USDT": 82.66,
+      "ETH/BTC": 0.02942,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.874e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012528,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04258
+    }
+  },
+  {
+    "time": "20:36:00",
+    "prices": {
+      "BTC/USDT": 65958.12,
+      "ETH/USDT": 1938.01,
+      "ADA/USDT": 0.2553,
+      "XRP/USDT": 1.2325,
+      "DOGE/USDT": 0.09214,
+      "SOL/USDT": 82.48,
+      "ETH/BTC": 0.02938,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.869e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012505,
+      "ADA/ETH": 0.0001318,
+      "SOL/ETH": 0.04255
+    }
+  },
+  {
+    "time": "20:37:00",
+    "prices": {
+      "BTC/USDT": 66101.77,
+      "ETH/USDT": 1942.84,
+      "ADA/USDT": 0.2558,
+      "XRP/USDT": 1.237,
+      "DOGE/USDT": 0.0923,
+      "SOL/USDT": 82.58,
+      "ETH/BTC": 0.02939,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.871e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012495,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04251
+    }
+  },
+  {
+    "time": "20:38:00",
+    "prices": {
+      "BTC/USDT": 66057.69,
+      "ETH/USDT": 1942.3,
+      "ADA/USDT": 0.2555,
+      "XRP/USDT": 1.2362,
+      "DOGE/USDT": 0.09221,
+      "SOL/USDT": 82.53,
+      "ETH/BTC": 0.0294,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.871e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.00125,
+      "ADA/ETH": 0.0001316,
+      "SOL/ETH": 0.04249
+    }
+  },
+  {
+    "time": "20:39:00",
+    "prices": {
+      "BTC/USDT": 65984.98,
+      "ETH/USDT": 1938.63,
+      "ADA/USDT": 0.2552,
+      "XRP/USDT": 1.2324,
+      "DOGE/USDT": 0.09206,
+      "SOL/USDT": 82.35,
+      "ETH/BTC": 0.02938,
+      "ADA/BTC": 3.86e-06,
+      "XRP/BTC": 1.868e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012481,
+      "ADA/ETH": 0.0001316,
+      "SOL/ETH": 0.04248
+    }
+  },
+  {
+    "time": "20:40:00",
+    "prices": {
+      "BTC/USDT": 65940.0,
+      "ETH/USDT": 1936.45,
+      "ADA/USDT": 0.255,
+      "XRP/USDT": 1.2291,
+      "DOGE/USDT": 0.09191,
+      "SOL/USDT": 82.18,
+      "ETH/BTC": 0.02937,
+      "ADA/BTC": 3.86e-06,
+      "XRP/BTC": 1.864e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012468,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04246
+    }
+  },
+  {
+    "time": "20:41:00",
+    "prices": {
+      "BTC/USDT": 65884.85,
+      "ETH/USDT": 1935.1,
+      "ADA/USDT": 0.2546,
+      "XRP/USDT": 1.2239,
+      "DOGE/USDT": 0.09178,
+      "SOL/USDT": 81.99,
+      "ETH/BTC": 0.02937,
+      "ADA/BTC": 3.86e-06,
+      "XRP/BTC": 1.857e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012435,
+      "ADA/ETH": 0.0001315,
+      "SOL/ETH": 0.04236
+    }
+  },
+  {
+    "time": "20:42:00",
+    "prices": {
+      "BTC/USDT": 65809.46,
+      "ETH/USDT": 1933.9,
+      "ADA/USDT": 0.2546,
+      "XRP/USDT": 1.2248,
+      "DOGE/USDT": 0.09173,
+      "SOL/USDT": 82.01,
+      "ETH/BTC": 0.02938,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.861e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.001246,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04242
+    }
+  },
+  {
+    "time": "20:43:00",
+    "prices": {
+      "BTC/USDT": 65787.59,
+      "ETH/USDT": 1935.34,
+      "ADA/USDT": 0.2549,
+      "XRP/USDT": 1.2267,
+      "DOGE/USDT": 0.09181,
+      "SOL/USDT": 82.04,
+      "ETH/BTC": 0.02941,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.864e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012468,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04239
+    }
+  },
+  {
+    "time": "20:44:00",
+    "prices": {
+      "BTC/USDT": 65806.59,
+      "ETH/USDT": 1933.63,
+      "ADA/USDT": 0.2545,
+      "XRP/USDT": 1.2245,
+      "DOGE/USDT": 0.09169,
+      "SOL/USDT": 82.0,
+      "ETH/BTC": 0.02938,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.861e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012459,
+      "ADA/ETH": 0.0001316,
+      "SOL/ETH": 0.0424
+    }
+  },
+  {
+    "time": "20:45:00",
+    "prices": {
+      "BTC/USDT": 65846.0,
+      "ETH/USDT": 1933.44,
+      "ADA/USDT": 0.2545,
+      "XRP/USDT": 1.2248,
+      "DOGE/USDT": 0.0917,
+      "SOL/USDT": 82.06,
+      "ETH/BTC": 0.02937,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.86e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012463,
+      "ADA/ETH": 0.0001316,
+      "SOL/ETH": 0.04244
+    }
+  },
+  {
+    "time": "20:46:00",
+    "prices": {
+      "BTC/USDT": 65709.45,
+      "ETH/USDT": 1929.03,
+      "ADA/USDT": 0.2544,
+      "XRP/USDT": 1.2212,
+      "DOGE/USDT": 0.09151,
+      "SOL/USDT": 81.84,
+      "ETH/BTC": 0.02935,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.859e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012454,
+      "ADA/ETH": 0.0001318,
+      "SOL/ETH": 0.04241
+    }
+  },
+  {
+    "time": "20:47:00",
+    "prices": {
+      "BTC/USDT": 65541.13,
+      "ETH/USDT": 1928.25,
+      "ADA/USDT": 0.2542,
+      "XRP/USDT": 1.2185,
+      "DOGE/USDT": 0.0912,
+      "SOL/USDT": 81.69,
+      "ETH/BTC": 0.02942,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.859e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012461,
+      "ADA/ETH": 0.0001318,
+      "SOL/ETH": 0.04236
+    }
+  },
+  {
+    "time": "20:48:00",
+    "prices": {
+      "BTC/USDT": 65493.91,
+      "ETH/USDT": 1928.52,
+      "ADA/USDT": 0.2542,
+      "XRP/USDT": 1.2169,
+      "DOGE/USDT": 0.09127,
+      "SOL/USDT": 81.74,
+      "ETH/BTC": 0.02944,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.859e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012485,
+      "ADA/ETH": 0.0001318,
+      "SOL/ETH": 0.0424
+    }
+  },
+  {
+    "time": "20:49:00",
+    "prices": {
+      "BTC/USDT": 65559.99,
+      "ETH/USDT": 1931.04,
+      "ADA/USDT": 0.2547,
+      "XRP/USDT": 1.2186,
+      "DOGE/USDT": 0.09141,
+      "SOL/USDT": 81.9,
+      "ETH/BTC": 0.02945,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.859e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.001249,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04241
+    }
+  },
+  {
+    "time": "20:50:00",
+    "prices": {
+      "BTC/USDT": 65543.4,
+      "ETH/USDT": 1929.85,
+      "ADA/USDT": 0.2546,
+      "XRP/USDT": 1.2214,
+      "DOGE/USDT": 0.09142,
+      "SOL/USDT": 81.9,
+      "ETH/BTC": 0.02944,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.864e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012496,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04244
+    }
+  },
+  {
+    "time": "20:51:00",
+    "prices": {
+      "BTC/USDT": 65310.4,
+      "ETH/USDT": 1923.95,
+      "ADA/USDT": 0.2539,
+      "XRP/USDT": 1.2127,
+      "DOGE/USDT": 0.09115,
+      "SOL/USDT": 81.6,
+      "ETH/BTC": 0.02946,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.858e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012495,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04243
+    }
+  },
+  {
+    "time": "20:52:00",
+    "prices": {
+      "BTC/USDT": 65233.63,
+      "ETH/USDT": 1920.22,
+      "ADA/USDT": 0.2534,
+      "XRP/USDT": 1.2104,
+      "DOGE/USDT": 0.09093,
+      "SOL/USDT": 81.5,
+      "ETH/BTC": 0.02943,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.854e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012492,
+      "ADA/ETH": 0.000132,
+      "SOL/ETH": 0.04246
+    }
+  },
+  {
+    "time": "20:53:00",
+    "prices": {
+      "BTC/USDT": 65334.01,
+      "ETH/USDT": 1922.77,
+      "ADA/USDT": 0.2541,
+      "XRP/USDT": 1.2136,
+      "DOGE/USDT": 0.09109,
+      "SOL/USDT": 81.71,
+      "ETH/BTC": 0.02942,
+      "ADA/BTC": 3.89e-06,
+      "XRP/BTC": 1.858e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012501,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04249
+    }
+  },
+  {
+    "time": "20:54:00",
+    "prices": {
+      "BTC/USDT": 65312.1,
+      "ETH/USDT": 1924.84,
+      "ADA/USDT": 0.2541,
+      "XRP/USDT": 1.2138,
+      "DOGE/USDT": 0.09119,
+      "SOL/USDT": 81.75,
+      "ETH/BTC": 0.02947,
+      "ADA/BTC": 3.89e-06,
+      "XRP/BTC": 1.859e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012514,
+      "ADA/ETH": 0.000132,
+      "SOL/ETH": 0.04246
+    }
+  },
+  {
+    "time": "20:55:00",
+    "prices": {
+      "BTC/USDT": 65311.07,
+      "ETH/USDT": 1923.8,
+      "ADA/USDT": 0.2537,
+      "XRP/USDT": 1.2136,
+      "DOGE/USDT": 0.09109,
+      "SOL/USDT": 81.72,
+      "ETH/BTC": 0.02945,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.857e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012509,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04248
+    }
+  },
+  {
+    "time": "20:56:00",
+    "prices": {
+      "BTC/USDT": 65300.89,
+      "ETH/USDT": 1924.85,
+      "ADA/USDT": 0.2536,
+      "XRP/USDT": 1.2127,
+      "DOGE/USDT": 0.09101,
+      "SOL/USDT": 81.7,
+      "ETH/BTC": 0.02947,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.858e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012511,
+      "ADA/ETH": 0.0001318,
+      "SOL/ETH": 0.04244
+    }
+  },
+  {
+    "time": "20:57:00",
+    "prices": {
+      "BTC/USDT": 65297.16,
+      "ETH/USDT": 1925.59,
+      "ADA/USDT": 0.2536,
+      "XRP/USDT": 1.2141,
+      "DOGE/USDT": 0.0911,
+      "SOL/USDT": 81.59,
+      "ETH/BTC": 0.02948,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.86e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012494,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04239
+    }
+  },
+  {
+    "time": "20:58:00",
+    "prices": {
+      "BTC/USDT": 65292.37,
+      "ETH/USDT": 1927.05,
+      "ADA/USDT": 0.2535,
+      "XRP/USDT": 1.2126,
+      "DOGE/USDT": 0.09108,
+      "SOL/USDT": 81.61,
+      "ETH/BTC": 0.02951,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.857e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012498,
+      "ADA/ETH": 0.0001316,
+      "SOL/ETH": 0.04235
+    }
+  },
+  {
+    "time": "20:59:00",
+    "prices": {
+      "BTC/USDT": 65265.65,
+      "ETH/USDT": 1928.76,
+      "ADA/USDT": 0.2538,
+      "XRP/USDT": 1.2135,
+      "DOGE/USDT": 0.09118,
+      "SOL/USDT": 81.68,
+      "ETH/BTC": 0.02954,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.859e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012514,
+      "ADA/ETH": 0.0001316,
+      "SOL/ETH": 0.04234
+    }
+  },
+  {
+    "time": "21:00:00",
+    "prices": {
+      "BTC/USDT": 65258.13,
+      "ETH/USDT": 1929.27,
+      "ADA/USDT": 0.2536,
+      "XRP/USDT": 1.2153,
+      "DOGE/USDT": 0.09133,
+      "SOL/USDT": 81.8,
+      "ETH/BTC": 0.02955,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.862e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012533,
+      "ADA/ETH": 0.0001315,
+      "SOL/ETH": 0.04239
+    }
+  },
+  {
+    "time": "21:01:00",
+    "prices": {
+      "BTC/USDT": 65469.04,
+      "ETH/USDT": 1935.49,
+      "ADA/USDT": 0.2552,
+      "XRP/USDT": 1.2217,
+      "DOGE/USDT": 0.09168,
+      "SOL/USDT": 82.13,
+      "ETH/BTC": 0.02955,
+      "ADA/BTC": 3.89e-06,
+      "XRP/BTC": 1.866e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012541,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04243
+    }
+  },
+  {
+    "time": "21:02:00",
+    "prices": {
+      "BTC/USDT": 65300.01,
+      "ETH/USDT": 1929.35,
+      "ADA/USDT": 0.2548,
+      "XRP/USDT": 1.2151,
+      "DOGE/USDT": 0.09143,
+      "SOL/USDT": 81.83,
+      "ETH/BTC": 0.02955,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.861e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012536,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04242
+    }
+  },
+  {
+    "time": "21:03:00",
+    "prices": {
+      "BTC/USDT": 65283.88,
+      "ETH/USDT": 1930.64,
+      "ADA/USDT": 0.255,
+      "XRP/USDT": 1.2178,
+      "DOGE/USDT": 0.09155,
+      "SOL/USDT": 81.82,
+      "ETH/BTC": 0.02958,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.866e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.001253,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04237
+    }
+  },
+  {
+    "time": "21:04:00",
+    "prices": {
+      "BTC/USDT": 65226.51,
+      "ETH/USDT": 1927.16,
+      "ADA/USDT": 0.2547,
+      "XRP/USDT": 1.2138,
+      "DOGE/USDT": 0.09145,
+      "SOL/USDT": 81.65,
+      "ETH/BTC": 0.02953,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.861e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012516,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04239
+    }
+  },
+  {
+    "time": "21:05:00",
+    "prices": {
+      "BTC/USDT": 65141.05,
+      "ETH/USDT": 1921.15,
+      "ADA/USDT": 0.2537,
+      "XRP/USDT": 1.2061,
+      "DOGE/USDT": 0.09117,
+      "SOL/USDT": 81.38,
+      "ETH/BTC": 0.02948,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.851e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012495,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04237
+    }
+  },
+  {
+    "time": "21:06:00",
+    "prices": {
+      "BTC/USDT": 65214.54,
+      "ETH/USDT": 1923.96,
+      "ADA/USDT": 0.254,
+      "XRP/USDT": 1.2068,
+      "DOGE/USDT": 0.09123,
+      "SOL/USDT": 81.48,
+      "ETH/BTC": 0.0295,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.85e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012495,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04239
+    }
+  },
+  {
+    "time": "21:07:00",
+    "prices": {
+      "BTC/USDT": 65460.0,
+      "ETH/USDT": 1936.07,
+      "ADA/USDT": 0.2553,
+      "XRP/USDT": 1.2145,
+      "DOGE/USDT": 0.09162,
+      "SOL/USDT": 81.73,
+      "ETH/BTC": 0.02958,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.856e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012486,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04222
+    }
+  },
+  {
+    "time": "21:08:00",
+    "prices": {
+      "BTC/USDT": 65591.71,
+      "ETH/USDT": 1939.82,
+      "ADA/USDT": 0.2558,
+      "XRP/USDT": 1.2185,
+      "DOGE/USDT": 0.09168,
+      "SOL/USDT": 81.96,
+      "ETH/BTC": 0.02957,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.858e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012498,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04225
+    }
+  },
+  {
+    "time": "21:09:00",
+    "prices": {
+      "BTC/USDT": 65629.0,
+      "ETH/USDT": 1940.45,
+      "ADA/USDT": 0.256,
+      "XRP/USDT": 1.219,
+      "DOGE/USDT": 0.09179,
+      "SOL/USDT": 82.06,
+      "ETH/BTC": 0.02956,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.858e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012502,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04228
+    }
+  },
+  {
+    "time": "21:10:00",
+    "prices": {
+      "BTC/USDT": 65479.27,
+      "ETH/USDT": 1936.01,
+      "ADA/USDT": 0.2554,
+      "XRP/USDT": 1.2131,
+      "DOGE/USDT": 0.09155,
+      "SOL/USDT": 81.93,
+      "ETH/BTC": 0.02956,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.853e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012512,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04233
+    }
+  },
+  {
+    "time": "21:11:00",
+    "prices": {
+      "BTC/USDT": 65320.41,
+      "ETH/USDT": 1931.38,
+      "ADA/USDT": 0.2546,
+      "XRP/USDT": 1.2068,
+      "DOGE/USDT": 0.09128,
+      "SOL/USDT": 81.69,
+      "ETH/BTC": 0.02956,
+      "ADA/BTC": 3.89e-06,
+      "XRP/BTC": 1.847e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012506,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04231
+    }
+  },
+  {
+    "time": "21:12:00",
+    "prices": {
+      "BTC/USDT": 65240.01,
+      "ETH/USDT": 1930.39,
+      "ADA/USDT": 0.2547,
+      "XRP/USDT": 1.2039,
+      "DOGE/USDT": 0.09112,
+      "SOL/USDT": 81.66,
+      "ETH/BTC": 0.02958,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.845e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012516,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.0423
+    }
+  },
+  {
+    "time": "21:13:00",
+    "prices": {
+      "BTC/USDT": 65137.6,
+      "ETH/USDT": 1925.93,
+      "ADA/USDT": 0.2542,
+      "XRP/USDT": 1.2029,
+      "DOGE/USDT": 0.09086,
+      "SOL/USDT": 81.49,
+      "ETH/BTC": 0.02957,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.846e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012511,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.0423
+    }
+  },
+  {
+    "time": "21:14:00",
+    "prices": {
+      "BTC/USDT": 65051.38,
+      "ETH/USDT": 1922.55,
+      "ADA/USDT": 0.2537,
+      "XRP/USDT": 1.1991,
+      "DOGE/USDT": 0.09067,
+      "SOL/USDT": 81.27,
+      "ETH/BTC": 0.02955,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.843e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012495,
+      "ADA/ETH": 0.000132,
+      "SOL/ETH": 0.04229
+    }
+  },
+  {
+    "time": "21:15:00",
+    "prices": {
+      "BTC/USDT": 64554.21,
+      "ETH/USDT": 1903.89,
+      "ADA/USDT": 0.2517,
+      "XRP/USDT": 1.1908,
+      "DOGE/USDT": 0.09003,
+      "SOL/USDT": 80.62,
+      "ETH/BTC": 0.0295,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.845e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012489,
+      "ADA/ETH": 0.0001322,
+      "SOL/ETH": 0.04234
+    }
+  },
+  {
+    "time": "21:16:00",
+    "prices": {
+      "BTC/USDT": 64277.52,
+      "ETH/USDT": 1893.54,
+      "ADA/USDT": 0.251,
+      "XRP/USDT": 1.1833,
+      "DOGE/USDT": 0.08986,
+      "SOL/USDT": 80.39,
+      "ETH/BTC": 0.02945,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.841e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012507,
+      "ADA/ETH": 0.0001326,
+      "SOL/ETH": 0.04246
+    }
+  },
+  {
+    "time": "21:17:00",
+    "prices": {
+      "BTC/USDT": 64457.42,
+      "ETH/USDT": 1897.7,
+      "ADA/USDT": 0.2515,
+      "XRP/USDT": 1.1904,
+      "DOGE/USDT": 0.09002,
+      "SOL/USDT": 80.69,
+      "ETH/BTC": 0.02944,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.846e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012522,
+      "ADA/ETH": 0.0001326,
+      "SOL/ETH": 0.04254
+    }
+  },
+  {
+    "time": "21:18:00",
+    "prices": {
+      "BTC/USDT": 64452.26,
+      "ETH/USDT": 1895.55,
+      "ADA/USDT": 0.2513,
+      "XRP/USDT": 1.1887,
+      "DOGE/USDT": 0.08999,
+      "SOL/USDT": 80.57,
+      "ETH/BTC": 0.02941,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.843e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.00125,
+      "ADA/ETH": 0.0001325,
+      "SOL/ETH": 0.04251
+    }
+  },
+  {
+    "time": "21:19:00",
+    "prices": {
+      "BTC/USDT": 64271.32,
+      "ETH/USDT": 1891.37,
+      "ADA/USDT": 0.2507,
+      "XRP/USDT": 1.1835,
+      "DOGE/USDT": 0.08962,
+      "SOL/USDT": 80.37,
+      "ETH/BTC": 0.02943,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.841e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012504,
+      "ADA/ETH": 0.0001325,
+      "SOL/ETH": 0.04249
+    }
+  },
+  {
+    "time": "21:20:00",
+    "prices": {
+      "BTC/USDT": 64244.53,
+      "ETH/USDT": 1892.01,
+      "ADA/USDT": 0.2503,
+      "XRP/USDT": 1.1809,
+      "DOGE/USDT": 0.08973,
+      "SOL/USDT": 80.26,
+      "ETH/BTC": 0.02945,
+      "ADA/BTC": 3.89e-06,
+      "XRP/BTC": 1.838e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012492,
+      "ADA/ETH": 0.0001323,
+      "SOL/ETH": 0.04243
+    }
+  },
+  {
+    "time": "21:21:00",
+    "prices": {
+      "BTC/USDT": 64049.03,
+      "ETH/USDT": 1884.78,
+      "ADA/USDT": 0.2492,
+      "XRP/USDT": 1.1657,
+      "DOGE/USDT": 0.08929,
+      "SOL/USDT": 80.2,
+      "ETH/BTC": 0.02942,
+      "ADA/BTC": 3.89e-06,
+      "XRP/BTC": 1.822e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012518,
+      "ADA/ETH": 0.0001322,
+      "SOL/ETH": 0.04255
+    }
+  },
+  {
+    "time": "21:22:00",
+    "prices": {
+      "BTC/USDT": 63666.23,
+      "ETH/USDT": 1872.55,
+      "ADA/USDT": 0.2473,
+      "XRP/USDT": 1.1572,
+      "DOGE/USDT": 0.08875,
+      "SOL/USDT": 79.27,
+      "ETH/BTC": 0.02941,
+      "ADA/BTC": 3.89e-06,
+      "XRP/BTC": 1.818e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012444,
+      "ADA/ETH": 0.000132,
+      "SOL/ETH": 0.04233
+    }
+  },
+  {
+    "time": "21:23:00",
+    "prices": {
+      "BTC/USDT": 63873.42,
+      "ETH/USDT": 1875.2,
+      "ADA/USDT": 0.2476,
+      "XRP/USDT": 1.1586,
+      "DOGE/USDT": 0.08901,
+      "SOL/USDT": 79.58,
+      "ETH/BTC": 0.02936,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.813e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012459,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04245
+    }
+  },
+  {
+    "time": "21:24:00",
+    "prices": {
+      "BTC/USDT": 64063.71,
+      "ETH/USDT": 1878.39,
+      "ADA/USDT": 0.2475,
+      "XRP/USDT": 1.1582,
+      "DOGE/USDT": 0.08916,
+      "SOL/USDT": 79.7,
+      "ETH/BTC": 0.02933,
+      "ADA/BTC": 3.86e-06,
+      "XRP/BTC": 1.808e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.001245,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04243
+    }
+  },
+  {
+    "time": "21:25:00",
+    "prices": {
+      "BTC/USDT": 63509.59,
+      "ETH/USDT": 1857.43,
+      "ADA/USDT": 0.2446,
+      "XRP/USDT": 1.1423,
+      "DOGE/USDT": 0.08768,
+      "SOL/USDT": 78.18,
+      "ETH/BTC": 0.02926,
+      "ADA/BTC": 3.86e-06,
+      "XRP/BTC": 1.799e-05,
+      "DOGE/BTC": 1.38e-06,
+      "SOL/BTC": 0.0012311,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04208
+    }
+  },
+  {
+    "time": "21:26:00",
+    "prices": {
+      "BTC/USDT": 64053.89,
+      "ETH/USDT": 1873.21,
+      "ADA/USDT": 0.2471,
+      "XRP/USDT": 1.1611,
+      "DOGE/USDT": 0.08857,
+      "SOL/USDT": 78.82,
+      "ETH/BTC": 0.02924,
+      "ADA/BTC": 3.86e-06,
+      "XRP/BTC": 1.812e-05,
+      "DOGE/BTC": 1.38e-06,
+      "SOL/BTC": 0.0012302,
+      "ADA/ETH": 0.0001319,
+      "SOL/ETH": 0.04206
+    }
+  },
+  {
+    "time": "21:27:00",
+    "prices": {
+      "BTC/USDT": 64139.9,
+      "ETH/USDT": 1877.14,
+      "ADA/USDT": 0.2481,
+      "XRP/USDT": 1.1662,
+      "DOGE/USDT": 0.08911,
+      "SOL/USDT": 79.22,
+      "ETH/BTC": 0.02926,
+      "ADA/BTC": 3.87e-06,
+      "XRP/BTC": 1.819e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012353,
+      "ADA/ETH": 0.0001321,
+      "SOL/ETH": 0.04219
+    }
+  },
+  {
+    "time": "21:28:00",
+    "prices": {
+      "BTC/USDT": 64151.44,
+      "ETH/USDT": 1878.28,
+      "ADA/USDT": 0.2479,
+      "XRP/USDT": 1.1628,
+      "DOGE/USDT": 0.08906,
+      "SOL/USDT": 79.04,
+      "ETH/BTC": 0.02928,
+      "ADA/BTC": 3.86e-06,
+      "XRP/BTC": 1.812e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.001232,
+      "ADA/ETH": 0.000132,
+      "SOL/ETH": 0.04209
+    }
+  },
+  {
+    "time": "21:29:00",
+    "prices": {
+      "BTC/USDT": 63866.59,
+      "ETH/USDT": 1874.93,
+      "ADA/USDT": 0.2469,
+      "XRP/USDT": 1.1573,
+      "DOGE/USDT": 0.08877,
+      "SOL/USDT": 78.71,
+      "ETH/BTC": 0.02936,
+      "ADA/BTC": 3.86e-06,
+      "XRP/BTC": 1.812e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012324,
+      "ADA/ETH": 0.0001317,
+      "SOL/ETH": 0.04198
+    }
+  },
+  {
+    "time": "21:30:00",
+    "prices": {
+      "BTC/USDT": 63719.59,
+      "ETH/USDT": 1871.97,
+      "ADA/USDT": 0.2475,
+      "XRP/USDT": 1.1618,
+      "DOGE/USDT": 0.08897,
+      "SOL/USDT": 78.68,
+      "ETH/BTC": 0.02939,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.823e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012349,
+      "ADA/ETH": 0.0001322,
+      "SOL/ETH": 0.04202
+    }
+  },
+  {
+    "time": "21:31:00",
+    "prices": {
+      "BTC/USDT": 63563.59,
+      "ETH/USDT": 1861.97,
+      "ADA/USDT": 0.2467,
+      "XRP/USDT": 1.1577,
+      "DOGE/USDT": 0.08859,
+      "SOL/USDT": 78.28,
+      "ETH/BTC": 0.02929,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.821e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012315,
+      "ADA/ETH": 0.0001325,
+      "SOL/ETH": 0.04205
+    }
+  },
+  {
+    "time": "21:32:00",
+    "prices": {
+      "BTC/USDT": 63784.93,
+      "ETH/USDT": 1869.25,
+      "ADA/USDT": 0.248,
+      "XRP/USDT": 1.1674,
+      "DOGE/USDT": 0.08916,
+      "SOL/USDT": 78.66,
+      "ETH/BTC": 0.0293,
+      "ADA/BTC": 3.88e-06,
+      "XRP/BTC": 1.83e-05,
+      "DOGE/BTC": 1.39e-06,
+      "SOL/BTC": 0.0012332,
+      "ADA/ETH": 0.0001327,
+      "SOL/ETH": 0.04206
+    }
+  },
+  {
+    "time": "21:33:00",
+    "prices": {
+      "BTC/USDT": 63851.37,
+      "ETH/USDT": 1869.81,
+      "ADA/USDT": 0.2488,
+      "XRP/USDT": 1.166,
+      "DOGE/USDT": 0.08938,
+      "SOL/USDT": 78.77,
+      "ETH/BTC": 0.02929,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.826e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012335,
+      "ADA/ETH": 0.0001331,
+      "SOL/ETH": 0.04212
+    }
+  },
+  {
+    "time": "21:34:00",
+    "prices": {
+      "BTC/USDT": 63729.09,
+      "ETH/USDT": 1868.28,
+      "ADA/USDT": 0.2491,
+      "XRP/USDT": 1.1657,
+      "DOGE/USDT": 0.08931,
+      "SOL/USDT": 78.74,
+      "ETH/BTC": 0.02931,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.828e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012354,
+      "ADA/ETH": 0.0001332,
+      "SOL/ETH": 0.04212
+    }
+  },
+  {
+    "time": "21:35:00",
+    "prices": {
+      "BTC/USDT": 63684.48,
+      "ETH/USDT": 1860.85,
+      "ADA/USDT": 0.2487,
+      "XRP/USDT": 1.166,
+      "DOGE/USDT": 0.08927,
+      "SOL/USDT": 78.45,
+      "ETH/BTC": 0.02922,
+      "ADA/BTC": 3.9e-06,
+      "XRP/BTC": 1.831e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012319,
+      "ADA/ETH": 0.0001336,
+      "SOL/ETH": 0.04216
+    }
+  },
+  {
+    "time": "21:36:00",
+    "prices": {
+      "BTC/USDT": 63552.91,
+      "ETH/USDT": 1856.29,
+      "ADA/USDT": 0.2485,
+      "XRP/USDT": 1.1679,
+      "DOGE/USDT": 0.08925,
+      "SOL/USDT": 78.47,
+      "ETH/BTC": 0.02921,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.837e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012344,
+      "ADA/ETH": 0.0001339,
+      "SOL/ETH": 0.04226
+    }
+  },
+  {
+    "time": "21:37:00",
+    "prices": {
+      "BTC/USDT": 63702.16,
+      "ETH/USDT": 1863.46,
+      "ADA/USDT": 0.2503,
+      "XRP/USDT": 1.1822,
+      "DOGE/USDT": 0.08976,
+      "SOL/USDT": 78.86,
+      "ETH/BTC": 0.02926,
+      "ADA/BTC": 3.92e-06,
+      "XRP/BTC": 1.855e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.001238,
+      "ADA/ETH": 0.0001342,
+      "SOL/ETH": 0.04229
+    }
+  },
+  {
+    "time": "21:38:00",
+    "prices": {
+      "BTC/USDT": 63640.0,
+      "ETH/USDT": 1860.66,
+      "ADA/USDT": 0.2498,
+      "XRP/USDT": 1.1786,
+      "DOGE/USDT": 0.08951,
+      "SOL/USDT": 78.78,
+      "ETH/BTC": 0.02924,
+      "ADA/BTC": 3.93e-06,
+      "XRP/BTC": 1.851e-05,
+      "DOGE/BTC": 1.4e-06,
+      "SOL/BTC": 0.0012378,
+      "ADA/ETH": 0.0001343,
+      "SOL/ETH": 0.04235
+    }
+  },
+  {
+    "time": "21:39:00",
+    "prices": {
+      "BTC/USDT": 63679.1,
+      "ETH/USDT": 1861.16,
+      "ADA/USDT": 0.2508,
+      "XRP/USDT": 1.1863,
+      "DOGE/USDT": 0.08997,
+      "SOL/USDT": 79.09,
+      "ETH/BTC": 0.02922,
+      "ADA/BTC": 3.94e-06,
+      "XRP/BTC": 1.863e-05,
+      "DOGE/BTC": 1.42e-06,
+      "SOL/BTC": 0.0012418,
+      "ADA/ETH": 0.0001348,
+      "SOL/ETH": 0.04249
+    }
+  },
+  {
+    "time": "21:40:00",
+    "prices": {
+      "BTC/USDT": 64010.01,
+      "ETH/USDT": 1873.32,
+      "ADA/USDT": 0.2525,
+      "XRP/USDT": 1.1996,
+      "DOGE/USDT": 0.09063,
+      "SOL/USDT": 79.7,
+      "ETH/BTC": 0.02926,
+      "ADA/BTC": 3.94e-06,
+      "XRP/BTC": 1.874e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012452,
+      "ADA/ETH": 0.0001348,
+      "SOL/ETH": 0.04254
+    }
+  },
+  {
+    "time": "21:41:00",
+    "prices": {
+      "BTC/USDT": 63813.0,
+      "ETH/USDT": 1865.84,
+      "ADA/USDT": 0.2515,
+      "XRP/USDT": 1.1965,
+      "DOGE/USDT": 0.09046,
+      "SOL/USDT": 79.45,
+      "ETH/BTC": 0.02924,
+      "ADA/BTC": 3.94e-06,
+      "XRP/BTC": 1.874e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012455,
+      "ADA/ETH": 0.0001348,
+      "SOL/ETH": 0.0426
+    }
+  },
+  {
+    "time": "21:42:00",
+    "prices": {
+      "BTC/USDT": 63729.23,
+      "ETH/USDT": 1864.19,
+      "ADA/USDT": 0.2508,
+      "XRP/USDT": 1.1973,
+      "DOGE/USDT": 0.09019,
+      "SOL/USDT": 79.39,
+      "ETH/BTC": 0.02926,
+      "ADA/BTC": 3.93e-06,
+      "XRP/BTC": 1.878e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012457,
+      "ADA/ETH": 0.0001345,
+      "SOL/ETH": 0.04256
+    }
+  },
+  {
+    "time": "21:43:00",
+    "prices": {
+      "BTC/USDT": 63720.34,
+      "ETH/USDT": 1865.01,
+      "ADA/USDT": 0.2507,
+      "XRP/USDT": 1.1976,
+      "DOGE/USDT": 0.09026,
+      "SOL/USDT": 79.48,
+      "ETH/BTC": 0.02927,
+      "ADA/BTC": 3.94e-06,
+      "XRP/BTC": 1.88e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012474,
+      "ADA/ETH": 0.0001345,
+      "SOL/ETH": 0.04263
+    }
+  },
+  {
+    "time": "21:44:00",
+    "prices": {
+      "BTC/USDT": 63666.94,
+      "ETH/USDT": 1867.54,
+      "ADA/USDT": 0.2503,
+      "XRP/USDT": 1.1959,
+      "DOGE/USDT": 0.09007,
+      "SOL/USDT": 79.47,
+      "ETH/BTC": 0.02934,
+      "ADA/BTC": 3.93e-06,
+      "XRP/BTC": 1.878e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012483,
+      "ADA/ETH": 0.0001341,
+      "SOL/ETH": 0.04255
+    }
+  },
+  {
+    "time": "21:45:00",
+    "prices": {
+      "BTC/USDT": 63806.5,
+      "ETH/USDT": 1870.2,
+      "ADA/USDT": 0.2502,
+      "XRP/USDT": 1.1963,
+      "DOGE/USDT": 0.09022,
+      "SOL/USDT": 79.56,
+      "ETH/BTC": 0.02931,
+      "ADA/BTC": 3.92e-06,
+      "XRP/BTC": 1.874e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012473,
+      "ADA/ETH": 0.0001338,
+      "SOL/ETH": 0.04253
+    }
+  },
+  {
+    "time": "21:46:00",
+    "prices": {
+      "BTC/USDT": 63527.52,
+      "ETH/USDT": 1861.15,
+      "ADA/USDT": 0.2486,
+      "XRP/USDT": 1.1871,
+      "DOGE/USDT": 0.08955,
+      "SOL/USDT": 79.14,
+      "ETH/BTC": 0.02931,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.869e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012458,
+      "ADA/ETH": 0.0001335,
+      "SOL/ETH": 0.0425
+    }
+  },
+  {
+    "time": "21:47:00",
+    "prices": {
+      "BTC/USDT": 63465.72,
+      "ETH/USDT": 1858.11,
+      "ADA/USDT": 0.2484,
+      "XRP/USDT": 1.1868,
+      "DOGE/USDT": 0.08955,
+      "SOL/USDT": 79.02,
+      "ETH/BTC": 0.02928,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.869e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012452,
+      "ADA/ETH": 0.0001337,
+      "SOL/ETH": 0.04252
+    }
+  },
+  {
+    "time": "21:48:00",
+    "prices": {
+      "BTC/USDT": 63261.81,
+      "ETH/USDT": 1853.66,
+      "ADA/USDT": 0.2477,
+      "XRP/USDT": 1.1833,
+      "DOGE/USDT": 0.08927,
+      "SOL/USDT": 78.75,
+      "ETH/BTC": 0.02931,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.87e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012445,
+      "ADA/ETH": 0.0001336,
+      "SOL/ETH": 0.04243
+    }
+  },
+  {
+    "time": "21:49:00",
+    "prices": {
+      "BTC/USDT": 63300.0,
+      "ETH/USDT": 1850.5,
+      "ADA/USDT": 0.2474,
+      "XRP/USDT": 1.1814,
+      "DOGE/USDT": 0.08931,
+      "SOL/USDT": 78.71,
+      "ETH/BTC": 0.02925,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.867e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012437,
+      "ADA/ETH": 0.0001336,
+      "SOL/ETH": 0.04255
+    }
+  },
+  {
+    "time": "21:50:00",
+    "prices": {
+      "BTC/USDT": 63263.06,
+      "ETH/USDT": 1847.85,
+      "ADA/USDT": 0.2473,
+      "XRP/USDT": 1.18,
+      "DOGE/USDT": 0.08938,
+      "SOL/USDT": 78.71,
+      "ETH/BTC": 0.02922,
+      "ADA/BTC": 3.91e-06,
+      "XRP/BTC": 1.864e-05,
+      "DOGE/BTC": 1.41e-06,
+      "SOL/BTC": 0.0012435,
+      "ADA/ETH": 0.0001337,
+      "SOL/ETH": 0.04255
+    }
+  }
+]
