@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="description" content="This is a simulation of crowd behavior in an evacuation. Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached." />
-<meta name="keywords" content="Mean Field Games, Discrete Time Mean Field Games, Discrete Time Mean Field Games Simulation, Numerical Methods, Hamilton-Jacobi-Bellman Equation, Fokker-Planck Equation, Optimal Control, Stochastic Processes" />
+<meta name="description" content="This is a simulation of crowd behavior in an evacuation. Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. A learning strategy based on Fictitious Play from Game Theory is adopted to improve convergence." />
+<meta name="keywords" content="Mean Field Games, Discrete Time Mean Field Games, Discrete Time Mean Field Games Simulation, Numerical Methods, Hamilton-Jacobi-Bellman Equation, Fokker-Planck Equation, Optimal Control, Stochastic Processes, Game Theory, Fictitious Play" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Discrete Time Mean Field Games Demo</title>
+<title>Discrete Time Mean Field Games Demo With Strategy Learning</title>
 <meta name="author" content="Ruobing Zhao">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -492,6 +492,7 @@ function MFGIteration() {
     // rho(t+1, x',y') = sum_{(x,y)} rho(t,x,y)*Pr(x', y', x, y, u*)
     // (x,y) neighbor of (x', y')
     rho_old = new Float64Array(rho);
+    // copy density array
     let rho_new = new Float64Array(T*grid_size*grid_size);
     //rho_new[index(0,0,0)] = 1;
     // set to intial distribution
@@ -504,7 +505,6 @@ function MFGIteration() {
     for (let time = 0; time < T-1; time++){
       for (let i = 0; i < grid_size; i++){
         for (let j = 0; j < grid_size; j++){
-          ///////////////////// OLD (NO SLOWDOWN)
           let sum = 0;
           // get neighbors of (i,j)
           let nb = neighbors[i*grid_size + j];
@@ -519,36 +519,6 @@ function MFGIteration() {
           sum = sum + P*rho_new[index(time, i, j)]; // use rho_new
 
           rho_new[index(time+1, i, j)] = sum;
-          ///////////////////// OLD (NO SLOWDOWN) END
-
-          // /////////////////////// NEW (with SLOWDOWN)
-          // let srcRho = rho[index(time, i,j)];
-          // if (srcRho===0) continue;
-          //
-          // let nb = neighbors[i*grid_size+j];
-          // let u = u_opt[index(time, i, j)];
-          //
-          // let totalP = 0;
-          // let P_stay = Pr(i,j,i,j,u);
-          // totalP += P_stay;
-          // rho_new[index(time+1,i,j)] += P_stay * srcRho;
-          //
-          // for (let n = 0; n<nb;n++){
-          //   let destX = nb[n][0];
-          //   let destY = nb[n][1];
-          //   let P = Pr(destX,destY,i,j,u);
-          //   totalP += P;
-          //   // let destRho = rho[index(time, destX, destY)];
-          //   // // let slowdown = 1/(1+ 10*destRho);
-          //   // let slowdown = 1;
-          //   // rho_new[index(time+1,destX,destY)] += P*slowdown*srcRho;
-          //   // rho_new[index(time+1,i,j)] += P*(1-slowdown)*srcRho;
-          //   rho_new[index(time+1, destX, destY)] += P*srcRho;
-          // }
-          // if (Math.abs(totalP-1)> 0.001){
-          //   console.log("Cell (" + i + "," + j + ") action =" + u +" totalP=" + totalP + "nb.length=" +nb.length);
-          // }
-          // /////////////////////// NEW (with SLOWDOWN) END
         }
       }
       // // check total mass doesn't exceed 1
@@ -632,7 +602,7 @@ return {density: rho, control: u_opt};
     <br>
     <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
     <h4>
-      4. Mean Field Games Demo
+      4. Mean Field Games Demo (with Strategy Learning)
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
     This is a simulation of crowd behavior in an evacuation (Click <a href="#sim">here</a> to jump to simulation). Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. The trajectory of an agent, \(X_t\), evolves in time: \[ dX_t = b(X_t, u_t,\rho_t)dt + \sigma dW_t\]
@@ -663,7 +633,13 @@ return {density: rho, control: u_opt};
     \[\rho_{t+1}(x) = \sum_{x'}\rho_t(x')P(x|x', u^*(t,x'))\]
     where \(P(x|x', u^*(t,x'))\) is the transition probability from \(x'\) to \(x\) following control \(u^*\).
     An equilibrium pair \((V,\rho)\) satisfies both the Bellman equation and the density evolution equation. <br>
-    <span id = "sim">This applet simulates such equilibrium.</span> The exit is located on one side of the room (highlighted in green). Click the button to start simulation.<br><br>
+    To improve convergence, I used a version of Fictitious Play from Game Theory, first introduced by Julia Robinson in <a href = "http://www.dklevine.com/archive/refs4422.pdf">1951</a>. This is a learning strategy where the agents learn to play the game. The idea is that each agent chooses their strategy in the current round (current iteration) assuming that the other agents will adopt a strategy according to their strategy frequencies in the past rounds. Robinson proved that if Fictitious Play converges, then it converges to a Nash Equilibrium of the original game. In Mean Field Games, this learning strategy is implemented analogously by looking at the historical average of the population density from previous iterations, so at iteration \(k\), instead of minimizing the value function based on the current population density distribution \(\rho^k(x)\), the agent minimizes the value function based on the historical average of population density, \(\bar{\rho}^k = \frac{1}{k}\sum_{i=1}^k\rho^i\):
+    \[V(t,x) = \inf_u\bigg\{ L(x,u,\bar{\rho_t}) + \mathbb{E}\big[V(t+1,x_{t+1})\big]\bigg\}\]
+    \[u^* = \text{argmin}_u \bigg\{ L(x,u,\bar{\rho_t}) + \mathbb{E}\big[V(t+1,x_{t+1})\big]\bigg\}\]
+    This improves convergence by smoothing out perturbations in the population density, since the change in density after iteration \(k\) only contributes \(\frac{\rho^{k+1}(x)-\rho^k(x)}{k+1}\) to the change in historical average. The convergence result (for continuous-time model) is proved in <a href = "https://www.esaim-cocv.org/articles/cocv/pdf/2017/02/cocv160004-s.pdf">this paper</a> by Cardaliaguet and Hadikhanloo.
+    <br>
+    <br>
+    <span id = "sim">This applet simulates the Nash Equilibrium of the Mean Field Game.</span> The crowd looks for the exit which is located on one side of the room (highlighted in <span style="color:green">green</span>). Click the button to start simulation.<br><br>
     <div>
     <div class="slidercontainer">
       <div>
