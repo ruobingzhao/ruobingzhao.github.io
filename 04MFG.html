@@ -612,7 +612,7 @@ return {density: rho, control: u_opt};
     The value function is defined as:
     \[V(t,x) = \inf_u J(t,x,u)\]
     with terminal conditon \(V(T,x) = G(x,\rho_T)\). This value function solves the Hamilton-Jacobi-Bellman (HJB) equation:
-    \[-\frac{\partial V}{\partial t} - \frac{\sigma^2}{2}\nabla^2 V = \inf_u \bigg\{b(x,t,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\} \]
+    \[-\frac{\partial V}{\partial t} - \frac{\sigma^2}{2}\nabla^2 V = \inf_u \bigg\{b(x,u,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\} \]
     and the optimal control is
     \[u^* = \text{argmin}_u \bigg\{b(x,t,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\}\]
     At the same time, the density function \(\rho_t(x)\) also evolves with time and satisfies the Fokker-Planck equation:
@@ -627,7 +627,7 @@ return {density: rho, control: u_opt};
     \[V(t,x) = \inf_u J(t,x,u)\]
     which satisfies the (backward) Bellman equation:
     \[V(t,x) = \inf_u\bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\big]\bigg\}\]
-    \[V(t,x) = G(x, \rho_T)\]
+    \[V(T,x) = G(x, \rho_T)\]
     \[u^* = \text{argmin}_u \bigg\{ L(x,u,\rho_t) + \mathbb{E}\big[V(t+1,x_{t+1})\big]\bigg\}\]
     The density satisfies the initial condition \(\rho_0(x)\) and evolves forward in time following:
     \[\rho_{t+1}(x) = \sum_{x'}\rho_t(x')P(x|x', u^*(t,x'))\]
@@ -639,7 +639,7 @@ return {density: rho, control: u_opt};
     The convergence result (for continuous-time model) is proved in <a href = "https://www.esaim-cocv.org/articles/cocv/pdf/2017/02/cocv160004-s.pdf">this paper</a> by Cardaliaguet and Hadikhanloo. With the cost functions defined as
     \[L(x,u,\rho) = c(u)+\lambda \rho(x)\]
     \[G(x,\rho) = |x-x_{\text{exit}}|^2\]
-    where \(c(u) = 1\) for \(u = \) up, down, left, right, \(c(u) = 1.4\) for \(u = \) diagonal moves, and \(\lambda\) is a constant, the convergence conditions are satisfied.
+    where \(c(u) = 1\) for \(u = \) up, down, left, right, \(c(u) = 1.4\) for \(u = \) diagonal moves, and \(\lambda\) is a positive constant, the convergence conditions are satisfied.
     <br>
     <br>
     <span id = "sim">This applet simulates the Nash Equilibrium of the Mean Field Game.</span> The crowd looks for the exit which is located on one side of the room (highlighted in <span style="color:green">green</span>). Click the button to start simulation.<br><br>
