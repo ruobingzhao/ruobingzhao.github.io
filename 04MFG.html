@@ -614,7 +614,7 @@ return {density: rho, control: u_opt};
     with terminal conditon \(V(T,x) = G(x,\rho_T)\). This value function solves the Hamilton-Jacobi-Bellman (HJB) equation:
     \[-\frac{\partial V}{\partial t} - \frac{\sigma^2}{2}\nabla^2 V = \inf_u \bigg\{b(x,u,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\} \]
     and the optimal control is
-    \[u^* = \text{argmin}_u \bigg\{b(x,t,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\}\]
+    \[u^* = \text{argmin}_u \bigg\{b(x,u,\rho)\cdot \nabla V + L(x,u,\rho)\bigg\}\]
     At the same time, the density function \(\rho_t(x)\) also evolves with time and satisfies the Fokker-Planck equation:
     \[\frac{\partial \rho}{\partial t} - \frac{\sigma^2}{2}\nabla^2 \rho = -\nabla \cdot (\rho b(x,u^*,\rho))\]
     An equilibrium pair \((V,\rho)\) satisfies both equations. The solution (existence and uniqueness given by Fixed-Point Theorems) can be found following an iterative algorithm: At iteration \(k\), given \(\rho^k\), solve the HJB equation ( propagates backward) to get \(V^k\) and extract \(u^*\), then use \(u^*\) to solve the Fokker-Planck equation (propagates forward), with initial condition \(\rho_0(x)\), to get \(\rho^{k+1}\). Repeat until a convergence criterion is satisfied.
