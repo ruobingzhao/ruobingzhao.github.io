@@ -636,7 +636,10 @@ return {density: rho, control: u_opt};
     In this demo, I used a version of Fictitious Play from Game Theory, first introduced by Julia Robinson in <a href = "http://www.dklevine.com/archive/refs4422.pdf">1951</a>. This is a learning strategy where the agents learn to play the game. The idea is that each agent chooses their strategy in the current round (current iteration) assuming that the other agents will adopt a strategy according to their strategy frequencies in the past rounds. Robinson proved that if Fictitious Play converges, then it converges to a Nash Equilibrium of the original game. In Mean Field Games, this learning strategy is implemented analogously by looking at the historical average of the population density from previous iterations, so at iteration \(k\), instead of minimizing the value function based on the current population density distribution \(\rho^k(x)\), the agent minimizes the value function based on the historical average of population density, \(\bar{\rho}^k = \frac{1}{k}\sum_{i=1}^k\rho^i\):
     \[V^k(t,x) = \inf_u\bigg\{ L(x,u,\bar{\rho_t}^k) + \mathbb{E}\big[V^k(t+1,x_{t+1})\big]\bigg\}\]
     \[u^{*k} = \text{argmin}_u \bigg\{ L(x,u,\bar{\rho_t}^k) + \mathbb{E}\big[V^k(t+1,x_{t+1})\big]\bigg\}\]
-    The convergence result (for continuous-time model) is proved in <a href = "https://www.esaim-cocv.org/articles/cocv/pdf/2017/02/cocv160004-s.pdf">this paper</a> by Cardaliaguet and Hadikhanloo.
+    The convergence result (for continuous-time model) is proved in <a href = "https://www.esaim-cocv.org/articles/cocv/pdf/2017/02/cocv160004-s.pdf">this paper</a> by Cardaliaguet and Hadikhanloo. With the cost functions defined as
+    \[L(x,u,\rho) = c(u)+\lambda \rho(x)\]
+    \[G(x,\rho) = |x-x_{\text{exit}}|_2\]
+    where \(c(u) = 1\) for \(u = \) up, down, left, right, \(c(u) = 1.4\) for \(u = \) diagonal moves, and \(\lambda\) is a constant, the convergence criterion is satisfied.
     <br>
     <br>
     <span id = "sim">This applet simulates the Nash Equilibrium of the Mean Field Game.</span> The crowd looks for the exit which is located on one side of the room (highlighted in <span style="color:green">green</span>). Click the button to start simulation.<br><br>
