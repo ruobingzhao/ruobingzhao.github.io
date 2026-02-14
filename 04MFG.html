@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="description" content="This is a simulation of crowd behavior in an evacuation. Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. A learning strategy based on Fictitious Play from Game Theory is adopted." />
+<meta name="description" content="This is a simulation of crowd behavior in an evacuation. Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. The solution is obtained by solving the HJB equation and the Fokker-Planck equation together. A learning strategy based on Fictitious Play from Game Theory is adopted." />
 <meta name="keywords" content="Mean Field Games, Discrete Time Mean Field Games, Discrete Time Mean Field Games Simulation, Numerical Methods, Hamilton-Jacobi-Bellman Equation, Fokker-Planck Equation, Optimal Control, Stochastic Processes, Game Theory, Fictitious Play" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Discrete Time Mean Field Games Demo With Strategy Learning</title>
+<title>Discrete Time Mean Field Games Demo With Learned Strategy</title>
 <meta name="author" content="Ruobing Zhao">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -602,7 +602,7 @@ return {density: rho, control: u_opt};
     <br>
     <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
     <h4>
-      4. Mean Field Games Demo (with Strategy Learning)
+      4. Mean Field Games Demo (with Learned Strategy)
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
     This is a simulation of crowd behavior in an evacuation (Click <a href="#sim">here</a> to jump to simulation). Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. The trajectory of an agent, \(X_t\), evolves in time: \[ dX_t = b(X_t, u_t,\rho_t)dt + \sigma dW_t\]
@@ -633,13 +633,13 @@ return {density: rho, control: u_opt};
     \[\rho_{t+1}(x) = \sum_{x'}\rho_t(x')P(x|x', u^*(t,x'))\]
     where \(P(x|x', u^*(t,x'))\) is the transition probability from \(x'\) to \(x\) following control \(u^*\).
     An equilibrium pair \((V,\rho)\) satisfies both the Bellman equation and the density evolution equation. <br>
-    In this demo, I used a version of Fictitious Play from Game Theory, first introduced by Julia Robinson in <a href = "http://www.dklevine.com/archive/refs4422.pdf">1951</a>. This is a learning strategy where the agents learn to play the game. The idea is that each agent chooses their strategy in the current round (current iteration) assuming that the other agents will adopt a strategy according to their strategy frequencies in the past rounds. Robinson proved that if Fictitious Play converges, then it converges to a Nash Equilibrium of the original game. In Mean Field Games, this learning strategy is implemented analogously by looking at the historical average of the population density from previous iterations, so at iteration \(k\), instead of minimizing the value function based on the current population density distribution \(\rho^k(x)\), the agent minimizes the value function based on the historical average of population density, \(\bar{\rho}^k = \frac{1}{k}\sum_{i=1}^k\rho^i\):
+    In this demo, I used a version of Fictitious Play from Game Theory, first introduced by Julia Robinson in <a href = "https://www.jstor.org/stable/1969530">1951</a>. This is a learning strategy where the agents learn to play the game. The idea is that each agent chooses their strategy in the current round (current iteration) assuming that the other agents will adopt a strategy according to their strategy frequencies in the past rounds. Robinson proved that if Fictitious Play converges, then it converges to a Nash Equilibrium of the original game. In Mean Field Games, this learning strategy is implemented analogously by looking at the historical average of the population density from previous iterations, so at iteration \(k\), instead of minimizing the value function based on the current population density distribution \(\rho^k(x)\), the agent minimizes the value function based on the historical average of population density, \(\bar{\rho}^k = \frac{1}{k}\sum_{i=1}^k\rho^i\):
     \[V^k(t,x) = \inf_u\bigg\{ L(x,u,\bar{\rho_t}^k) + \mathbb{E}\big[V^k(t+1,x_{t+1})\big]\bigg\}\]
     \[u^{*k} = \text{argmin}_u \bigg\{ L(x,u,\bar{\rho_t}^k) + \mathbb{E}\big[V^k(t+1,x_{t+1})\big]\bigg\}\]
     The convergence result (for continuous-time model) is proved in <a href = "https://www.esaim-cocv.org/articles/cocv/pdf/2017/02/cocv160004-s.pdf">this paper</a> by Cardaliaguet and Hadikhanloo. With the cost functions defined as
     \[L(x,u,\rho) = c(u)+\lambda \rho(x)\]
-    \[G(x,\rho) = |x-x_{\text{exit}}|_2\]
-    where \(c(u) = 1\) for \(u = \) up, down, left, right, \(c(u) = 1.4\) for \(u = \) diagonal moves, and \(\lambda\) is a constant, the convergence criterion is satisfied.
+    \[G(x,\rho) = |x-x_{\text{exit}}|^2\]
+    where \(c(u) = 1\) for \(u = \) up, down, left, right, \(c(u) = 1.4\) for \(u = \) diagonal moves, and \(\lambda\) is a constant, the convergence conditions are satisfied.
     <br>
     <br>
     <span id = "sim">This applet simulates the Nash Equilibrium of the Mean Field Game.</span> The crowd looks for the exit which is located on one side of the room (highlighted in <span style="color:green">green</span>). Click the button to start simulation.<br><br>
