@@ -69,10 +69,14 @@ html { background: white; margin:0;}
 function toggle() {
     var image = document.getElementById('portrait');
 		if (image.src.match("museum2.jpg")) {
-		// 	image.src = "beach_cropped.jpg";
-		// } else if (image.src.match("beach_cropped.jpg")) {
+			image.src = "boar.jpg";
+		} else if (image.src.match("boar.jpg")) {
 			image.src ="river.jpg"
 		} else if (image.src.match("river.jpg")){
+			image.src = "paris.jpg";
+		} else if (image.src.match("paris.jpg")) {
+			image.src = "temple_ds.heic";
+		} else if (image.src.match("temple_ds.heic")) {
 			image.src = "temple_copy.jpg";
 		} else if (image.src.match("temple_copy.jpg")) {
         image.src = "pic.jpg";
