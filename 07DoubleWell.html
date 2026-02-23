@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="This applet simulates the thermal equilibrium distribution of a quantum particle in a double-potential well. The particle satisfies the time-independent Schrödinger Equation. The probability amplitude of finding the particle at position \(x\) is given by the wave function, and the probability of finding the particle at each energy level is given by the Boltzmann distribution. A scaled Brownian motion can be constructed from the quantum density operator after an inverse-temperature transform trick. This allows us to use Feynman's Path Integral Approach to solve for the distribution. The Metropolis-Hastings algorithm for Markov Chain Monte Carlo method is used to simulate the paths. The paths can be sampled as Brownian Bridges to improve the algorithm's efficiency. Tunneling effect is visible as the paths are sampled, where the particle crosses the potential barrier." />
+<meta name="keywords" content="Quantum Mechanics, Statistical Mechanics, Brownian Bridge, Numerical Method, Metropolis Algorithm" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>Simulating Quantum Particle and Tunneling in a Double-Potential Well Using Brownian Bridge</title>
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+</head>
+<body>
+<style type="text/css">
+#transition-table td, #transition-table th {padding: 2px 2px; font-size: 12px }
+#weight-table td, #weight-table th {padding: 2px 2px; font-size: 12px }
+
+#returns-table td, #returns-table th {padding: 2px 2px; font-size: 12px }
+
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1;
+  height: 350px;
+}
+*/
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
+
+#pseudocode {
+  display: none;
+}
+
+#terrain-table th, #terrain-table td {
+  padding: 2px, 2px;
+  font-size: 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+#terrain-table th {
+  text-align: center;
+}
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+</style>
+<script>
+
+///////////// GLOBAL VARIABLES /////////////
+const beta = 10; //inverse temperature (time horizon)
+const L = 5; // length of the box that the particle is in
+const M = 200; // number of bins for histogram
+const N = 300;// number of time steps
+const dt = beta/N // size of time increment
+const lmax = Math.floor(N/10); // maximum length of brownian bridge to modify
+let path = new Float64Array(N); // array that stores the position of a Brownian path
+path.fill(0);
+// for simplicity, set hbar = m = 1
+const hbar = 1;
+const m = 1;
+
+const max_iter = 100000;
+
+// histogram for distribution
+let histogram = new Int32Array(M);// array for histogram
+histogram.fill(0);
+const bin_size = L/M;
+
+///////////// HELPER FUNCTIONS /////////////
+
+// sample from normal distribution
+// Box Muller transform
+function norm_rand(mu, sigmasq) {
+  u1 = 1.0-Math.random();
+  u2 = 1.0-Math.random();// prevents log(0)
+  z0 = Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+  return z0*Math.sqrt(sigmasq) + mu;
+}
+
+// sample a random integer between min and max
+function int_rand(min, max) {
+  return Math.floor(Math.random()*(max-min+1)) + min;
+}
+
+function V(x) {
+  return 4*Math.pow(x,4) - 8*Math.pow(x,2) + 4 // double-potential well
+}
+
+///////////// COMPUTATIONS /////////////
+
+// ONE STEP METROPOLIS
+// FOR ONE FRAME IN ANIMATION
+// iter = current iteration
+function metropolis(iter) {
+    // Step 1: pick anchor point x_0 for the start position of the j-th path
+    // and generate a new path by making changes to a portion of it (l nodes)
+    newpath(path);
+
+    // Step 2: slide the path to another random position, the new x_0
+    movepath(path);
+
+    // fill bins of histogram
+    // fill every 10 paths (performance improvement)
+    if (iter % 10 == 0){
+      for (let i = 0; i < N; i++) {
+      let bin  = Math.floor((path[i]+L/2)/bin_size);
+        // add to histogram
+        // skip if out of bounds
+        if (bin >= 0 && bin < M) {
+          histogram[bin] +=1;
+        }
+      }
+    }
+}
+
+function newpath(path) {
+  // length of brownian bridge, take a random number between 3 and lmax
+  let l = int_rand(5, lmax);
+
+  // pick a random start node from 0 to N
+  let k = int_rand(0, N-1);
+
+  // endpoints of Brownian bridge
+  let x_start = path[k];
+  let x_end = path[(k+l)% N]; // index modulo N
+
+  // allocate array for inbetween nodes of Brownian bridge
+  let bridge = new Float64Array(l-1);
+
+  // compute energy change for alpha
+  let V_sum = 0;
+
+  // Generate a new path between node k and node k+l
+  for (let i =1; i <l; i++) {
+    // compute mean and variance of the inbetween nodes of the brownian bridge
+    // one step at a time
+    let mean = x_start + (1/(l-i+1))*(x_end - x_start);
+    let variance = (Math.pow(hbar,2)/m)*(l-i)*dt/(l-i+1);
+
+    // take a sample from normal distribution
+    let new_x = norm_rand(mean, variance);
+
+    // update x_start
+    x_start = new_x;
+
+    // append new_x to bridge
+    bridge[i-1] = new_x;
+
+    // compute energy change for alpha
+    V_sum += V(new_x) - V(path[(k+i) % N]);
+  }
+
+  // compute alpha
+  let alpha = Math.exp(-dt*V_sum);
+  alpha = Math.min(1, alpha);
+
+  // if accepted proposed move
+  if (Math.random() < alpha) {
+    // replace segment in old path with bridge
+    for (let i =1; i< l; i++){
+      path[(k+i) % N] = bridge[i-1];
+    }
+  }
+}
+
+function movepath(path) {
+  // propose a random move distance
+  // max shift distance = L/10
+  let max_shift = L/10;
+  let delta = (Math.random()*2-1)*max_shift;
+
+  // move new path
+  // compute energy change for alpha
+  let V_sum = 0;
+  for (let k = 0; k < N; k++) {
+    V_sum += V(path[k]+delta) - V(path[k]);
+  }
+
+  // compute alpha
+  let alpha = Math.exp(-dt*V_sum);
+  alpha = Math.min(1, alpha);
+
+  // if accepted proposed move
+  if (Math.random() < alpha) {
+    // replace old path with new path
+    for (let i = 0; i <N; i++) {
+      path[i] += delta;
+    }
+  }
+}
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "container">
+    <br>
+    <br>
+    <br>
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      7. Simulating Quantum Particle and Tunneling in a Double-Potential Well Using Brownian Bridge
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    This applet simulates the thermal equilibrium distribution of a quantum particle in a double-potential well. The particle satisfies the time-independent Schrödinger Equation. The probability amplitude of finding the particle at position \(x\) is given by the wave function, and the probability of finding the particle at each energy level is given by the Boltzmann distribution. A scaled Brownian motion can be constructed from the quantum density operator after an inverse-temperature transform trick. This allows us to use Feynman's Path Integral Approach to solve for the distribution. The Metropolis-Hastings algorithm for Markov Chain Monte Carlo method is used to simulate the paths. The paths can be sampled as Brownian Bridges to improve the algorithm's efficiency. Tunneling effect is visible as the paths are sampled, where the particle crosses the potential barrier.
+    <br>
+    <br>
+    <i>This tutorial is intended to be self-contained (given basic math and physics knowledge).</i> While the <a href="#reference">book</a> by Werner Krauth is a great reference for the numerical method, it leaves out a lot of background knowledge, which is why I wrote this tutorial. I will explain every step of building the simulation, starting from <a href = "#physics_section">the physics</a>, moving on to <a href = "#math_section">the math</a>, and last but not least the <a href = "#algo_section">numerical algorithm</a>. I try to make it easy to understand while maintaining a certain level of mathematical rigor. You can also skip all this and jump straight to the <a href="#simulation">simulation</a>.
+    <!-- <br> -->
+    <!-- <span id = "physics_section"><br></span> -->
+    <p id = "physics_section"><br><br></p>
+    <h4>The Physics</h4>
+    The Boltzmann distribution gives us the probability of finding a system in energy level \(E_n\) at temperature \(T\):
+    \[p_n = \frac{1}{Z}e^{-\frac{E_n}{k_B T}}\]
+    where \(Z \;\dot{=}\;\sum_{n=0}^{\infty}e^{-\frac{E_n}{k_B T}}\) is the partition function (to normalize total probability to 1), \(k_B\) is the Boltzmann constant and \(T\) is the temperature of the system.
+    For this simulation, the system is a quantum particle in a double-potential well. A quantum particle satisfies the Schrödinger Equation:
+    \[i\hbar\frac{\partial \Psi}{\partial t} = -\frac{\hbar^2}{2m}\frac{\partial^2 \Psi}{\partial x^2} + V\cdot \Psi\]
+    where \(\Psi = \Psi(x,t)\) is the probability amplitude of the particle, meaning that \(|\Psi(x)\Psi^*(x)| = |\Psi(x)|^2\) gives the probability density of the particle at position \(x\) and time \(t\), and \(V\) is the potential field of the system. Assuming that the potential function is not time-dependent, i.e. \(V=V(x)\), we can break \(\Psi(x,t)\) into time-dependent part and space-dependent part and simplify the equation. Let \(\Psi(x,t) = \phi(t)\psi(x)\), substitute this in the Schrödinger Equation and separate variables. We get
+    \[-i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = -\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x)\]
+    Since the left side and the right side depend on different variables, the only way that they can be identically equal is that both equals a constant, \(E\), the total energy of the system. Now we get a differential equation for each of the variables:
+    \[-i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = E\]
+    \[-\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x) = E\]
+    Note that the solution to the first equation is just \(\phi(t) = e^{-\frac{i E t}{\hbar}}\). Therefore, the wave function \(\Psi\) becomes \(\Psi(x,t) = e^{-\frac{i E t}{\hbar}}\psi(x)\). The probability density of the particle is then \(|\Psi(x,t)|^2 = |e^{-\frac{i E t}{\hbar}}\psi(x)|^2 = |\psi(x)|^2 \). Hence the probability of finding the particle at position \(x\) does not depend on time. Since we are simulating the equilibrium distribution of the particle, we can use \(\psi(x)\) as our probability amplitude function. To simplify the notation a bit, we introduce the operator
+    \[\hat{H} = -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} + \hat{V}(x) = \hat{K}+\hat{V}\]
+    Then the second differential equation simplifies to
+    \[\hat{H}\psi = E\psi\]
+    after multiplying both sides by \(\psi\).
+    <br>
+    <br>
+    Recall that the probability of finding the particle at a given energy level \(E_n\) is:
+    \[p_n = \frac{1}{Z}e^{-\frac{E_n}{k_B T}}\]
+    The probability density of finding the particle at energy level \(E_n\) (energy eigenstate \(n\) of the quantum system) and at position \(x\) is then
+    \[p_n(x) = \frac{1}{Z}e^{-\frac{E_n}{k_B T}}|\psi_n(x)|^2 \;\;\text{ or }\;\; \frac{1}{Z}\psi_n(x)e^{-\frac{E_n}{k_B T}}\psi_n^*(x)\]
+    where \(\psi_n(x)\) is the wave function for energy level \(n\). Hence the probability density of finding the particle at position \(x\) across all energy levels (which is what we are interested in) is then
+    \[\pi(x) = \sum_{n=0}^{\infty}\frac{1}{Z}e^{-\frac{E_n}{k_B T}}|\psi_n(x)|^2\]
+    Note that (using the <a href="https://en.wikipedia.org/wiki/Bra–ket_notation">Dirac notation</a>) the operator \(e^{-\frac{\hat{H}}{k_B T}}\) applied to \(|\psi_n\rangle\), the wave function for energy eigenstate \(n\), results in the eigenvalue \(e^{-\frac{E_n}{k_B T}}\).
+    <br>
+    <br>
+    For simplicity, let us introduce the inverse temperature, \(\beta = \frac{1}{k_B T}\). The connection between this inverse temperature transform and Feynman's path integral will be explained later.
+    <br>
+    <br>
+    The diagonal elements of the (infinite) density matrix with respect to (continuous) position basis are the unnormalized probability densities of finding the particle at position \(x\). These diagonal elements are:
+    \[\rho(x,x,\beta) = \sum_{n=0}^{\infty}e^{-\beta E_n}\psi_n(x)\psi_n^*(x)\]
+    Note that \(\pi(x) = \frac{1}{Z}\rho(x,x,\beta)\). The off-diagonal elements of the density matrix represent quantum coherence between the states. This is the degree to which any two different states are in superposition:
+    \[
+    \rho(x_1,x_2,\beta) = \sum_{n=0}^{\infty}e^{-\beta E_n}\psi_n(x_1)\psi_n^*(x_2)
+    \]
+    <br>
+    <!-- Boltzmann - Time independent Schroedinger -->
+    <span id = "math_section"><br></span>
+    <h4>The Math</h4>
+    Before we continue, we derive a convolution property of the density matrix \(\rho\). Let \(x_0, x_1, x_2, \tau\) be dummy variables. Consider the following integral:
+    \[
+    \begin{aligned}
+    \int \rho(x_0,x_1,\tau)\rho(x_1,x_2,\tau)dx_1 & = \int \sum_{n,m} \psi_n(x_0)e^{-\tau E_n}\psi^*_n(x_1)\psi_m(x_1)e^{-\tau E_m}\psi^*_m(x_2) dx_1\\
+    & = \sum_{n,m}\psi_n(x_0)e^{-\tau E_n} \int \psi^*_n(x_1)\psi_m(x_1) dx_1 e^{-\tau E_m}\psi^*_m(x_2)
+    \end{aligned}
+    \]
+    Because \(\psi_n\), \(\psi_m\) are eigenfunctions, \(\psi_n(x)\psi^*_m(x) = \delta_{nm}\), where \(\delta_{nm}\) is the Kronecker delta, the integral simplifies:
+    \[
+    \begin{aligned}
+    \int \rho(x_0,x_1,\tau)\rho(x_1,x_2,\tau)dx_1 & = \sum_n\psi_n(x_0)e^{-\tau E_n} e^{-\tau E_n}\psi^*_n(x_2)\\
+    & = \sum_n\psi_n(x_0)e^{-2\tau E_n}\psi^*_n(x_2)\\
+    & = \rho(x_0,x_2, 2\tau)
+    \end{aligned}
+    \]
+    More layers can be added by adding more dummy variables.
+    <!-- \[
+    \begin{aligned}
+    \rho(x_0,x_4, \tau) & = \int \rho(x_0,x_2,\frac{\tau}{2})\rho(x_2,x_4,\frac{\tau}{2})dx_2\\
+    & =\int\int\int \rho(x_0,x_1,\frac{\tau}{4})\rho(x_1,x_2,\frac{\tau}{4})\rho(x_2,x_3,\frac{\tau}{4})\rho(x_3,x_4,\frac{\tau}{4})dx_1dx_2dx_3\\
+    \rho(x_0,x_8, \tau) & = \underbrace{\int\int...\int}_{7 \text{ integrals}} \rho(x_0,x_1,\frac{\tau}{8})\rho(x_1,x_2,\frac{\tau}{8})...\rho(x_7,x_8,\frac{\tau}{8})dx_1dx_2...dx_7
+    \end{aligned}
+    \] -->
+    Let \(N=2^k\) for some positive integer \(k\). We have
+    \[
+    \rho(x_0,x_{N}, \tau) = \underbrace{\int\int...\int}_{N-1 \text{ integrals}} \rho(x_0,x_1,\frac{\tau}{N})\rho(x_1,x_2,\frac{\tau}{N})...\rho(x_{N-1},x_{N},\frac{\tau}{N})dx_1dx_2...dx_{N-1}
+    \]
+    We can algebraically manipulate the probability density of finding the particle at position \(x\) across all energy levels, \(\pi(x) = \frac{1}{Z}\rho(x,x,\beta)\):
+    \[\begin{aligned}\pi(x) & = \sum_{n=0}^{\infty}\frac{1}{Z}e^{-\beta E_n}|\psi_n(x)|^2\\
+    & = \frac{1}{Z}\sum_{n=0}^{\infty}e^{-\beta E_n}\psi_n(x)\psi_n^*(x)\\
+    & = \frac{1}{Z}\sum_{n=0}^{\infty}e^{-\beta E_n}\langle x |\psi_n\rangle \langle \psi_n|x\rangle\\
+    & = \frac{1}{Z}\sum_{n=0}^{\infty} \langle x |\psi_n\rangle e^{-\beta E_n} \langle \psi_n|x\rangle\\
+    & = \frac{1}{Z} \langle x| \bigg(\sum_{n=0}^{\infty}|\psi_n\rangle \langle \psi_n |\bigg) e^{-\beta \hat{H}} |x\rangle\\
+    & = \frac{1}{Z} \langle x| e^{-\beta \hat{H}} |x\rangle\end{aligned}\]
+    In the last step, since \(\big(\sum_{n=0}^{\infty}|\psi_n\rangle \langle \psi_n |\big) \) is the sum of <a href="https://quantummechanics.ucsd.edu/ph130a/130_notes/node185.html">projection operators</a> across all energy eigenstates, the sum is the identity \(I\).
+    <br>
+    <br>
+    <!-- Note that we can keep adding dummy variables and obtain
+    \[
+    \] -->
+    <!-- We can rewrite \(\pi(x)\) as
+    \[
+    \begin{aligned}\pi(x) & = \sum_{n=0}^{\infty}\frac{1}{Z}e^{-\frac{E_n}{k_B T}}|\psi_n(x)|^2\\
+    & = \frac{1}{Z}\sum_{n=0}^{\infty}e^{-\beta E_n}\psi_n(x)\psi_n^*(x)\\
+    & = \frac{1}{Z}\rho(x,x,\beta)\end{aligned}
+    \]
+    We can pull out the \(1/Z\) because -->
+    For a fixed temperature \(T\), the partition function \(Z \;\dot{=}\; \sum_{n=0}^{\infty}e^{-\beta E_n}\) is just a constant, which is the total size of the probability space, i.e. sum of the probabilities of energy levels (across all position \(x\)). On the other hand, the size of the probability space, \(Z\), can also be computed under the positional basis, by summing up (integrating) the probabilities of finding the particle at position \(x\) (across all energy levels):
+    \[
+    Z = \int \rho(x,x,\beta) dx
+    \]
+    This can also be written as
+    \[
+    Z = \int Z\cdot \pi(x) dx = \int \langle x| e^{-\beta \hat{H}} |x\rangle dx
+    \]
+    Recall that the operator \(\hat{H}\) is defined as \(\hat{H} = \hat{K}+\hat{V}\). Therefore,
+    \[
+    Z = \int \langle x| e^{-\beta (\hat{K}+\hat{V})} |x\rangle dx
+    \]
+    Note that \(\hat{K}\) and \(\hat{V}\) are operators, and for any two operators \(A\) and \(B\), it is generally not true that \(e^{A+B} = e^A e^B\). Ideally, we would still like to be able to separate the two operators \(\hat{K}\) and \(\hat{V}\), because we know how to evaluate \(\langle x| e^{-\beta \hat{K}} |x'\rangle\) and \(\langle x| e^{-\beta \hat{V}} |x'\rangle\) for any positions \(x\) and \(x'\). We have
+    \[
+    \langle x| e^{-\beta \hat{V}} |x'\rangle  = e^{-\beta V(x')} \langle x|x'\rangle = e^{-\beta V(x')}\cdot\delta(x-x')
+    \]
+    and \(\langle x| e^{-\beta \hat{K}} |x'\rangle\) can be viewed as the density matrix elements of the free particle (when \(V(x)=0\)),
+    \[
+    \langle x| e^{-\beta \hat{K}} |x'\rangle = \rho^{\text{free}}(x,x',\beta)
+    \]
+    Recall that \(\hat{K} = -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2}\). If we differentiate \(\rho^{\text{free}}\) with respect to \(\beta\), we get:
+    \[
+    \frac{\partial \rho^{\text{free}}}{\partial \beta} = \langle x| (-\hat{K})e^{-\beta \hat{K}} |x'\rangle = -\langle x| \hat{K}|\big(e^{-\beta \hat{K}} |x'\rangle\big)\rangle = \frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} \langle x | e^{-\beta \hat{K}} | x'\rangle = \frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2}\rho^{\text{free}}(x,x',\beta)
+    \]
+    This is just the heat equation with diffusion constant \(\alpha = \hbar^2/(2m)\). Given the initial condition
+    \[
+    \rho^{\text{free}}(x,x',0) = \langle x |x'\rangle = \delta(x-x')
+    \]
+    we have
+    \[
+    \langle x| e^{-\beta \hat{K}} |x'\rangle = \rho^{\text{free}}(x,x',\beta) = \big(\sqrt{\frac{m}{2\pi\hbar^2 \beta}}\big)e^{-\frac{m(x-x')^2}{2\hbar^2\beta}}
+    \]
+    Note that this is the density function of a normal distribution. Later we will construct a Brownian motion from \(\rho^{\text{free}}\). It is highly desirable for numerical simulation because there are numerical methods (such as the Box-Muller method) that output random numbers sampled from the normal distribution.
+    <br>
+    <br>
+    In order to separate the \(\hat{K}\) part and the \(\hat{V}\) part of the operator in \(\langle x| e^{-\beta \hat{H}} |x\rangle\), we use the Trotter's Product Formula, which states that for self-adjoint operators \(A\) and \(B\) on a Hilbert space \(H\), such that \(A\), \(B\) are bounded below and \(A+B\) is densely defined and self-adjoint on domain \(\mathrm{Dom}(A)\cap \mathrm{Dom}(B) \), then for all \(\psi \in H\),
+    \[
+    \lim_{N\to \infty} ||e^{-t(A+B)}\psi - (e^{-tA/N}e^{-tB/N})^N\psi|| = 0
+    \]
+    For a double-well potential confined in a box of the form \(V(x) = ax^4-bx^2\) where \(a, b > 0\), the conditions for Trotter's formula are satisfied (See Theorem 9.39 in <a href = "#reference">[1]</a>).
+    <!-- For any \(x, x'\) and \(\tau\) very small, applying Trotter's formula, we can separate \(e^{-\tau\hat{H}}\) into \(e^{-\tau\hat{K}}\) and \(e^{-\tau\hat{V}}\) and obtain:
+    \[
+    \rho(x,x',\tau) = e^{-\frac{\tau}{2}V(x)}\langle x| e^{-\tau \hat{K}} |x'\rangle e^{-\frac{\tau}{2}V(x')}\] -->
+    Now we divide the inverse temperature \(\beta\) into \(N\) pieces, where \(N\) is a large number, for example, \(N = 2^k\) for a positive integer \(k\). Let
+    \(\Delta_{\tau} = \beta/N\). Applying Trotter's formula, we can separate \(e^{-\Delta_{\tau}\hat{H}}\) into \(e^{-\Delta_{\tau}\hat{K}}\) and \(e^{-\Delta_{\tau}\hat{V}}\) and obtain:
+    \[
+    \begin{aligned}
+    \rho(x,x',\Delta_{\tau}) & =\langle x| e^{-\frac{\Delta_{\tau}}{2}\hat{V}} e^{-\Delta_{\tau} \hat{K}} e^{-\frac{\Delta_{\tau}}{2}\hat{V}} |x'\rangle \\
+    <!-- & = e^{-\frac{\Delta_{\tau}}{2}V(x)}\langle x| e^{-\Delta_{\tau} \hat{K}} |x'\rangle e^{-\frac{\Delta_{\tau}}{2}V(x')}\\ -->
+    & = e^{-\frac{\Delta_{\tau}}{2}V(x)}\rho^{\text{free}}(x,x',\Delta_{\tau}) e^{-\frac{\Delta_{\tau}}{2}V(x')}
+    \end{aligned}
+    \]
+    Recall the convolution property of \(\rho\), replacing \(\tau\) with \(\beta\) and \(\tau/N\) with \(\Delta_{\tau}\):
+    \[
+    \rho(x_0,x_{N}, \beta) = \underbrace{\int\int...\int}_{N-1 \text{ integrals}} \rho(x_0,x_1,\Delta_{\tau})\rho(x_1,x_2,\Delta_{\tau})...\rho(x_{N-1},x_{N},\Delta_{\tau})dx_1dx_2...dx_{N-1}
+    \]
+    Substituting \(\rho(x_k,x_{k+1},\Delta_{\tau}) =e^{-\frac{\Delta_{\tau}}{2}V(x_k)}\rho^{\text{free}}(x_k,x_{k+1},\Delta_{\tau}) e^{-\frac{\Delta_{\tau}}{2}V(x_{k+1})} \), we get
+    \[
+    \rho(x_0,x_N,\beta) = \underbrace{\int\int...\int}_{N-1\text{ integrals}} \rho^{\text{free}}(x_0,x_1,\Delta_{\tau})\rho^{\text{free}}(x_1,x_2,\Delta_{\tau})...\rho^{\text{free}}(x_{N-1},x_{N},\Delta_{\tau}) \exp\bigg(-\Delta_{\tau}(\frac{1}{2}V(x_0)+\sum_{k=1}^{N-1} V(x_{k})+\frac{1}{2}V(x_N))\bigg)dx_1...dx_{N-1}
+    \]
+    Recall the form of elements of the free particle density \(\rho^{\text{free}}\). We have
+    \[
+    \rho^{\text{free}}(x_k,x_{k+1},\Delta_{\tau}) = \big(\sqrt{\frac{m}{2\pi\hbar^2 \Delta_{\tau}}}\big)e^{-\frac{m(x_k-x_{k+1})^2}{2\hbar^2\Delta_{\tau}}}
+    \]
+    If we treat the inverse temperature \(\beta = \frac{1}{k_B T}\) as the length of a finite "time period", and \(\Delta_{\tau}\) as the size of an infinitessimal "time increment", then the free particle density matrix describes a Wiener process:
+    \[
+    <!-- \begin{aligned} -->
+    dX_t = \sigma dW_t
+    <!-- \sigma & = \sqrt{\frac{\hbar^2}{m}}
+    \end{aligned} -->
+    \]
+    where \(\sigma = \sqrt{\frac{\hbar^2}{m}}\). However, \(\beta\) is not the real time variable. We are simulating the thermal equilibrium of a system, there is no time variable in our problem (at equilibrium the states do not change with time), as if we are looking at a frozen instant in reality. One can imagine the random walk not as the paths of the particle in time, but as its simultaneous existence in space, due to the Uncertainty Principle.
+    <br>
+    <br>
+    Going back to the density matrix elements:
+    \[
+    \begin{aligned}
+    \rho(x_0,x_N,\beta) & = \underbrace{\int\int...\int}_{N-1\text{ integrals}} \prod_{k=0}^{N-1} \rho^{\text{free}}(x_k,x_{k+1},\Delta_{\tau}) \exp\bigg(-\Delta_{\tau}(\frac{1}{2} V(x_0)+\sum_{k=1}^{N-1} V(x_{k})+\frac{1}{2}V(x_{N}))\bigg)dx_1...dx_{N-1}\\
+    & = \rho^{\text{free}}(x_0,x_{N},\beta) \underbrace{\int\int...\int}_{N-1\text{ integrals}} \frac{\prod_{k=0}^{N-1} \rho^{\text{free}}(x_k,x_{k+1},\Delta_{\tau})}{ \rho^{\text{free}}(x_0,x_{N},\beta)} \exp\bigg(-\Delta_{\tau}(\frac{1}{2} V(x_0)+\sum_{k=1}^{N-1} V(x_{k})+\frac{1}{2}V(x_{N}))\bigg)dx_1...dx_{N-1}
+    \end{aligned}
+    \]
+    Notice that the fraction inside the integral is the probability density of the Wiener process taking a specific path \(x_0\to x_1 \to x_2...\to x_{N-1}\to x_{N}\), given that it starts at
+    \(x_0\) and arrives at \(x_N\), so the right hand side is just the expected value of \(\exp\big(-\Delta_{\tau}\sum_{k=0}^{N-1} V(x_{k})\big)\) with respect to the probability measure conditioned on the Wiener process starting at \(x_0\) and arriving at \(x_N\). Therefore,
+    \[
+    \begin{aligned}
+    \rho(x_0,x_N,\beta) & = \rho^{\text{free}}(x_0,x_{N},\beta) \cdot\mathbb{E}\bigg[\exp\bigg(-\Delta_{\tau}(\frac{1}{2} V(x_0)+\sum_{k=1}^{N-1} V(x_{k})+\frac{1}{2}V(x_{N}))\bigg)\bigg | X_0 = x_0, X_{\beta} = x_N \bigg]
+    \end{aligned}
+    \]
+    Taking limit \(N\to \infty\), we get
+    \[
+    \rho(x_0,x_N,\beta) = \rho^{\text{free}}(x_0,x_{N},\beta) \cdot\mathbb{E}\bigg[\exp\bigg(-\int_0^{\beta} V(x_s)ds\bigg)\bigg | X_0 = x_0, X_{\beta} = x_N \bigg]
+    \]
+    Note that this is the Feynman-Kac formula. It means that we can get the values of \(\rho(x_0,x_N,\beta)\) by sampling Brownian paths conditioned on \(X_0 = x_0, X_{\beta} = x_N\) and take average (expected value) of \(\exp\big(-\int_0^{\beta} V(x_s)ds\big)\) evaluated along these paths. This is the basis of the numerical algorithm later.
+    <br>
+    <br>
+    Recall that the goal of our simulation is to get \(\pi(x)\), the probability of finding the particle at position \(x\), and that \(\pi(x) = \frac{1}{Z}\rho(x,x,\beta)\). Therefore, we still need to calculate the total size of the probability space by integrating \(\rho\).
+    \[
+    Z = \int \rho(x,x,\beta) dx
+    \]
+    We can replace the dummy variables \(x\) with \(x_0\), then Z can be written as the expected value above (where \(x_N = x_0\)) plus one more integral:
+    \[
+    Z = \int \rho(x_0,x_0,\beta) dx_0 = \int \rho^{\text{free}}(x_0,x_{0},\beta) \cdot\mathbb{E}\bigg[\exp\bigg(-\int_0^{\beta} V(x_s)ds\bigg)\bigg | X_0 = x_0, X_{\beta} = x_0 \bigg]dx_0
+    \]
+    Note that because \(x_0 = x_N\), this is a Wiener process whose path is a closed loop.
+    <!-- \[
+    Z = \int \rho(x_0,x_0,\beta) dx_0 = \underbrace{\int\int...\int}_{N\text{ integrals}} \rho(x_0,x_1,\Delta_{\tau})\rho(x_1,x_2,\Delta_{\tau})...\rho(x_{N-1},x_{0},\Delta_{\tau})dx_1...dx_{N-1}dx_0
+    \]
+    Substituting \(\rho(x_k,x_{k+1},\Delta_{\tau}) =e^{-\frac{\Delta_{\tau}}{2}V(x_k)}\rho^{\text{free}}(x_k,x_{k+1},\Delta_{\tau}) e^{-\frac{\Delta_{\tau}}{2}V(x_{k+1})} \), we get
+    \[
+    Z = \int \rho(x_0,x_0,\beta) dx_0 = \underbrace{\int\int...\int}_{N\text{ integrals}} \rho^{\text{free}}(x_0,x_1,\Delta_{\tau})\rho^{\text{free}}(x_1,x_2,\Delta_{\tau})...\rho^{\text{free}}(x_{N-1},x_{0},\Delta_{\tau}) \exp\big(-\Delta_{\tau}\sum_{k=0}^{N-1} V(x_{k})\big)dx_1...dx_{N-1}dx_0
+    \]
+    Recall the form of elements of the free particle density \(\rho^{\text{free}}\). We have
+    \[
+    \rho^{\text{free}}(x_k,x_{k+1},\Delta_{\tau}) = \big(\sqrt{\frac{m}{2\pi\hbar^2 \Delta_{\tau}}}\big)e^{-\frac{m(x_k-x_{k+1})^2}{2\hbar^2\Delta_{\tau}}}
+    \]
+    If we treat the inverse temperature \(\beta = \frac{1}{k_B T}\) as the length of a finite "time period", and \(\Delta_{\tau}\) as the size of an infinitessimal "time increment", then the free particle density matrix describes a Wiener process:
+    \[
+    dX_t = \sigma dW_t
+    \]
+    where \(\sigma = \sqrt{\frac{\hbar^2}{m}}\). Note that because \(x_0 = x_N\), this is a Wiener process whose path is a closed loop. However, \(\beta\) is not the real time variable. We are simulating the thermal equilibrium of a system, there is no time variable in our problem (the states do not change with time), as if we are looking at a frozen instance in reality. One can imagine the "random walk" not as the paths of the particle in time, but as its simultaneous existence in space, due to the Uncertainty Principle. -->
+    <br>
+    <!-- Now we can -->
+    <br>
+    <br>
+    <span id = "algo_section"><br></span>
+    <h4>The Algorithm</h4>
+    From earlier we know that a diagonal element of the particle's density matrix, \(\rho(x,x,\beta)\), represents the unnormalized probability density of finding the particle at position \(x\), and we can use the Feynman-Kac formula to get the values of \(\rho(x,x,\beta)\) by sampling Brownian paths that start and end at \(x\), evaluating \(\exp\bigg(-\int_0^{\beta} V(x_s)ds\bigg)\) along the paths, and averaging the results. However, this naive approach has some downsides in practice. First, we need to sample many many paths for every \(x\) of the space, but because the particle is in a potential field where there are regions with high potential barriers, a significant portion of the paths we generate actually contribute very little to the final average because \(\exp\bigg(-\int_0^{\beta} V(x_s)ds\bigg)\) will turn out to be a very small number. This wastes computing power. Secondly, we are only getting the unnormalized probabilities at each position \(x\), we still need to integrate over the whole space to get \(Z\), the total size of the probability space.
+    <br>
+    <br>
+    A better approach is the Markov Chain Monte Carlo method. Instead of blindly generating millions of Brownian paths and calculating their average, imagine we drop a quantum particle at a random point in the potential field, and let it find its own path. Since the particle is more likely to visit a state with low energy cost (high probability density), for example, at the bottom of the potential well, rather than climbing over the potential barrier, we should naturally converge to the true distribution. Then, instead of calculating the integral \(Z\), we can just register when the particle visits a state during the random walk and build the probability distribution using a histogram. The Metropolis-Hastings algorithm provides a procedure for the particle to settle into the true distribution. It is based on the relative probabilities between an old path and a new path.
+    <br>
+    <br>
+    In the Metropolis-Hastings algorithm, we propose a move from an old state to new state. The acceptance rate of this proposal, \(\alpha\), is given by:
+    \[
+    \alpha = \min\bigg\{ \;1,\; \frac{P(\text{new state})\cdot P(\text{proposing old}|\text{new})}{P(\text{old state})\cdot P(\text{proposing new}|\text{old})}\bigg\}
+    \]
+    where \(P(\text{old state})\), \(P(\text{new state})\) are the probability densities of the states, and \(P(\text{proposing old}|\text{new})\) is the probability of proposing the old state given that we are at the new state (and vice versa). The conditional probabilities come from an additional requirement known as "detailed balance". Detailed Balance means that the flux from the old state to the new state must be equal to the flux from the new state back to the old state. Mathematically, this is
+    \[
+    P(\text{flux into old state}) = P(\text{flux into new state})
+    \]
+    which is equivalent to
+    \[
+    P(\text{new state})\cdot P(\text{new state}\to \text{old state}) = P(\text{old state})\cdot P(\text{old state}\to \text{new state})
+    \]
+    In Metropolis algorithms, in order to move from one state to another, one must first propose a move, and then accept the move. Therefore, let \(\mathcal{P}\) denote the probability of accepting a move. We have
+    \[
+    P(\text{new state})\cdot P(\text{proposing old}|\text{new})\cdot \mathcal{P}(\text{new state}\to \text{old state}) = P(\text{old state})\cdot P(\text{proposing new}|\text{old})\cdot\mathcal{P}(\text{old state}\to \text{new state})
+    \]
+    Rearranging this, we obtain the ratio in the Metropolis-Hastings algorithm:
+    \[
+    \frac{\mathcal{P}(\text{old state}\to \text{new state})}{\mathcal{P}(\text{new state}\to \text{old state})} = \frac{P(\text{new state})\cdot P(\text{proposing old}|\text{new})}{P(\text{old state})\cdot P(\text{proposing new}|\text{old})}
+    \]
+    If \(P(\text{new state})\cdot P(\text{proposing old}|\text{new}) > P(\text{old state})\cdot P(\text{proposing new}|\text{old})\), meaning that we are more likely to accept moves from the old state to the new state than the other way around, then \(\alpha = 1\), we always accept the proposed move.
+    If \(P(\text{new state})\cdot P(\text{proposing old}|\text{new}) < P(\text{old state})\cdot P(\text{proposing new}|\text{old})\), meaning that we are less likely to accept moves from the old state to the new state than the other way around, then \(\alpha = \frac{P(\text{new state})\cdot P(\text{proposing old}|\text{new})}{P(\text{old state})\cdot P(\text{proposing new}|\text{old})} = \frac{\mathcal{P}(\text{old state}\to \text{new state})}{\mathcal{P}(\text{new state}\to \text{old state})}\), we accept the proposed move with probability that equals the ratio between the acceptance probabilities of the two states.
+    <br>
+    <br>
+    Note that if we propose a completely random new path from an old path, there is a higher chance that the particle runs into a potential barrier, resulting in the proposed path getting rejected thus wasting computing power. However, if we only propose small changes (high acceptance rate), it is also wasteful because it takes longer for the particle to visit the whole space and converge to true distribution. To efficiently sample new paths while keeping a relatively high acceptance rate, we make changes to a segment of a path at a time. Given nodes \(x_0, x_1, ..., x_{N-1}, x_N=x_0\) of a Brownian path, we pick a segment of it, with end points \(x_{k}\) and \(x_{k+l}\), and propose new positions for nodes between but not including the end points of this segment. Note that this segment is a Brownian Bridge which starts at \(x_k\) at time \(t=k\) and ends at \(x_{k+l}\) at time \(t=k+l\). A new path between the two endpoints can be sampled from the distribution of the Brownian bridge, ensuring that the particle will arrive at \(x_{k+l}\) at time \(t=k+l\).
+    <br>
+    <br>
+    Let us derive the distribution for a general Brownian bridge. Suppose \(W_t\) is a Wiener process that is a scaled Brownian motion, \( dW_t = \sigma dB_t\), where \(B_t\) is a standard Brownian motion. Suppose that \(W_{t} = a\) and \(W_T = b\) for some \(a,b\) and \(T>t\), that is, \(W\) is a Brownian bridge from \(a\) to \(b\) from time \(t\) to \(T\). For any \(s\in (t,T)\), we have, by Bayes's Theorem and the Markov property of the Brownian motion, the probability density of \(W_s = x\) is:
+    \[
+    \begin{aligned}
+    p(W_s = x|W_t = a, W_T = b) & = \frac{p(W_s = x|W_t = a)\cdot p(W_T = b|W_s = x)}{p(W_T = b|W_t = a)}\\
+    & =  \frac{1}{\sigma \sqrt{2\pi}}\sqrt{\frac{(T-t)}{(s-t)(T-s)}}\exp\bigg(-\frac{1}{2\sigma^2}\big( \frac{(x-a)^2}{(s-t)}+ \frac{(b-x)^2}{(T-s)} - \frac{(b-a)^2}{(T-t)}\big)\bigg)
+    \end{aligned}
+    \]
+    After a bit of algebra (rewriting the expression into the format \(\frac{1}{\tilde{\sigma}\sqrt{2\pi }}\exp(-\frac{1}{2\tilde{\sigma}^2}(x-\mu)^2) \)), we get
+    \[
+    \mu = a+\frac{s-t}{T-t}(b-a)
+    \]
+    \[
+    \tilde{\sigma}^2 = \sigma^2\frac{(s-t)(T-s)}{(T-t)}
+    \]
+    where \(\mu\) is the mean of \(W_s\) and \(\tilde{\sigma}^2\) is the variance of \(W_s\).
+    <br>
+    <br>
+    Therefore, a node \(x_{k+j}\) between end points \(x_{k}\) and \(x_{k+l}\) can be sampled from the normal distribution with mean and variance given by (recall that \(\sigma^2 = \frac{\hbar^2}{m}\)):
+    \[
+    \mu = x_k + \frac{j}{l}(x_{k+l}-x_k)
+    \]
+    \[
+    \tilde{\sigma}^2 = \frac{\hbar^2}{m}\frac{(l-j)j(\Delta_{\tau})}{l}
+    \]
+    We generate the inbetween nodes one at a time, each node anchored to the previous one. After generating the new path (the Brownian bridge), we compute the probability ratio (energy change), and the acceptance rate for the Metropolis-Hastings algorithm:
+    \[
+    p(\text{old bridge}) = \bigg(\frac{1}{Z}\bigg)\cdot\bigg(\prod_{j=k}^{k+l-1}\rho^{\text{free}}(x_j^{\text{old}},x_{j+1}^{\text{old}},\Delta_{\tau})\bigg) \cdot \exp\bigg(-\Delta_{\tau}(\frac{1}{2} V(x_k^{\text{old}})+\sum_{j=k+1}^{k+l-1} V(x_{j}^{\text{old}})+\frac{1}{2}V(x_{k+l}^{\text{old}}))\bigg)
+    \]
+    \[
+    p(\text{new bridge}) = \bigg(\frac{1}{Z}\bigg)\cdot\bigg(\prod_{j=k}^{k+l-1}\rho^{\text{free}}(x_j^{\text{new}},x_{j+1}^{\text{new}},\Delta_{\tau})\bigg) \cdot \exp\bigg(-\Delta_{\tau}(\frac{1}{2} V(x_k^{\text{new}})+\sum_{j=k+1}^{k+l-1} V(x_{j}^{\text{new}})+\frac{1}{2}V(x_{k+l}^{\text{new}}))\bigg)
+    \]
+    \[
+    p(\text{proposing new|old}) = \frac{\prod_{j=k}^{k+l-1}\rho^{\text{free}}(x_j^{\text{new}}, x_{j+1}^{\text{new}}, \Delta_{\tau})}{\rho^{\text{free}}(x_k,x_{k+l}, l \Delta_{\tau})}
+    \]
+    \[
+    p(\text{proposing old|new}) = \frac{\prod_{j=k}^{k+l-1}\rho^{\text{free}}(x_j^{\text{old}}, x_{j+1}^{\text{old}}, \Delta_{\tau})}{\rho^{\text{free}}(x_k,x_{k+l}, l \Delta_{\tau})}
+    \]
+    \[
+    <!-- \alpha = \min\bigg\{ \; 1,\; \frac{p(\text{new bridge})}{p(\text{old bridge})}\bigg\} -->
+    \alpha_{\text{local}} = \min\left\{ \;1,\; \exp\bigg(-\Delta_\tau \sum_{i=1}^{l-1} \big(V(x_{k+i}^{\text{new}}) - V(x_{k+i}^{\text{old}})\big)\bigg) \right\}
+    \]
+    Note that the \(1/Z\) and \(\rho^{\text{free}}\) factors cancel out.
+    <br>
+    <br>
+    If the new path is accepted, we register the \(x\)-positions and propose a slide of the path to another location (new \(x_0\)), and compute the probability of the whole path there. The probabilities before and after the slide are (note that \(x_0 = x_N\)):
+    \[
+    p(\text{old location}) = \bigg(\frac{1}{Z}\bigg)\cdot \bigg(\prod_{k=0}^{N-1}\rho^{\text{free}}(x_k^{\text{old}},x_{k+1}^{\text{old}},\Delta_{\tau})\bigg) \cdot \exp\bigg(-\Delta_{\tau}(\sum_{k=0}^{N-1} V(x_{k}^{\text{old}}))\bigg)
+    \]
+    \[
+    p(\text{new location}) = \bigg(\frac{1}{Z}\bigg)\cdot \bigg(\prod_{k=0}^{N-1}\rho^{\text{free}}(x_k^{\text{new}},x_{k+1}^{\text{new}},\Delta_{\tau})\bigg) \cdot \exp\bigg(-\Delta_{\tau}(\sum_{k=0}^{N-1} V(x_{k}^{\text{new}}))\bigg)
+    \]
+    \[
+    \frac{p(\text{proposing old|new})}{p(\text{proposing new|old})} = 1
+    \]
+    \[
+    \alpha_{\text{global}} = \min\left\{ \;1,\; \exp\bigg(-\Delta_\tau \sum_{i=0}^{N-1} \big(V(x_{i}^{\text{new}}) - V(x_{i}^{\text{old}})\big)\bigg) \right\}
+    \]
+    Again, the \(1/Z\) and \(\rho^{\text{free}}\) factors cancel out. The \(\rho^{\text{free}}\) cancel out because we are translating the same path to a different location, the internal step differences do not change.
+    If the slide is also accepted, we repeat the process above and generate a new path for a random segment of the path.
+    <br>
+    <br>
+    One last remark, since the Wiener process is a closed loop (\(x_N = x_0\)), in the algorithm whenever we need \(x_N\), we replace it with \(x_0\). The indices need to be handled using \(\mathrm{modulo}(k,N)\).
+    <br>
+    <br>
+    Now we have every tool we need to build the actual simulation. <a href="#pseudocode" onclick="toggle_vis('pseudocode')">View/hide pseudocode</a>
+    <br>
+    <div id ="pseudocode">
+      <br>
+    <pre>
+///////////// GLOBAL VARIABLES /////////////
+double beta // inverse temperature (time horizon)
+double L // length of the box that the particle is in
+int M // number of bins for histogram
+int N // number of time steps
+double dt = beta/N // size of time increment
+double lmax = N/10 // maximum length of brownian bridge to modify
+double path[N] = zeros // array that stores the position of a Brownian path
+// for simplicity, set hbar = m = 1
+double hbar = 1
+double m = 1
+
+max_iter = 100000
+
+// histogram for distribution
+int histogram[M] = zeros // array for histogram
+double bin_size = L/M
+
+///////////// HELPER FUNCTIONS /////////////
+// May use built in functions from libraries
+
+// sample from normal distribution
+// Box Muller transform
+function norm_rand(mu, sigmasq) {
+  u1 = rand(0,1);
+  u2 = rand(0,1);
+  z0 = sqrt(-2*log(u1))*cos(2*pi*u2);
+  return z0*sqrt(sigmasq) + mu
+}
+
+function int_rand(min, max) // sample a random integer between min and max
+
+function V(x) {
+  V = 4*x^4 - 8*x^2 + 3 // double-potential well
+}
+
+///////////// COMPUTATIONS /////////////
+function metropolis() {
+  for j from 0 to max_iter {
+    // Step 1: pick anchor point x_0 for the start position of the j-th path
+    // and generate a new path by making changes to a portion of it (l nodes)
+    newpath(path);
+
+    // Step 2: slide the path to another random position, the new x_0
+    movepath(path);
+
+    // fill bins of histogram
+    // fill every 10 paths (performance improvement)
+    if (j % 10 == 0){
+      for i from 0 to N-1 {
+        bin  = floor((path[i]+L/2)/bin_size)
+
+        // add to histogram
+        // skip if out of bounds
+        if (bin >= 0 && bin < M) {
+          histogram[bin] += 1
+        }
+      }
+    }
+  }
+}
+
+function newpath(path) {
+  // length of brownian bridge, take a random number between 3 and lmax
+  l = int_rand(5, lmax)
+
+  // pick a random start node from 0 to N
+  k = int_rand(0, N)
+
+  // endpoints of Brownian bridge
+  x_start = path[k]
+  x_end = path[(k+l)% N] // index modulo N
+
+  // allocate array for inbetween nodes of Brownian bridge
+  new bridge[]
+
+  // compute energy change for alpha
+  V_sum = 0;
+
+  // Generate a new path between node k and node k+l
+  for i from 1 to l-1 {
+    // compute mean and variance of the inbetween nodes of the brownian bridge
+    // one step at a time
+    mean = x_start + (1/(l-i+1))*(x_end - x_start)
+    variance = (hbar^2/m)*(l-i)*dt/(l-i+1)
+
+    // take a sample from normal distribution
+    new_x = norm_rand(mean, variance)
+
+    // update x_start
+    x_start = new_x
+
+    // append new_x to bridge
+    bridge.append = new_x
+
+    // compute energy change for alpha
+    V_sum += V(new_x) - V(path[(k+i) % N])
+  }
+
+  // compute alpha
+  alpha = exp(-dt*V_sum)
+  alpha = min(1, alpha)
+
+  // if accepted proposed move
+  if (rand(0,1) < alpha) {
+    // replace segment in old path with bridge
+    for i from 1 to l-1 {
+      path[(k+i) % N] = bridge[i-1]
+    }
+  }
+}
+
+function movepath(path) {
+  // propose a random move distance
+  // max shift distance = L/10
+  delta = rand(-L/10, L/10)
+
+  // move new path
+  // compute energy change for alpha
+  V_sum = 0;
+  for k from 0 to N-1 {
+    V_sum += V(path[k]+delta) - V(path[k])
+  }
+
+  // compute alpha
+  alpha = exp(-dt*V_sum)
+  alpha = min(1, alpha)
+
+  // if accepted proposed move
+  if (rand(0,1) < alpha) {
+    // replace old path with new path
+    for i from 0 to N-1 {
+      path[i] += delta
+    }
+  }
+}
+    </pre>
+  </div>
+    <br>
+    <br>
+    <br>
+    <span id = "reference"><br></span>
+    Reference:<br>
+    [1] Brian C. Hall (2013), <i>Quantum Theory for Mathematicians</i>, Springer.<br>
+    [2] Werner Krauth (2006), <i>Statistical Mechanics: Algorithms and Computations</i>, Oxford University Press.
+    <span id = "simulation"><br></span>
+    <br>
+    <h4>Simulation</h4>
+    The distribution of the particle is given by the histogram (light blue) in the back. The Brownian paths are shown in red. These are the simultaneous existence of the particle in space. The tunneling effect (highlighted in dark blue) is visible, when the particle crosses over the potential barrier to the other side of the double well.
+    <br>
+    <br>
+    <i>Note: In Markov Chain Monte Carlo method, we do not clear the path array from the previous iteration, but reuse it as the new initial condition. This reduces the bias from our choice of initial condition. The result of a Markov Chain simulation that has been running forever is indistinguishable from the result of the Direct Sampling method, which has no initial condition bias. You can read about "Perfect Sampling" in Krauth's book.</i>
+    <div>
+    <input type ="button" value = "Start Simulation" onClick = "start_simulation()">
+    <input type ="button" value = "Reset" onClick = "reset_calc()">
+    </div>
+</div>
+    <div class ="graph-container">
+      <div class ="graph-container" style = "display: flex; flex-wrap: wrap; justify-content: left; gap: 20px; align-items: flex-start;">
+
+        <div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">Quantum Particle in a Double-Potential Well</div>
+          <canvas id="box" style="border:2px solid #333;">
+          </canvas>
+        </div>
+
+
+
+      </div>
+    </div>
+
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+//////////// Visualization Script
+//////////// Setting up canvas
+
+const canvas = document.getElementById("box");
+
+// Set canvas dimensions
+if (canvas.width != 400) canvas.width = 400;
+if (canvas.height != 300) canvas.height = 300;
+
+// Get the canvas context
+const ctx = canvas.getContext('2d');
+const width = canvas.width;
+const height = canvas.height;
+
+///////////// HELPERS
+// converts x to canvas x
+const vis_x_min = -1.5;
+const vis_x_max = 1.5;
+
+// converts x to canvas x
+function mapX(x) {
+  return ((x - vis_x_min) / (vis_x_max - vis_x_min)) * width;
+}
+
+
+// converts y to canvas y
+function mapY(y) {
+  const y_min = 0;
+  const y_max = 5.0;
+  return height - ((y - y_min) / (y_max - y_min)) * height;
+}
+
+// converts node index to canvas pixel y
+function mapTime(i) {
+  return (i / N) * height;
+}
+
+// save potential picture
+let background;
+//////////// Display
+window.onload = function() {
+
+// draw potential
+draw_V(ctx);
+
+background = ctx.getImageData(0,0,width, height);
+
+}
+
+////////////// draw potential
+function draw_V(context){
+  context.beginPath();
+  context.strokeStyle = "#666666";
+  context.lineWidth = 2;
+
+  // for canvas pixels x axis
+  for (let px = 0; px <= width; px++) {
+    // convert pixel to x
+    let x = vis_x_min + (px / width)*(vis_x_max-vis_x_min);
+    // calculate V
+    let y = V(x);
+    // convert back to pixel y
+    let py = mapY(y);
+
+    if (px === 0) {
+      context.moveTo(px, py);
+    } else {
+      context.lineTo(px, py);
+    }
+  }
+  context.stroke();
+}
+
+/////////////////// draw path
+function draw_path(context, path) {
+  // context.strokeStyle = "rgba(255, 0, 0, 0.4)"; // opacity 20%
+  context.lineWidth = 2;
+
+  for (let i = 0; i < N; i++) {
+    let px = mapX(path[i]);
+    let py = mapTime(i); // time on y-axis
+    // get next node position to check for tunneling
+    let px_next = mapX(path[(i+1)%N]);
+    let py_next = mapTime(i+1); // time on y-axis
+
+    context.beginPath();
+    context.moveTo(px, py);
+    context.lineTo(px_next, py_next);
+
+    if (path[i]*path[(i+1)%N] < 0){
+      context.strokeStyle = "rgb(0, 0, 255, 0.2)" // tunneling, blue
+      context.lineWidth = 4;
+    } else {
+      context.strokeStyle = "rgba(255, 0, 0, 0.2)"; // opacity 20%
+      context.lineWidth = 2;
+    }
+    // draw line
+    context.stroke();
+  }
+
+  // // draw closed loop x0 = xN
+  // context.lineTo(mapX(path[0]), mapTime(N));
+  // // context.stroke();
+}
+
+//////////////////// draw histogram
+function draw_histogram(context) {
+  // count total samples taken so far
+  let total_samples = 0;
+  for (let i = 0; i < M; i++) {
+    total_samples += histogram[i];
+  }
+
+  if (total_samples === 0) return;
+
+  // normalized curve
+  context.beginPath();
+  context.fillStyle = "rgb(102, 204, 255, 0.3)"; // opacity 30%
+
+  // start from bottom left
+  context.moveTo(mapX(-L/2), mapY(0));
+
+  for (let bin = 0; bin < M; bin++) {
+    let x = (bin * bin_size) - L/2;
+
+    // normalization
+    let p_x = histogram[bin] / (total_samples * bin_size);
+
+    let px = mapX(x);
+    let py = mapY(p_x);
+
+    context.lineTo(px, py);
+    context.lineTo(mapX(x + bin_size), py);
+  }
+
+  // fill histogram
+  context.lineTo(mapX(L/2), mapY(0));
+  context.closePath();
+  context.fill();
+}
+
+let currentIter = 0;
+const iters_per_frame = 500; // 500 paths per frame
+
+///////////////// animation
+function animateFrame(){
+  if (currentIter >= max_iter){
+    console.log("Iteration", max_iter);
+    return;
+  }
+
+  // run metropolis
+  for (let i = 0; i< iters_per_frame; i++){
+    metropolis(currentIter);
+    currentIter ++;
+  }
+
+  // clear canvas from previous frame
+  ctx.clearRect(0,0,width,height);
+
+  // paste V(x) background
+  ctx.putImageData(background,0,0);
+
+  // draw histogram
+  draw_histogram(ctx);
+
+  // draw path
+  draw_path(ctx, path);
+
+  requestAnimationFrame(animateFrame);
+}
+
+function start_simulation(){
+  // run animation
+  requestAnimationFrame(animateFrame);
+}
+
+function reset_calc(){
+  // clear canvas
+  ctx.clearRect(0,0,width,height);
+
+  // draw V
+  draw_V(ctx);
+
+  // reset iteration count
+  currentIter = 0;
+
+  // reset histogram
+  histogram.fill(0);
+}
+
+function toggle_vis(id) {
+       var cont = document.getElementById(id);
+       if(cont.style.display == 'block')
+          cont.style.display = 'none';
+       else
+          cont.style.display = 'block';
+    }
+
+</script>
+
+</body>
+</html>
