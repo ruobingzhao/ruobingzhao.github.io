@@ -790,7 +790,7 @@ function movepath(path) {
     The distribution of the particle is given by the histogram (light blue) in the back. The Brownian paths are shown in red. These are the simultaneous existence of the particle in space. The tunneling effect (highlighted in dark blue) is visible, when the particle crosses over the potential barrier to the other side of the double well.
     <br>
     <br>
-    <i>Note: In Markov Chain Monte Carlo method, we do not clear the path array from the previous iteration, but reuse it as the new initial condition. This reduces the bias from our choice of initial condition. The result of a Markov Chain simulation that has been running forever is indistinguishable from the result of the Direct Sampling method, which has no initial condition bias. You can read about "Perfect Sampling" in Krauth's book.</i>
+    <i>Note: In Markov Chain Monte Carlo method, we do not clear the path array from the previous run when the reset button is clicked, but reuse the path as the new initial condition. This reduces the bias from our choice of initial condition. The result of a Markov Chain simulation that has been running forever is indistinguishable from the result of the Direct Sampling method, which has no initial condition bias. You can read about "Perfect Sampling" in Krauth's book.</i>
     <div>
     <input type ="button" value = "Start Simulation" onClick = "start_simulation()">
     <input type ="button" value = "Reset" onClick = "reset_calc()">
