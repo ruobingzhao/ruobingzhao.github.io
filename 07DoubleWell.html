@@ -790,7 +790,7 @@ function movepath(path) {
     <br>
     <br>
     <h4 id = "simulation">Simulation</h4>
-    The distribution of the particle is given by the histogram (light blue) in the back. The Brownian paths are shown in red. These are the simultaneous existence of the particle in space. The tunneling effect (highlighted in dark blue) is visible, when the particle crosses over the potential barrier to the other side of the double well.
+    The distribution of the particle is given by the histogram (<span style="color:rgb(102, 204, 255, 1)">light blue</span>) in the back. The Brownian paths are shown in red. These are the simultaneous existence of the particle in space. The tunneling effect (highlighted in <span style="color:rgb(0, 0, 255, 1)">dark blue</span>) is visible, when the particle crosses over the potential barrier to the other side of the double well.
     <br>
     <br>
     <i>Note: In Markov Chain Monte Carlo method, we do not clear the path array from the previous run when the reset button is clicked, but reuse the path as the new initial condition. This reduces the bias from our choice of initial condition. The result of a Markov Chain simulation that has been running forever is indistinguishable from the result of the Direct Sampling method, which has no initial condition bias. You can read about "Perfect Sampling" in Krauth's book.</i>
@@ -895,7 +895,7 @@ function draw_V(context){
 
 /////////////////// draw path
 function draw_path(context, path) {
-  // context.strokeStyle = "rgba(255, 0, 0, 0.4)"; // opacity 20%
+  // context.strokeStyle = "rgba(255, 0, 0, 0.4)"; // opacity 40%
   context.lineWidth = 2;
 
   for (let i = 0; i < N; i++) {
@@ -937,7 +937,7 @@ function draw_histogram(context) {
 
   // normalized curve
   context.beginPath();
-  context.fillStyle = "rgb(102, 204, 255, 0.4)"; // opacity 30%
+  context.fillStyle = "rgb(102, 204, 255, 0.4)"; // opacity 40%
 
   // start from bottom left
   context.moveTo(mapX(-L/2), mapY(0));
