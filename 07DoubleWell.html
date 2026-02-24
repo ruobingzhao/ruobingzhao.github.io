@@ -150,7 +150,7 @@ path.fill(0);
 const hbar = 1;
 const m = 1;
 
-const max_iter = 100000;
+const max_iter = 200000;
 
 // histogram for distribution
 let histogram = new Int32Array(M);// array for histogram
@@ -672,7 +672,7 @@ function norm_rand(mu, sigmasq) {
 function int_rand(min, max) // sample a random integer between min and max
 
 function V(x) {
-  V = 4*x^4 - 8*x^2 + 3 // double-potential well
+  V = 4*x^4 - 8*x^2 + 4 // double-potential well
 }
 
 ///////////// COMPUTATIONS /////////////
