@@ -150,7 +150,7 @@ path.fill(0);
 const hbar = 1;
 const m = 1;
 
-const max_iter = 200000;
+const max_iter = 150000;
 
 // histogram for distribution
 let histogram = new Int32Array(M);// array for histogram
@@ -937,7 +937,7 @@ function draw_histogram(context) {
 
   // normalized curve
   context.beginPath();
-  context.fillStyle = "rgb(102, 204, 255, 0.3)"; // opacity 30%
+  context.fillStyle = "rgb(102, 204, 255, 0.4)"; // opacity 30%
 
   // start from bottom left
   context.moveTo(mapX(-L/2), mapY(0));
