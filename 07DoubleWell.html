@@ -614,7 +614,7 @@ function movepath(path) {
     Note that the \(1/Z\) and \(\rho^{\text{free}}\) factors cancel out.
     <br>
     <br>
-    If the new path is accepted, we register the \(x\)-positions and propose a slide of the path to another location (new \(x_0\)), and compute the probability of the whole path there. The probabilities before and after the slide are (note that \(x_0 = x_N\)):
+    If the new path is accepted, we replace the old path with the new path; otherwise, we keep the old path. Next, we propose a slide of the path to another location (new \(x_0\)), and compute the probability of the whole path there. The probabilities before and after the slide are (note that \(x_0 = x_N\)):
     \[
     p(\text{old location}) = \bigg(\frac{1}{Z}\bigg)\cdot \bigg(\prod_{k=0}^{N-1}\rho^{\text{free}}(x_k^{\text{old}},x_{k+1}^{\text{old}},\Delta_{\tau})\bigg) \cdot \exp\bigg(-\Delta_{\tau}(\sum_{k=0}^{N-1} V(x_{k}^{\text{old}}))\bigg)
     \]
@@ -628,7 +628,7 @@ function movepath(path) {
     \alpha_{\text{global}} = \min\left\{ \;1,\; \exp\bigg(-\Delta_\tau \sum_{i=0}^{N-1} \big(V(x_{i}^{\text{new}}) - V(x_{i}^{\text{old}})\big)\bigg) \right\}
     \]
     Again, the \(1/Z\) and \(\rho^{\text{free}}\) factors cancel out. The \(\rho^{\text{free}}\) cancel out because we are translating the same path to a different location, the internal step differences do not change.
-    If the slide is also accepted, we repeat the process above and generate a new path for a random segment of the path.
+    If the slide is also accepted, we replace the path array with the shifted path; otherwise, we keep the old path. Then, we register the \(x\)-positions to the histogram. We repeat the process above and generate a new path for a random segment of the path.
     <br>
     <br>
     One last remark, since the Wiener process is a closed loop (\(x_N = x_0\)), in the algorithm whenever we need \(x_N\), we replace it with \(x_0\). The indices need to be handled using \(\mathrm{modulo}(k,N)\).
