@@ -910,7 +910,7 @@ function draw_path(context, path) {
     context.lineTo(px_next, py_next);
 
     if (path[i]*path[(i+1)%N] < 0){
-      context.strokeStyle = "rgb(0, 0, 255, 0.2)" // tunneling, blue
+      context.strokeStyle = "rgb(0, 0, 255, 0.4)" // tunneling, blue
       context.lineWidth = 4;
     } else {
       context.strokeStyle = "rgba(255, 0, 0, 0.2)"; // opacity 20%
