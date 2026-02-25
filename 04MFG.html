@@ -4,7 +4,7 @@
 <meta name="description" content="This is a simulation of crowd behavior in an evacuation. Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. The solution is obtained by solving the HJB equation and the Fokker-Planck equation together. A learning strategy based on Fictitious Play from Game Theory is adopted." />
 <meta name="keywords" content="Mean Field Games, Discrete Time Mean Field Games, Discrete Time Mean Field Games Simulation, Numerical Methods, Hamilton-Jacobi-Bellman Equation, Fokker-Planck Equation, Optimal Control, Stochastic Processes, Game Theory, Fictitious Play" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mean Field Games Demo With Learned Strategy</title>
+<title>Mean Field Games Demo With Fictitious Play</title>
 <meta name="author" content="Ruobing Zhao">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -602,7 +602,7 @@ return {density: rho, control: u_opt};
     <br>
     <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
     <h4>
-      4. Mean Field Games Demo (with Learned Strategy)
+      4. Mean Field Games Demo with Fictitious Play
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
     This is a simulation of crowd behavior in an evacuation (Click <a href="#sim">here</a> to jump to simulation). Each agent tries to get to the exit as fast as possible, but if every agent rushes to the exit via the shortest path, the path becomes congested. In the Mean Field Games system, (infinitely many) interacting agents choose their paths based on not just the distance to the exit, but also on the population density nearby, until an equilibrium is reached. The trajectory of a representative agent, \(X_t\), evolves in time: \[ dX_t = b(X_t, u_t,\rho_t)dt + \sigma dW_t\]
