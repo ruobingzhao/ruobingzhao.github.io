@@ -56,7 +56,14 @@ html { background: white; margin:0;}
 
 </style>
 <script>
-
+function toggle() {
+    var image = document.getElementById('picture');
+		if (image.src.match("monaco2.jpg")) {
+			image.src = "monaco.jpg";
+    } else {
+        image.src = "monaco2.jpg";
+    }
+}
 </script>
 <div id="wrap">
   <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -110,7 +117,7 @@ html { background: white; margin:0;}
       Tutorial 6 <a href="06GraphCycle.html">Finding Arbitrage in Cryptocurrencies Using Johnson's Cycle Enumeration Algorithm</a>
     </h4>
     <h4>
-      Tutorial 7 <a href="07DoubleWell.html">Simulating Quantum Particle and Tunneling in a Double-Potential Well Using Brownian Bridge</a>
+      Tutorial 7 <a href="07DoubleWell.html">Simulating Quantum Particle and Tunneling in a Double-Well Potential Using Brownian Bridge</a>
     </h4>
 
     <hr>
@@ -120,8 +127,8 @@ html { background: white; margin:0;}
     <br>
     <br>
     <p style="width:250px;">In 2024, I visited Monaco and the famous Monte Carlo Hotel & Casino. If you know you know.</p>
-      <img src="monaco.jpg" class="img-rounded" alt="monaco" style="width:250px;">
-      <img src="monaco2.jpg" class="img-rounded" alt="monaco2" style="width:250px;">
+      <img src="monaco.jpg" id="picture" class="img-rounded" onclick="toggle()" alt="monaco" style="width:250px;">
+      <!-- <img src="monaco2.jpg" class="img-rounded" alt="monaco2" style="width:250px;"> -->
     </div>
 </div>
 </div>

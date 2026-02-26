@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="description" content="This applet simulates the thermal equilibrium distribution of a quantum particle in a double-potential well. The particle satisfies the time-independent Schrödinger Equation. The probability amplitude of finding the particle at position \(x\) is given by the wave function, and the probability of finding the particle at each energy level is given by the Boltzmann distribution. A scaled Brownian motion can be constructed from the quantum density operator after an inverse-temperature transform trick. This allows us to use Feynman's Path Integral Approach to solve for the distribution. The Metropolis-Hastings algorithm for Markov Chain Monte Carlo method is used to simulate the paths. The paths can be sampled as Brownian Bridges to improve the algorithm's efficiency. Tunneling effect is visible as the paths are sampled, where the particle crosses the potential barrier." />
+<meta name="description" content="This applet simulates the thermal equilibrium distribution of a quantum particle in a double-well potential. The particle satisfies the time-independent Schrödinger Equation. The probability amplitude of finding the particle at position \(x\) is given by the wave function, and the probability of finding the particle at each energy level is given by the Boltzmann distribution. A scaled Brownian motion can be constructed from the quantum density operator after an inverse-temperature transform trick. This allows us to use Feynman's Path Integral Approach to solve for the distribution. The Metropolis-Hastings algorithm for Markov Chain Monte Carlo method is used to simulate the paths. The paths can be sampled as Brownian Bridges to improve the algorithm's efficiency. Tunneling effect is visible as the paths are sampled, where the particle crosses the potential barrier." />
 <meta name="keywords" content="Quantum Mechanics, Statistical Mechanics, Brownian Bridge, Numerical Method, Metropolis Algorithm" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="utf-8">
-<title>Simulating Quantum Particle and Tunneling in a Double-Potential Well Using Brownian Bridge</title>
+<title>Simulating Quantum Particle and Tunneling in a Double-Well Potential Using Brownian Bridge</title>
 <meta name="author" content="Ruobing Zhao">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -174,7 +174,7 @@ function int_rand(min, max) {
 }
 
 function V(x) {
-  return 4*Math.pow(x,4) - 8*Math.pow(x,2) + 4 // double-potential well
+  return 4*Math.pow(x,4) - 8*Math.pow(x,2) + 4 // double-well potential
 }
 
 ///////////// COMPUTATIONS /////////////
@@ -312,10 +312,10 @@ function movepath(path) {
     <br>
     <i id ="top">All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
     <h4>
-      7. Simulating Quantum Particle and Tunneling in a Double-Potential Well Using Brownian Bridge
+      7. Simulating Quantum Particle and Tunneling in a Double-Well Potential Using Brownian Bridge
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    This applet simulates the thermal equilibrium distribution of a quantum particle in a double-potential well. The particle satisfies the time-independent Schrödinger Equation. The probability amplitude of finding the particle at position \(x\) is given by the wave function, and the probability of finding the particle at each energy level is given by the Boltzmann distribution. A scaled Brownian motion can be constructed from the quantum density operator after an inverse-temperature transform trick. This allows us to use Feynman's Path Integral Approach to solve for the distribution. The Metropolis-Hastings algorithm for Markov Chain Monte Carlo method is used to simulate the paths. The paths can be sampled as Brownian Bridges to improve the algorithm's efficiency. Tunneling effect is visible as the paths are sampled, where the particle crosses the potential barrier.
+    This applet simulates the thermal equilibrium distribution of a quantum particle in a double-well potential. The particle satisfies the time-independent Schrödinger Equation. The probability amplitude of finding the particle at position \(x\) is given by the wave function, and the probability of finding the particle at each energy level is given by the Boltzmann distribution. A scaled Brownian motion can be constructed from the quantum density operator after an inverse-temperature transform trick. This allows us to use Feynman's Path Integral Approach to solve for the distribution. The Metropolis-Hastings algorithm for Markov Chain Monte Carlo method is used to simulate the paths. The paths can be sampled as Brownian Bridges to improve the algorithm's efficiency. Tunneling effect is visible as the paths are sampled, where the particle crosses the potential barrier.
     <br>
     <br>
     <i>This tutorial is intended to be self-contained (given basic math and physics knowledge).</i> While the <a href="#reference">book</a> by Werner Krauth is a great reference for the numerical method, it leaves out a lot of background knowledge, which is why I wrote this tutorial. I will explain every step of building the simulation, starting from <a href = "#physics_section">the physics</a>, moving on to <a href = "#math_section">the math</a>, and last but not least the <a href = "#algo_section">numerical algorithm</a>. I try to make it easy to understand while maintaining a certain level of mathematical rigor. You can also skip all this and jump straight to the <a href="#simulation">simulation</a>.
@@ -326,7 +326,7 @@ function movepath(path) {
     The Boltzmann distribution gives us the probability of finding a system in energy level \(E_n\) at temperature \(T\):
     \[p_n = \frac{1}{Z}e^{-\frac{E_n}{k_B T}}\]
     where \(Z \;\dot{=}\;\sum_{n=0}^{\infty}e^{-\frac{E_n}{k_B T}}\) is the partition function (to normalize total probability to 1), \(k_B\) is the Boltzmann constant and \(T\) is the temperature of the system.
-    For this simulation, the system is a quantum particle in a double-potential well. A quantum particle satisfies the Schrödinger Equation:
+    For this simulation, the system is a quantum particle in a double-well potential. A quantum particle satisfies the Schrödinger Equation:
     \[i\hbar\frac{\partial \Psi}{\partial t} = -\frac{\hbar^2}{2m}\frac{\partial^2 \Psi}{\partial x^2} + V\cdot \Psi\]
     where \(\Psi = \Psi(x,t)\) is the probability amplitude of the particle, meaning that \(|\Psi(x)\Psi^*(x)| = |\Psi(x)|^2\) gives the probability density of the particle at position \(x\) and time \(t\), and \(V\) is the potential field of the system. Assuming that the potential function is not time-dependent, i.e. \(V=V(x)\), we can break \(\Psi(x,t)\) into time-dependent part and space-dependent part and simplify the equation. Let \(\Psi(x,t) = \phi(t)\psi(x)\), substitute this in the Schrödinger Equation and separate variables. We get
     \[-i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = -\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x)\]
@@ -540,7 +540,7 @@ function movepath(path) {
     From earlier we know that a diagonal element of the particle's density matrix, \(\rho(x,x,\beta)\), represents the unnormalized probability density of finding the particle at position \(x\), and we can use the Feynman-Kac formula to get the values of \(\rho(x,x,\beta)\) by sampling Brownian paths that start and end at \(x\), evaluating \(\exp\bigg(-\int_0^{\beta} V(x_s)ds\bigg)\) along the paths, and averaging the results. However, this naive approach has some downsides in practice. First, we need to sample many many paths for every \(x\) of the space, but because the particle is in a potential field where there are regions with high potential barriers, a significant portion of the paths we generate actually contribute very little to the final average because \(\exp\bigg(-\int_0^{\beta} V(x_s)ds\bigg)\) will turn out to be a very small number. This wastes computing power. Secondly, we are only getting the unnormalized probabilities at each position \(x\), we still need to integrate over the whole space to get \(Z\), the total size of the probability space.
     <br>
     <br>
-    A better approach is the Markov Chain Monte Carlo method. Instead of blindly generating millions of Brownian paths and calculating their average, imagine we drop a quantum particle at a random point in the potential field, and let it find its own path. Since the particle is more likely to visit a state with low energy cost (high probability density), for example, at the bottom of the potential well, rather than climbing over the potential barrier, we should naturally converge to the true distribution. Then, instead of calculating the integral \(Z\), we can just register when the particle visits a state during the random walk and build the probability distribution using a histogram. The Metropolis-Hastings algorithm provides a procedure for the particle to settle into the true distribution. It is based on the relative probabilities between an old path and a new path.
+    A better approach is the Markov Chain Monte Carlo method. Instead of blindly generating millions of Brownian paths and calculating their average, imagine we drop a quantum particle at a random point in the potential field, and let it find its own path. Since the particle is more likely to visit a state with low energy cost (high probability density), for example, at the bottom of the potential well, rather than getting past the potential barrier, we should naturally converge to the true distribution. Then, instead of calculating the integral \(Z\), we can just register when the particle visits a state during the random walk and build the probability distribution using a histogram. The Metropolis-Hastings algorithm provides a procedure for the particle to settle into the true distribution. It is based on the relative probabilities between an old path and a new path.
     <br>
     <br>
     In the Metropolis-Hastings algorithm, we propose a move from an old state to new state. The acceptance rate of this proposal, \(\alpha\), is given by:
@@ -672,7 +672,7 @@ function norm_rand(mu, sigmasq) {
 function int_rand(min, max) // sample a random integer between min and max
 
 function V(x) {
-  V = 4*x^4 - 8*x^2 + 4 // double-potential well
+  V = 4*x^4 - 8*x^2 + 4 // double-well potential
 }
 
 ///////////// COMPUTATIONS /////////////
@@ -803,7 +803,7 @@ function movepath(path) {
       <div class ="graph-container" style = "display: flex; flex-wrap: wrap; justify-content: left; gap: 20px; align-items: flex-start;">
 
         <div>
-          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">Quantum Particle in a Double-Potential Well</div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">Quantum Particle in a Double-Well Potential</div>
           <canvas id="box" style="border:2px solid #333;">
           </canvas>
         </div>
