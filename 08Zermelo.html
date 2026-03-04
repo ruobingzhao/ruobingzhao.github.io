@@ -603,7 +603,7 @@ function boat_trajectory(u_opt){
     \[
     J(x,y) = 0, \;\; (x,y)\in \partial\mathcal{O}
     \]
-    The value function is defined as the minimum of the objective function over all control trajectories, with the boundary condition
+    The value function is defined as the infimum of the objective function over all admissible controls, with the boundary condition
     \[
     V(x,y) = \inf_{\theta}\, J(x,y,\theta)
     \]
@@ -612,23 +612,23 @@ function boat_trajectory(u_opt){
     \]
     The value function satisfies the Hamilton-Jacobi-Bellman (HJB) equation, along with the boundary condition:
     \[
-    \inf_{\theta}\bigg\{ \frac{\partial V}{\partial x} \cdot (v_x + k\cos\theta_t) + \frac{\partial V}{\partial y} \cdot (v_y + k\sin\theta_t) + \frac{1}{2}\sigma^2\bigg(\frac{\partial^2 V}{\partial x^2} + \frac{\partial^2 V}{\partial y^2}\bigg)+ 1\bigg\} = 0,\;\; (x,y)\in \mathcal{O}
+    \inf_{\theta}\bigg\{ \frac{\partial V}{\partial x} \cdot (v_x + k\cos\theta) + \frac{\partial V}{\partial y} \cdot (v_y + k\sin\theta) + \frac{1}{2}\sigma^2\bigg(\frac{\partial^2 V}{\partial x^2} + \frac{\partial^2 V}{\partial y^2}\bigg)+ 1\bigg\} = 0,\;\; (x,y)\in \mathcal{O}
     \]
     \[
     V(x,y) = 0, \;\; \;(x,y)\in \partial \mathcal{O}
     \]
-    For a numerical solution, we use finite difference to approximate the derivatives. For the first derivatives, we choose the left/right side difference depending on whether \(v_x + k\cos\theta_t\) and \(v_y + k\sin\theta_t\) are positive or negative. (This comes from the requirement of local consistency for Markov Chain Approximation, which will be explained later.)
+    For a numerical solution, we use finite difference with step size \(h>0\) to approximate the derivatives. For the first derivatives, we choose the left/right side difference depending on whether \(v_x + k\cos\theta\) and \(v_y + k\sin\theta\) are positive or negative. (This comes from the requirement of local consistency for Markov Chain Approximation, which will be explained later.)
     \[
-    \frac{\partial V}{\partial x} \approx \frac{V(x+h,y) - V(x,y)}{h} \;\;\text{ if }\;v_x + k\cos\theta_t \geq 0
+    \frac{\partial V}{\partial x} \approx \frac{V(x+h,y) - V(x,y)}{h} \;\;\text{ if }\;v_x + k\cos\theta \geq 0
     \]
     \[
-    \frac{\partial V}{\partial x} \approx \frac{V(x,y) - V(x-h,y)}{h} \;\;\text{ if }\;v_x + k\cos\theta_t < 0
+    \frac{\partial V}{\partial x} \approx \frac{V(x,y) - V(x-h,y)}{h} \;\;\text{ if }\;v_x + k\cos\theta < 0
     \]
     \[
-    \frac{\partial V}{\partial y} \approx \frac{V(x,y+h) - V(x,y)}{h} \;\;\text{ if }\;v_y + k\sin\theta_t \geq 0
+    \frac{\partial V}{\partial y} \approx \frac{V(x,y+h) - V(x,y)}{h} \;\;\text{ if }\;v_y + k\sin\theta \geq 0
     \]
     \[
-    \frac{\partial V}{\partial y} \approx \frac{V(x,y) - V(x,y-h)}{h} \;\;\text{ if }\;v_y + k\sin\theta_t < 0
+    \frac{\partial V}{\partial y} \approx \frac{V(x,y) - V(x,y-h)}{h} \;\;\text{ if }\;v_y + k\sin\theta < 0
     \]
     \[
     \frac{\partial^2 V}{\partial x^2} \approx \frac{V(x+h,y)-2V(x,y)+ V(x-h,y)}{h^2}
@@ -636,7 +636,7 @@ function boat_trajectory(u_opt){
     \[
     \frac{\partial^2 V}{\partial y^2} \approx \frac{V(x,y+h)-2V(x,y)+ V(x,y-h)}{h^2}
     \]
-    For any real number \(a\), let \(a^+ = \max[0,a]\), \(a^- = \max[0,-a]\), i.e. \(a^+\) and \(a^-\) denote the positive and negative parts of \(a\), so that \(a = a^+-a^-\) and \(|a| = a^++a^-\). Adopting the notation \(b_1 = v_x + k\cos\theta_t\), \(b_2 = v_y + k\sin\theta_t\), we can rewrite the HJB equation:
+    For any real number \(a\), let \(a^+ = \max[0,a]\), \(a^- = \max[0,-a]\), i.e. \(a^+\) and \(a^-\) denote the positive and negative parts of \(a\), so that \(a = a^+-a^-\) and \(|a| = a^++a^-\). Adopting the notation \(b_1 = v_x + k\cos\theta\), \(b_2 = v_y + k\sin\theta\), we can rewrite the HJB equation:
     \[
     \begin{aligned}
     \inf_{\theta}\bigg\{ & 1 + \frac{V(x+h,y) - V(x,y)}{h} \cdot b_1^+ - \frac{V(x,y) - V(x-h,y)}{h} \cdot b_1^-\\
@@ -675,10 +675,10 @@ function boat_trajectory(u_opt){
     \]
     Then this Markov chain is <b>locally consistent</b> with the continuous time state process, meaning that the mean, variance, and covariance of incremental changes in the Markov chain states are consistent with those of the continuous time stochastic process:
     \[
-    \mathbb{E}[\Delta \eta_n^h] = \big(v_x + k\cos\theta_t\big)\cdot \Delta_t^{h,\theta}
+    \mathbb{E}[\Delta \eta_n^h] = \big(v_x + k\cos\theta\big)\cdot \Delta_t^{h,\theta}
     \]
     \[
-    \mathbb{E}[\Delta \zeta_n^h] = \big(v_y + k\sin\theta_t\big)\cdot \Delta_t^{h,\theta}
+    \mathbb{E}[\Delta \zeta_n^h] = \big(v_y + k\sin\theta\big)\cdot \Delta_t^{h,\theta}
     \]
     \[
     \mathbb{E}\big[ \big(\Delta \eta_n^h - \mathbb{E}[\Delta \eta_n^h] \big)^2 \big] = \sigma^2 \Delta_t^{h,\theta} + o(\Delta_t^{h,\theta})
