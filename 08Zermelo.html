@@ -220,9 +220,27 @@ function v(i,j){
     vy = omega * dx;
 
   } else if (current_vfield == "three"){
+    let center_x = grid_x / 2;
+    let center_y = grid_y / 2;
+
+    let dx = i - center_x;
+    let dy = j - center_y;
+
+    // angular velocity
+    let omega = 0.015;
+
+    // rotation
+    vx = omega * dy;
+    vy = -omega * dx;
+
+  } else if (current_vfield == "four"){
     vx = 0.25;
     let wave_phase = (i / grid_x) * 2 * Math.PI;
     vy = 0.3 * Math.sin(wave_phase);
+  } else if (current_vfield == "five"){
+    vx = -0.25;
+    let wave_phase = (i / grid_x) * 2 * Math.PI;
+    vy = -0.3 * Math.sin(wave_phase);
   }
 
   return {x: vx, y: vy};
@@ -753,9 +771,13 @@ function boat_trajectory(u_opt){
       <input type="radio" name="vfield" id="one" value="one" style = "margin-left: 10px;" checked>
       One Direction
       <input type="radio" name="vfield" id="two" value="two" style = "margin-left: 15px;">
-      Whirlpool
+      Clockwise Whirlpool
       <input type="radio" name="vfield" id="three" value="three" style = "margin-left: 15px;">
+      Counterclockwise Whirlpool
+      <input type="radio" name="vfield" id="four" value="four" style = "margin-left: 15px;">
       Sinusoidal Flow
+      <input type="radio" name="vfield" id="five" value="five" style = "margin-left: 15px;">
+      Sinusoidal Flow (other direction)
     </div>
     </div>
     <br>
