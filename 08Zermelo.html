@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="In this demo we solve the Zermelo's Navigation Problem numerically as a continuous-time stochastic control problem using Markov Chain Approximation." />
+<meta name="keywords" content="Continuous-Time Stochastic Control, Markov Chain Approximation, Zermelo's Navigation Problem, Numerical Method" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>Zermelo's Navigation Problem (A Continuous-Time Stochastic Control Problem)</title>
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+</head>
+<body>
+<style type="text/css">
+#transition-table td, #transition-table th {padding: 2px 2px; font-size: 12px }
+#weight-table td, #weight-table th {padding: 2px 2px; font-size: 12px }
+
+#returns-table td, #returns-table th {padding: 2px 2px; font-size: 12px }
+
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1;
+  height: 350px;
+}
+*/
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
+
+#pseudocode {
+  display: none;
+}
+
+#terrain-table th, #terrain-table td {
+  padding: 2px, 2px;
+  font-size: 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+#terrain-table th {
+  text-align: center;
+}
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+</style>
+<script>
+
+///////////// GLOBAL VARIABLES /////////////
+const Lx = 5;
+const Ly = 4;
+const h = 0.05;
+const hsq = Math.pow(h,2);
+const grid_x = Lx/h;
+const grid_y = Ly/h;
+let max_iter = 1000;
+let target_x = 30;
+let target_y = 20;
+const k = 0.5; // max velocity of the boat
+const sigma = 0.1; // diffusion coefficient
+const sigsq = Math.pow(sigma,2);
+let V = new Float64Array(grid_x*grid_y); // value function
+V.fill(0);
+let u_opt = new Uint8Array(grid_x*grid_y);
+u_opt.fill(0);// controls: k*pi/8
+
+// stores boat trajectory
+let boat_pos = [];
+let boat_pos_cont = [];
+
+// default start position
+let x0 = 2;
+let y0 = 2;
+
+// vector field selection
+let current_vfield = "one";
+
+///////////// HELPER FUNCTIONS /////////////
+// index for float Array
+function index(i, j) {
+  return i*grid_y + j;
+}
+
+// sample from normal distribution
+// Box Muller transform
+function norm_rand(mu, sigmasq) {
+  u1 = 1.0-Math.random();
+  u2 = 1.0-Math.random();// prevents log(0)
+
+  z1 = Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+  // z2 = Math.sqrt(-2*Math.log(u1))*Math.sin(2*Math.PI*u2);
+  return z1*Math.sqrt(sigmasq) + mu;
+  // return { w1: z1*Math.sqrt(sigmasq) + mu, w2: z2*Math.sqrt(sigmasq) + mu};
+}
+
+// sample a random integer between min and max
+function int_rand(min, max) {
+  return Math.floor(Math.random()*(max-min+1)) + min;
+}
+
+
+// velocity field
+function v(i,j){
+  // let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
+  // let vfieldType = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
+
+  let vx = 0;
+  let vy = 0;
+
+  if (current_vfield == "one"){
+    let center_y = grid_y / 2;
+    let normalized_y = (j - center_y) / center_y;
+
+    vx = 0.4 * (1 - Math.pow(normalized_y, 2));
+    vy = 0;
+  } else if (current_vfield == "two"){
+    let center_x = grid_x / 2;
+    let center_y = grid_y / 2;
+
+    let dx = i - center_x;
+    let dy = j - center_y;
+
+    // angular velocity
+    let omega = 0.015;
+
+    // rotation
+    vx = -omega * dy;
+    vy = omega * dx;
+
+  } else if (current_vfield == "three"){
+    vx = 0.25;
+    let wave_phase = (i / grid_x) * 2 * Math.PI;
+    vy = 0.3 * Math.sin(wave_phase);
+  }
+
+  return {x: vx, y: vy};
+}
+
+/////////////// MOVED THESE CALCULATIONS INSIDE THE EXPECTEDVAL FUNCTION
+/////////////// TO REDUCE REDUNDANT EVALUATIONS
+
+function parameters(x,y,u){
+  let v_field = v(x,y);
+  let b1val = v_field.x + k*Math.cos(u*Math.PI/8);
+  let b2val = v_field.y + k*Math.sin(u*Math.PI/8);
+  let b1a = Math.abs(b1val);
+  let b2a = Math.abs(b2val);
+  let b1p, b1m, b2p, b2m;
+  if (b1val >= 0){
+    b1p = b1val;
+    b1m = 0;
+  } else {
+    b1p = 0;
+    b1m = -b1val;
+  }
+  if (b2val >= 0){
+    b2p = b2val;
+    b2m = 0;
+  } else {
+    b2p = 0;
+    b2m = -b2val;
+  }
+  // Q = |b1|/h + |b2|/h + 2*sigma^2/h^2
+  let Q_val = b1a/h + b2a/h + 2*sigsq/hsq;
+  let Deltat = 1/Q_val;
+  // p_right
+  let pright = (b1p/h + sigsq/(2*hsq))/Q_val;
+  // p_left
+  let pleft = (b1m/h + sigsq/(2*hsq))/Q_val;
+  // p_down // index bigger
+  let pdown = (b2p/h + sigsq/(2*hsq))/Q_val;
+  // p_up // index smaller
+  let pup = (b2m/h + sigsq/(2*hsq))/Q_val;
+
+  return {b1: b1val, b2: b2val, b1plus: b1p, b1minus: b1m, b2plus: b2p, b2minus: b2m, b1abs: b1a, b2abs: b2a, Q: Q_val, Delta_t: Deltat, p_right: pright, p_left: pleft, p_up: pup, p_down: pdown};
+}
+
+// // compute b1, b2, Q
+// function b1(x,y,u){
+//   let b1plus = 0;
+//   let b1minus = 0;
+//   let b1abs = 0;
+//   let v_field = v(x,y);
+//   let b1 = v_field.x + k*Math.cos(u*Math.PI/8);
+//
+//   if (b1 >= 0){
+//     b1plus = b1;
+//     b1minus = 0;
+//     b1abs = b1;
+//   } else {
+//     b1plus = 0;
+//     b1minus = -b1;
+//     b1abs = -b1;
+//   }
+//
+//   return {plus: b1plus, minus: b1minus, abs: b1abs};
+// }
+//
+// function b2(x,y,u){
+//   let b2plus = 0;
+//   let b2minus = 0;
+//   let b2abs = 0;
+//   let v_field = v(x,y);
+//   let b2 = v_field.y + k*Math.sin(u*Math.PI/8);
+//
+//   if (b2 >= 0){
+//     b2plus = b2;
+//     b2minus = 0;
+//     b2abs = b2;
+//   } else {
+//     b2plus = 0;
+//     b2minus = -b2;
+//     b2abs = -b2;
+//   }
+//
+//   return {plus: b2plus, minus: b2minus, abs: b2abs};
+// }
+//
+// function Q(x,y,u){
+//   let Q_val = 0;
+//   // Q = |b1|/h + |b2|/h + 2*sigma^2/h^2
+//   let b1val = b1(x,y,u).abs;
+//   let b2val = b2(x,y,u).abs;
+//   Q_val = b1val/h + b2val/h + 2*sigsq/hsq;
+//
+//   return Q_val;
+// }
+//
+// // single step cost
+// function Delta_t(x,y,u) {
+//   // Delta = 1/Q
+//   let Delta = 0;
+//   let Qval = Q(x,y,u);
+//   Delta = 1/Qval;
+//
+//   return Delta;
+// }
+//
+// // transition probabilities
+// function p_right(x,y,u){
+//   let p_right = 0;
+//   // p_right = (b1plus/h + sigma^2/(2*h^2))/Q
+//   let b1p = b1(x,y,u).plus;
+//   let Qval = Q(x,y,u);
+//   p_right = (b1p/h + sigsq/(2*hsq))/Qval;
+//
+//   return p_right;
+// }
+//
+// function p_left(x,y,u){
+//   let p_left = 0;
+//   // p_left = (b1minus/h + sigma^2/(2*h^2))/Q
+//   let b1m = b1(x,y,u).minus;
+//   let Qval = Q(x,y,u);
+//   p_left = (b1m/h + sigsq/(2*hsq))/Qval;
+//
+//   return p_left;
+// }
+//
+// function p_down(x,y,u){
+// // index bigger
+// let p_down = 0;
+// // p_down = (b2plus/h + sigma^2/(2*h^2))/Q
+// let b2p = b2(x,y,u).plus;
+// let Qval = Q(x,y,u);
+// p_down = (b2p/h + sigsq/(2*hsq))/Qval;
+//
+// return p_down;
+// }
+//
+// function p_up(x,y,u){
+// // index smaller
+// let p_up = 0;
+// // p_up = (b2minus/h + sigma^2/(2*h^2))/Q
+// let b2m = b2(x,y,u).minus;
+// let Qval = Q(x,y,u);
+// p_up = (b2m/h + sigsq/(2*hsq))/Qval;
+//
+// return p_up;
+// }
+/////////////// MOVED THESE CALCULATIONS INSIDE THE EXPECTEDVAL FUNCTION
+
+///////////// COMPUTATIONS /////////////
+// Solve Bellman equation V(x,y) = min E[L + V(x',y')]
+function bellman(x, y){
+  let minVal = Infinity;
+  let bestU = 0;
+
+  // control = u*pi/8
+  for (let u = 0; u<16; u++){
+    // let cost = Delta_t + expectedVal(x, y, u);
+    let cost = expectedVal(x, y, u);
+    if (cost < minVal) {
+      minVal = cost;
+      bestU = u;
+    }
+  }
+  return {value: minVal, control: bestU};
+}
+
+// compute expected value E[L + V(x',y')] given x, y, u
+function expectedVal(x, y, u){
+  // compute parameters
+  let param = parameters(x,y,u);
+
+  // expected value = Delta_t + sum_u p(x',y'|x,y)*V(x',y')
+  let sum = param.Delta_t;
+  // going right
+  if (x < grid_x-1) {
+    sum += param.p_right*V[index(x+1,y)];
+  } else {
+    // reflecting boundary
+    sum += param.p_right*V[index(x,y)];
+  }
+  // going left
+  if (x > 0){
+    sum += param.p_left*V[index(x-1,y)];
+  } else {
+    sum += param.p_left*V[index(x,y)];
+  }
+  // going down // index bigger
+  if (y < grid_y - 1){
+    sum += param.p_down*V[index(x,y+1)];
+  } else {
+    sum += param.p_down*V[index(x,y)];
+  }
+  // going up // index smaller
+  if (y > 0){
+    sum += param.p_up*V[index(x,y-1)];
+  } else {
+    sum += param.p_up*V[index(x,y)];
+  }
+
+return sum;
+}
+
+//// Value Iteration
+function VI (){
+  let V_old = new Float64Array(V);
+
+  for (let iter = 0; iter < max_iter; iter++){
+    // copy old Value function
+    for (let i = 0; i < grid_x; i++){
+      for (let j = 0; j < grid_y; j++){
+        V_old[index(i,j)] = V[index(i,j)];
+      }
+    }
+
+    // loop over all states
+    for (let i = 0; i < grid_x; i++){
+      for (let j = 0; j < grid_y; j++){
+        // check if reach target, set value function to zero
+        if (i == target_x && j == target_y){
+          V[index(i,j)] = 0;
+          // skip the rest
+          continue;
+        }
+        // bellman for other cells
+        // Gauss-Seidel value iteration; reads from V not V_old
+        const result = bellman(i, j);
+        V[index(i, j)] = result.value;
+        u_opt[index(i, j)] = result.control;
+      }
+    }
+
+    // Check convergence criterion
+    let diff = math.norm(math.subtract(Array.from(V),Array.from(V_old)), 'inf');
+    if (diff < 0.0001){
+      console.log("converged at iteration ", iter);
+      break;
+    }
+  }
+}
+
+function boat_start(){
+  // generate a random start position for the boat
+  x0 = int_rand(0, grid_x-1);
+  y0 = int_rand(0, grid_y-1);
+  // try again if (x0,y0) is the target
+  while (x0 == target_x && y0 == target_y){
+    x0 = int_rand(0, grid_x-1);
+    y0 = int_rand(0, grid_y-1);
+  }
+}
+
+function boat_trajectory(u_opt){
+  // clear current boat trajectory
+  boat_pos = [];
+
+  // append (x0,y0) to boat trajectory
+  boat_pos.push([x0,y0]);
+
+  let current_x = x0;
+  let current_y = y0;
+  let new_x = x0;
+  let new_y = y0;
+
+  while (current_x !== target_x || current_y !== target_y){
+    // safety check: whether the boat is stuck
+    if (boat_pos.length > 10000){
+      console.log("boat stuck, max steps reached");
+      break;
+    }
+    // check optimal control for current location
+    let theta = u_opt[index(current_x,current_y)];
+
+    // compute probabilities of moving up, down, left, right
+    let param = parameters(current_x,current_y,theta);
+
+    new_x = current_x;
+    new_y = current_y;
+
+    // // move boat to new location
+    // // Euler's method, continuous SDE
+    // let Xt = param.b1*param.Delta_t + sigma*norm_rand(0,param.Delta_t);
+    // let Yt = param.b2*param.Delta_t + sigma*norm_rand(0,param.Delta_t);
+
+
+    // move boat to new location
+    let r = Math.random();
+    if (r < param.p_right){
+      new_x = current_x+1;
+    } else if (r < param.p_right + param.p_left){
+      new_x = current_x - 1;
+    } else if (r < param.p_right + param.p_left + param.p_up){
+      new_y = current_y - 1;
+    } else {
+      new_y = current_y + 1;
+    }
+
+    // check if hit grid walls
+    // reflecting boundaries
+    if (new_x < 0 || new_x >= grid_x){
+      // stay at old location
+      new_x = current_x;
+    }
+    if (new_y < 0 || new_y >= grid_y){
+      // stay at old location
+      new_y = current_y;
+    }
+
+    boat_pos.push([new_x, new_y]);
+
+    // update current location
+    current_x = new_x;
+    current_y = new_y;
+  }
+
+}
+
+/////////////// MAIN FUNCTION SEE VISUALIZATION SECTION /////////////////
+
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "container">
+    <br>
+    <br>
+    <br>
+    <i id ="top">All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      8. Zermelo's Navigation Problem (A Continuous-Time Stochastic Control Problem)
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    In this demo we solve the Zermelo's Navigation Problem numerically as a continuous-time stochastic control problem using Markov Chain Approximation. Click <a href="#sim">here</a> to play with the simulation.
+    <br>
+    The original (deterministic) Zermelo's Navigation Problem was formulated by Ernst Zermelo in his 1931 <a href="https://doi.org/10.1002/zamm.19310110205">paper</a>. A boat in a body of water (or, a zeppelin surrounded by air) is moving at its maximum motor speed \(k\) towards a destination against a variable water current (or wind) given by the vector field \(\vec{v} = (v_x, v_y)\). The boat seeks to minimize the time it takes to arrive at the destination. The boat position \((x,y)\) evolves according to the differential equations:
+    \[
+    \dot{x} = v_x(x,y) + k\cos\theta_t
+    \]
+    \[
+    \dot{y} = v_y(x,y) + k\sin\theta_t
+    \]
+    where \(\theta_t\) is the angle between the boat's moving direction and the \(x\)-axis at time \(t\), which is the control variable. In this demo, we consider the stochastic case, where there is Brownian noise in the state evolution:
+    \[
+    dX_t = \bigg(v_x(X_t,Y_t) + k\cos\theta_t\bigg)dt + \sigma dW^{1}_t
+    \]
+    \[
+    dY_t = \bigg(v_y(X_t,Y_t) + k\sin\theta_t\bigg)dt + \sigma dW^{2}_t
+    \]
+    Again \(\theta\) is the control variable, and \(W^{1}_t\), \(W^2_t\) are independent 1-dimensional Brownian motions, and \(\sigma >0\). The goal is to find the minimum mean exit time (and the optimal control trajectory) from an open set \(\mathcal{O}\in \mathbb{R}^2\), which represents the body of water, and its boundary \(\partial \mathcal{O}\) represents the destination. The objective function to be minimized is
+    \[
+    J(x,y,\theta) = \mathbb{E}^{x,y} [\int_0^{\tau} 1\; dt] = \mathbb{E}^{x,y} [\tau], \;\; (x,y)\in \mathcal{O}
+    \]
+    \[
+    \tau = \inf\{s>0:\; (x_s,y_s) \notin \mathcal{O}\}
+    \]
+    \[
+    J(x,y) = 0, \;\; (x,y)\in \partial\mathcal{O}
+    \]
+    The value function is defined as the minimum of the objective function over all control trajectories, with the boundary condition
+    \[
+    V(x,y) = \inf_{\theta}\, J(x,y,\theta)
+    \]
+    \[
+    V(x,y) = 0, \;\; \;(x,y)\in \partial \mathcal{O}
+    \]
+    The value function satisfies the Hamilton-Jacobi-Bellman (HJB) equation, along with the boundary condition:
+    \[
+    \inf_{\theta}\bigg\{ \frac{\partial V}{\partial x} \cdot (v_x + k\cos\theta_t) + \frac{\partial V}{\partial y} \cdot (v_y + k\sin\theta_t) + \frac{1}{2}\sigma^2\bigg(\frac{\partial^2 V}{\partial x^2} + \frac{\partial^2 V}{\partial y^2}\bigg)+ 1\bigg\} = 0,\;\; (x,y)\in \mathcal{O}
+    \]
+    \[
+    V(x,y) = 0, \;\; \;(x,y)\in \partial \mathcal{O}
+    \]
+    For a numerical solution, we use finite difference to approximate the derivatives. For the first derivatives, we choose the left/right side difference depending on whether \(v_x + k\cos\theta_t\) and \(v_y + k\sin\theta_t\) are positive or negative. (This comes from the requirement of local consistency for Markov Chain Approximation, which will be explained later.)
+    \[
+    \frac{\partial V}{\partial x} \approx \frac{V(x+h,y) - V(x,y)}{h} \;\;\text{ if }\;v_x + k\cos\theta_t \geq 0
+    \]
+    \[
+    \frac{\partial V}{\partial x} \approx \frac{V(x,y) - V(x-h,y)}{h} \;\;\text{ if }\;v_x + k\cos\theta_t < 0
+    \]
+    \[
+    \frac{\partial V}{\partial y} \approx \frac{V(x,y+h) - V(x,y)}{h} \;\;\text{ if }\;v_y + k\sin\theta_t \geq 0
+    \]
+    \[
+    \frac{\partial V}{\partial y} \approx \frac{V(x,y) - V(x,y-h)}{h} \;\;\text{ if }\;v_y + k\sin\theta_t < 0
+    \]
+    \[
+    \frac{\partial^2 V}{\partial x^2} \approx \frac{V(x+h,y)-2V(x,y)+ V(x-h,y)}{h^2}
+    \]
+    \[
+    \frac{\partial^2 V}{\partial y^2} \approx \frac{V(x,y+h)-2V(x,y)+ V(x,y-h)}{h^2}
+    \]
+    For any real number \(a\), let \(a^+ = \max[0,a]\), \(a^- = \max[0,-a]\), i.e. \(a^+\) and \(a^-\) denote the positive and negative parts of \(a\), so that \(a = a^+-a^-\) and \(|a| = a^++a^-\). Adopting the notation \(b_1 = v_x + k\cos\theta_t\), \(b_2 = v_y + k\sin\theta_t\), we can rewrite the HJB equation:
+    \[
+    \begin{aligned}
+    \inf_{\theta}\bigg\{ & 1 + \frac{V(x+h,y) - V(x,y)}{h} \cdot b_1^+ - \frac{V(x,y) - V(x-h,y)}{h} \cdot b_1^-\\
+    & + \frac{V(x,y+h) - V(x,y)}{h} \cdot b_2^+ - \frac{V(x,y) - V(x,y-h)}{h} \cdot b_2^-\\
+    & + \frac{1}{2}\sigma^2\bigg(\frac{V(x+h,y)-2V(x,y)+ V(x-h,y)}{h^2} + \frac{V(x,y+h)-2V(x,y)+ V(x,y-h)}{h^2}\bigg)\bigg\} = 0,\;\; (x,y)\in \mathcal{O}
+    \end{aligned}
+    \]
+    Collecting terms, we get
+    \[
+    \begin{aligned}
+    \inf_{\theta}\bigg\{ & 1 + \bigg( \frac{b_1^+}{h} + \frac{\sigma^2}{2h^2} \bigg)V(x+h,y) \\
+      & + \bigg( \frac{b_1^-}{h} + \frac{\sigma^2}{2h^2} \bigg)V(x-h,y)\\
+      & + \bigg( \frac{b_2^+}{h} + \frac{\sigma^2}{2h^2} \bigg)V(x,y+h) \\
+      & + \bigg( \frac{b_2^-}{h} + \frac{\sigma^2}{2h^2} \bigg)V(x,y-h)\\
+      & - \bigg( \frac{b_1^+}{h} + \frac{b_1^-}{h} + \frac{b_2^+}{h} + \frac{b_2^-}{h} +\frac{2\sigma^2}{h^2} \bigg)V(x,y) \bigg\} = 0
+    \end{aligned}
+    \]
+    Note that \(b_1^+\), \(b_1^-\), \(b_2^+\), \(b_2^-\) are all non-negative numbers. We can define a Markov chain \(\,\xi_n^h = (\eta_n^h, \zeta_n^h)\,\) on the discrete state space \(S^h = \{(ih,jh): i,j\in \mathbb{Z}\}\), with transition probabilities
+    \[
+    p^{h,\theta}(x+h,y|x,y) = \frac{b_1^+/h + \sigma^2/2h^2}{Q^{h,\theta}}
+    \]
+    \[
+    p^{h,\theta}(x-h,y|x,y) = \frac{b_1^-/h + \sigma^2/2h^2}{Q^{h,\theta}}
+    \]
+    \[
+    p^{h,\theta}(x,y+h|x,y) = \frac{b_2^+/h + \sigma^2/2h^2}{Q^{h,\theta}}
+    \]
+    \[
+    p^{h,\theta}(x,y-h|x,y) =  \frac{b_2^-/h + \sigma^2/2h^2}{Q^{h,\theta}}
+    \]
+    \[
+    \text{where }\; Q^{h,\theta} = \frac{b_1^+}{h} + \frac{b_1^-}{h} + \frac{b_2^+}{h} + \frac{b_2^-}{h} +\frac{2\sigma^2}{h^2}
+    \]
+    \[
+    \text{Note that }\; \sum p^{h,\theta} = 1
+    \]
+    Then this Markov chain is <b>locally consistent</b> with the continuous time state process, meaning that the mean, variance, and covariance of incremental changes in the Markov chain states are consistent with those of the continuous time stochastic process:
+    \[
+    \mathbb{E}[\Delta \eta_n^h] = \big(v_x + k\cos\theta_t\big)\cdot \Delta_t^{h,\theta}
+    \]
+    \[
+    \mathbb{E}[\Delta \zeta_n^h] = \big(v_y + k\sin\theta_t\big)\cdot \Delta_t^{h,\theta}
+    \]
+    \[
+    \mathbb{E}\big[ \big(\Delta \eta_n^h - \mathbb{E}[\Delta \eta_n^h] \big)^2 \big] = \sigma^2 \Delta_t^{h,\theta} + o(\Delta_t^{h,\theta})
+    \]
+    \[
+    \mathbb{E}\big[ \big(\Delta \zeta_n^h - \mathbb{E}[\Delta \zeta_n^h] \big)^2 \big] = \sigma^2 \Delta_t^{h,\theta} + o(\Delta_t^{h,\theta})
+    \]
+    <!-- \[
+    \mathbb{E}[(\Delta \eta_n^h)^2] = \sigma^2 \Delta_t^{h,\theta} + \mathcal{O}(h)\Delta_t^{h,\theta} + [\mathcal{O}(\Delta_t^{h,\theta})]^2
+    \] -->
+    <!-- \[
+    \mathbb{E}[(\Delta \zeta_n^h)^2] = \sigma^2 \Delta_t^{h,\theta} + \mathcal{O}(h)\Delta_t^{h,\theta} + [\mathcal{O}(\Delta_t^{h,\theta})]^2
+    \] -->
+    \[
+    \mathbb{E}\big[ \big(\Delta \eta_n^h - \mathbb{E}[\Delta \eta_n^h] \big)\big(\Delta \zeta_n^h - \mathbb{E}[\Delta \zeta_n^h] \big) \big] = 0 + o(\Delta_t^{h,\theta})
+    \]
+    \[
+    \text{where }\; \Delta_t^{h,\theta} = \frac{1}{Q^{h,\theta}}
+    \]
+    Let us consider the discrete-time control problem with this Markov chain \(\xi_n^h\). Suppose we are minimizing the mean exit time of \(\xi_n^h\) from a set \(\mathcal{O}^h = \mathcal{O}\cap S^h\) in the discrete state space, defined as
+    \[
+    \tau^{h,\theta} = \sum_{s = 0}^{N-1} \Delta_t^{h,\theta_n} \;\;\text{ where }N = \min \{ n>0: \xi_n^h \notin \mathcal{O}^h \}
+    \]
+    Then the value function is
+    \[
+    V^h(x,y) = \min_{\theta} \mathbb{E}[\tau^{h,\theta}]
+    \]
+    which satisfies the Bellman equation
+    \[
+    V^h(x,y) = \min_{\theta}\mathbb{E}\big[ \Delta_t^{h,\theta} + V^h(\xi_{n+1}^h)\;|\;\xi_n^h = (x,y)\big]
+    \]
+    or, written with transition probabilities (compare this to the HJB equation earlier)
+    \[
+    \begin{aligned}
+    V^h(x,y) = \min_{\theta}\bigg\{ & \Delta_t^{h,\theta} + p^{h,\theta}(x+h,y|x,y)\cdot V^h(x+h,y) +  p^{h,\theta}(x-h,y|x,y)\cdot V^h(x-h,y)\\
+      & +  p^{h,\theta}(x,y+h|x,y)\cdot V^h(x,y+h) +  p^{h,\theta}(x,y-h|x,y)\cdot V^h(x,y-h) \bigg\}
+    \end{aligned}
+    \]
+    The value function satisfies the boundary condition
+    \[
+    V^h(x,y) = 0,\; \; (x,y) \in \partial \mathcal{O}^h
+    \]
+    The discrete time control problem can be solved using standard methods such as value iteration. As \(h\to 0\), the Markov chain \(\xi_n^h\) converges weakly to the continuous-time stochastic process, and the value function \(V^h(x,y)\) converges to the value function of the continuous-time control problem, \(V(x,y)\). Detailed discussion on convergence can be found in Chapter 10 and Chapter 16 of <a href="#reference">[2]</a>.
+    <br>
+    <br>
+    <br>
+    <h5 id = "reference"> </h5>
+    <br>
+    <br>
+    <h5>Reference</h5>
+    [1] W.H. Fleming, H.M. Soner (2006), <i>Controlled Markov Processes and Viscosity Solutions</i>, Springer.<br>
+    [2] H.J. Kushner, P. Dupuis (2001), <i>Numerical Methods for Stochastic Control Problems in Continuous Time</i>, Springer.
+    <br>
+    <span id = "sim"><br></span>
+    <h4>Simulation</h4>
+    This applet simulates the Zermelo's Navigation Problem. The boat is dropped at a random location in the map (length: \(5\), width: \(4\)). The boat location evoles with time and follows the stochastic differential equations:
+    \[
+    dX_t = \bigg(v_x(X_t,Y_t) + k\cos\theta_t\bigg)dt + \sigma dW^{1}_t
+    \]
+    \[
+    dY_t = \bigg(v_y(X_t,Y_t) + k\sin\theta_t\bigg)dt + \sigma dW^{2}_t
+    \]
+    where \(k = 0.5\) is the motor speed of the boat, and \(\sigma = 0.1\) is the diffusion coefficient that controls the random choppiness of the water. The maximum calm water speed is approximately \(0.4\). The target island is indicated by the <span style="color:#FFE680">yellow</span> circle.
+    <br>
+    <br>
+    <div class="slidercontainer">
+      <div>
+      Water current vector field \(v = (v_x,v_y)\):
+      </div>
+      <br>
+      <div>
+      <input type="radio" name="vfield" id="one" value="one" style = "margin-left: 10px;" checked>
+      One Direction
+      <input type="radio" name="vfield" id="two" value="two" style = "margin-left: 15px;">
+      Whirlpool
+      <input type="radio" name="vfield" id="three" value="three" style = "margin-left: 15px;">
+      Sinusoidal Flow
+    </div>
+    </div>
+    <br>
+    Click "Start Simulation" to start simulation given the current starting location and water vector field.
+    <br>
+    Click "Reset" to start a new simulation and drop the boat at a new starting location.
+    <br>
+    <i>Note: Calculation with a new vector field could take a few seconds.</i>
+    <div>
+    <input type ="button" value = "Start Simulation" onClick = "start_simulation()">
+    <input type ="button" value = "Reset" onClick = "reset_calc()">
+    </div>
+</div>
+    <div class ="graph-container">
+      <div class ="graph-container" style = "display: flex; flex-wrap: wrap; justify-content: left; gap: 20px; align-items: flex-start;">
+
+        <div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">Zermelo's Navigation Problem with Stochastic Storm</div>
+          <canvas id="box" style="border:2px solid #333;">
+          </canvas>
+        </div>
+
+
+
+      </div>
+    </div>
+<a href="#top">Back to Page Top</a>
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+//////////// Visualization Script
+//////////// Setting up canvas
+
+const canvas = document.getElementById("box");
+
+// Set canvas dimensions
+if (canvas.width != 400) canvas.width = 400;
+if (canvas.height != 300) canvas.height = 300;
+
+// Get the canvas context
+const ctx = canvas.getContext('2d');
+const width = canvas.width;
+const height = canvas.height;
+const cellSizeX = width/grid_x;
+const cellSizeY = height/grid_y;
+
+///////////// HELPERS
+// animation frame
+let frame_num = 0;
+// save potential picture
+let background;
+
+function update_environment() {
+  let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
+  current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";
+
+  ctx.fillStyle = '#0099FF'; // blue water
+  ctx.fillRect(0, 0, width, height);
+
+  // ctx.fillStyle = '#FFE680'; // island yellow
+  // ctx.fillRect(target_x * cellSizeX, target_y * cellSizeY, cellSizeX, cellSizeY);
+
+  // make island bigger
+  let island_centerX = target_x * cellSizeX + (cellSizeX / 2);
+  let island_centerY = target_y * cellSizeY + (cellSizeY / 2);
+  let island_radius = cellSizeX * 2.5;
+  ctx.beginPath();
+  ctx.arc(island_centerX, island_centerY, island_radius, 0, 2 * Math.PI);
+  ctx.fillStyle = '#FFE680'; // yellow
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#DAA520'; // darker golden
+  ctx.stroke();
+
+  // save background
+  background = ctx.getImageData(0, 0, width, height);
+
+  // vector field
+  draw_velocity_field(ctx);
+
+}
+
+
+//////////// Display
+window.onload = function() {
+  update_environment();
+
+  // event listeners to radio buttons to update field automatically
+ let radioButtons = document.querySelectorAll('input[name="vfield"]');
+ radioButtons.forEach(radio => {
+   radio.addEventListener('change', function() {
+     reset_calc();
+   });
+ });
+
+}
+
+/////////////////// draw boat
+function draw_boat(context){
+  let x_pos = boat_pos[frame_num][0];
+  let y_pos = boat_pos[frame_num][1];
+  let px = cellSizeX*x_pos + cellSizeX/2;
+  let py = cellSizeY*y_pos + cellSizeY/2;
+
+  let initial_u = u_opt[index(x_pos,y_pos)];
+  let angle = initial_u*Math.PI/8;
+
+  // draw boat
+  // save canvas state
+  context.save();
+  // move canvas origin
+  context.translate(px, py);
+  // rotate canvas to boat angle
+  context.rotate(angle);
+
+  let L = 16; // length of the boat
+  let W = 10; // width of the boat
+  // pentagon shaped boat
+  context.beginPath();
+  context.moveTo(L / 2, 0);
+  context.lineTo(L / 6, W / 2);
+  context.lineTo(-L / 2, W / 2);
+  context.lineTo(-L / 2, -W / 2);
+  context.lineTo(L / 6, -W / 2);
+  context.closePath();
+
+  context.fillStyle = "#FFFFFF"; // white
+  context.fill();
+  context.lineWidth = 1.5;
+  context.strokeStyle = "#000000"; // black
+  context.stroke();
+
+  // restore canvas
+  context.restore();
+}
+
+/////////////////// draw boat trajectory
+function draw_boat_path(context) {
+  // paste canvas of previous frame (without boat)
+  if (frame_num > 0){
+    // paste background
+    ctx.putImageData(canvas_frame,0,0);
+  }
+
+  // Stop when reached the end of the array
+  if (frame_num >= boat_pos.length - 1){
+    draw_boat(ctx);
+    return;
+  }
+
+  // ctx.fillStyle = 'rgba(255, 0, 0, 0.6)'; // red
+  // boat location
+  let x_pos = boat_pos[frame_num][0];
+  let y_pos = boat_pos[frame_num][1];
+  let x_nextpos = boat_pos[frame_num+1][0];
+  let y_nextpos = boat_pos[frame_num+1][1];
+  // let px = cellSizeX*x_pos;
+  // let py = cellSizeY*y_pos;
+  let px = x_pos * cellSizeX + (cellSizeX / 2);
+  let py = y_pos * cellSizeY + (cellSizeY / 2);
+  let px_next = x_nextpos * cellSizeX + (cellSizeX / 2);
+  let py_next = y_nextpos * cellSizeY + (cellSizeY / 2);
+
+  // draw boat position
+  // line instead of filled cell
+  context.beginPath();
+  context.moveTo(px, py);
+  context.lineTo(px_next, py_next);
+  context.strokeStyle = "rgba(255, 0, 0, 0.6)"; // opacity
+  context.lineWidth = 4;
+  // ctx.fillRect(px, py, cellSizeX, cellSizeY);
+
+  // // draw line
+  context.stroke();
+
+  // save canvas for next frame
+  canvas_frame = ctx.getImageData(0,0,width, height);
+
+  // draw boat
+  draw_boat(ctx);
+
+  // increment frame_num
+  frame_num++;
+
+  // animation 0.2 second per frame
+  setTimeout(() => {requestAnimationFrame(() => draw_boat_path(context));}, 150);
+
+}
+
+function draw_velocity_field(context) {
+  // only draw an arrow every 8 cells
+  const step = 8;
+
+  context.strokeStyle = "rgba(255, 255, 255, 0.4)"; // faint white
+  context.lineWidth = 1.5;
+
+  for (let i = 2; i < grid_x; i += step) {
+    for (let j = 2; j < grid_y; j += step) {
+      let vel = v(i, j);
+
+      // skip if velocity = 0
+      if (vel.x === 0 && vel.y === 0) continue;
+
+      // calculate magnitude
+      let mag = Math.sqrt(vel.x*vel.x + vel.y*vel.y);
+      // scale arrow length, minimum 4 pixels
+      let arrowLength = Math.max(mag*40, 4);
+
+      let angle = Math.atan2(vel.y, vel.x);
+
+      let px = i * cellSizeX + (cellSizeX / 2);
+      let py = j * cellSizeY + (cellSizeY / 2);
+
+      // rotate canvas
+      context.save();
+      context.translate(px, py);
+      context.rotate(angle);
+
+      // draw arrow
+      context.beginPath();
+      context.moveTo(-arrowLength / 2, 0);
+      context.lineTo(arrowLength / 2, 0);
+
+      // draw arrowhead
+      let headSize = Math.min(4, arrowLength/3);
+      context.lineTo(arrowLength / 2 - headSize, -headSize*0.75);
+      context.moveTo(arrowLength / 2, 0);
+      context.lineTo(arrowLength / 2 - headSize, headSize*0.75);
+
+      context.stroke();
+      context.restore();
+    }
+  }
+}
+
+function start_simulation(){
+  // check if already has a boat trajectory
+  if (boat_pos.length != 0){
+    // clear canvas
+    ctx.clearRect(0,0,width,height);
+    // paste background
+    ctx.putImageData(background,0,0);
+    // draw velocity field
+    draw_velocity_field(ctx);
+    // reuse same boat start location
+    // calculate boat trajectory
+    boat_trajectory(u_opt);
+
+    // draw boat path
+    frame_num = 0;
+    draw_boat_path(ctx);
+
+  } else {
+    // identify vector field
+    let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
+    current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
+
+    // // draw velocity field
+    // draw_velocity_field(ctx);
+    // run value iteration
+    VI();
+
+    // put boat at a random location
+    boat_start();
+    // calculate boat trajectory
+    boat_trajectory(u_opt);
+
+    // draw boat path
+    frame_num = 0;
+    draw_boat_path(ctx);
+  }
+
+}
+
+function reset_calc(){
+  // clear canvas
+  ctx.clearRect(0,0,width,height);
+  // paste background
+  ctx.putImageData(background,0,0);
+  // clear boat trajectory
+  boat_pos = [];
+  // reset frame_num
+  frame_num = 0;
+  // identify vector field
+  let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
+  current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
+  // draw vector field
+  draw_velocity_field(ctx);
+
+}
+
+function toggle_vis(id) {
+       var cont = document.getElementById(id);
+       if(cont.style.display == 'block')
+          cont.style.display = 'none';
+       else
+          cont.style.display = 'block';
+    }
+
+</script>
+
+</body>
+</html>
