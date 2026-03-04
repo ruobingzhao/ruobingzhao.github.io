@@ -825,7 +825,7 @@ function update_environment() {
   // make island bigger
   let island_centerX = target_x * cellSizeX + (cellSizeX / 2);
   let island_centerY = target_y * cellSizeY + (cellSizeY / 2);
-  let island_radius = cellSizeX * 2.5;
+  let island_radius = cellSizeX * 1.5;
   ctx.beginPath();
   ctx.arc(island_centerX, island_centerY, island_radius, 0, 2 * Math.PI);
   ctx.fillStyle = '#FFE680'; // yellow
