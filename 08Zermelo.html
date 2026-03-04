@@ -966,7 +966,7 @@ function draw_velocity_field(context) {
       // calculate magnitude
       let mag = Math.sqrt(vel.x*vel.x + vel.y*vel.y);
       // scale arrow length, minimum 4 pixels
-      let arrowLength = Math.max(mag*40, 4);
+      let arrowLength = Math.max(mag*50, 4);
 
       let angle = Math.atan2(vel.y, vel.x);
 
