@@ -735,7 +735,7 @@ function boat_trajectory(u_opt){
     <br>
     <span id = "sim"><br></span>
     <h4>Simulation</h4>
-    This applet simulates the Zermelo's Navigation Problem. The boat is dropped at a random location in the map (length: \(5\), width: \(4\)). The boat location evoles with time and follows the stochastic differential equations:
+    This applet simulates the Zermelo's Navigation Problem. The boat is dropped at a random location in the map (length of map: \(5\), width: \(4\)). The boat location evoles with time and follows the stochastic differential equations:
     \[
     dX_t = \bigg(v_x(X_t,Y_t) + k\cos\theta_t\bigg)dt + \sigma dW^{1}_t
     \]
@@ -796,8 +796,8 @@ function boat_trajectory(u_opt){
 const canvas = document.getElementById("box");
 
 // Set canvas dimensions
-if (canvas.width != 400) canvas.width = 400;
-if (canvas.height != 300) canvas.height = 300;
+if (canvas.width != 500) canvas.width = 500;
+if (canvas.height != 400) canvas.height = 400;
 
 // Get the canvas context
 const ctx = canvas.getContext('2d');
