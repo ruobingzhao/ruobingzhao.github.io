@@ -250,8 +250,8 @@ function v(i,j){
 
 /////////////// TO REDUCE REDUNDANT EVALUATIONS
 
-function parameters(x,y,u){
-  let v_field = v(x,y);
+function parameters(x,y,u,v_field){
+  // let v_field = v(x,y);
   let b1val = v_field.x + k*Math.cos(u*Math.PI/8);
   let b2val = v_field.y + k*Math.sin(u*Math.PI/8);
   let b1a = Math.abs(b1val);
@@ -397,10 +397,12 @@ function bellman(x, y){
   let minVal = Infinity;
   let bestU = 0;
 
+  let current_v_field = v(x,y);
+
   // control = u*pi/8
   for (let u = 0; u<16; u++){
     // let cost = Delta_t + expectedVal(x, y, u);
-    let cost = expectedVal(x, y, u);
+    let cost = expectedVal(x, y, u, current_v_field);
     if (cost < minVal) {
       minVal = cost;
       bestU = u;
@@ -410,9 +412,9 @@ function bellman(x, y){
 }
 
 // compute expected value E[L + V(x',y')] given x, y, u
-function expectedVal(x, y, u){
+function expectedVal(x, y, u, v_field){
   // compute parameters
-  let param = parameters(x,y,u);
+  let param = parameters(x,y,u, v_field);
 
   // expected value = Delta_t + sum_u p(x',y'|x,y)*V(x',y')
   let sum = param.Delta_t;
@@ -475,7 +477,15 @@ function VI (){
     }
 
     // Check convergence criterion
-    let diff = math.norm(math.subtract(Array.from(V),Array.from(V_old)), 'inf');
+    // removed Array.from() to improve performance
+    // let diff = math.norm(math.subtract(Array.from(V),Array.from(V_old)), 'inf');
+    let diff = 0;
+    for (let k = 0; k < V.length; k++){
+      let current_diff = Math.abs(V[k]-V_old[k]);
+      if (current_diff> diff){
+        diff = current_diff;
+      }
+    }
     if (diff < 0.0001){
       console.log("converged at iteration ", iter);
       break;
@@ -516,7 +526,8 @@ function boat_trajectory(u_opt){
     let theta = u_opt[index(current_x,current_y)];
 
     // compute probabilities of moving up, down, left, right
-    let param = parameters(current_x,current_y,theta);
+    let current_v_field = v(current_x, current_y);
+    let param = parameters(current_x,current_y,theta, current_v_field);
 
     new_x = current_x;
     new_y = current_y;
