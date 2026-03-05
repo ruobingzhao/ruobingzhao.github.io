@@ -695,13 +695,15 @@ function boat_trajectory(u_opt){
     <br>
     Click "Reset" to drop the boat at a new starting location. Then click "Start Simulation" again.
     <br>
-    After the calculations are done, you can see a heatmap of the value function \(V(x)\). Darker color means that the average time to get to the target island is longer. Press the button to toggle heatmap.
+    After the calculations are done, you can see a heatmap of the value function \(V(x,y)\). Darker color means that the mininum average time to get to the target island is longer. Press the button to toggle heatmap.
     <!-- Color test <b style="color:#99ddff">color1</b><b style="color:#80d4ff">color2</b><b style="color:#4dc3ff">color3</b><b style="color:#33adff">color4</b><b style="color:#0099FF">color5</b><b style="color:#0080ff">color6</b><b style="color:#0066ff">color7</b><b style="color:#0040ff">color8</b><b style="color:#0033cc">color9</b><b style="color:#000099">color10</b> -->
     <br>
     <i>Note: Calculation with a new vector field could take a few seconds.</i>
     <div>
-    <input type ="button" value = "Start Simulation" onClick = "start_simulation()">
-    <input type ="button" value = "Reset" onClick = "reset_calc()">
+    <input type ="button" value = "Start Simulation" onClick = "start_simulation()">&emsp;
+    <input type ="button" value = "Reset" onClick = "reset_calc()">&emsp;
+    <input type="checkbox" id="heatmap_box" name="heatmap_box" value="yes">
+    Display Heatmap
     </div>
 </div>
     <div class ="graph-container">
@@ -749,6 +751,47 @@ let background;
 //　heatmap
 let heatmap;
 
+let display_heatmap = false;
+
+function toggle_heatmap(){
+  let checkbox = document.getElementById("heatmap_box");
+  display_heatmap = checkbox.checked;
+
+  ctx.clearRect(0, 0, width, height);
+
+  // paste the correct background image
+  if (display_heatmap && heatmap) {
+    ctx.putImageData(heatmap, 0, 0);
+  } else if (background) {
+    ctx.putImageData(background, 0, 0);
+  }
+
+  // if a trajectory exists, redraw the red line
+  if (boat_pos.length > 0) {
+    ctx.beginPath();
+
+    for (let i = 0; i < frame_num && i < boat_pos.length - 1; i++) {
+      let px = boat_pos[i][0] * cellSizeX + (cellSizeX / 2);
+      let py = boat_pos[i][1] * cellSizeY + (cellSizeY / 2);
+      let px_next = boat_pos[i+1][0] * cellSizeX + (cellSizeX / 2);
+      let py_next = boat_pos[i+1][1] * cellSizeY + (cellSizeY / 2);
+
+      ctx.moveTo(px, py);
+      ctx.lineTo(px_next, py_next);
+    }
+    ctx.strokeStyle = "rgba(255, 0, 0, 0.6)";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    // update the animation loop so it pastes the correct background
+    canvas_frame = ctx.getImageData(0, 0, width, height);
+
+    //draw the boat on top
+    draw_boat(ctx);
+  }
+}
+
+
 function update_environment() {
   let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
   current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";
@@ -762,18 +805,6 @@ function update_environment() {
   ctx.strokeStyle = "#DAA520";
   ctx.lineWidth = 2;
   ctx.strokeRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
-
-  // // make island bigger
-  // let island_centerX = target_x * cellSizeX + (cellSizeX / 2);
-  // let island_centerY = target_y * cellSizeY + (cellSizeY / 2);
-  // let island_radius = cellSizeX * 1.5;
-  // ctx.beginPath();
-  // ctx.arc(island_centerX, island_centerY, island_radius, 0, 2 * Math.PI);
-  // ctx.fillStyle = '#FFE680'; // yellow
-  // ctx.fill();
-  // ctx.lineWidth = 2;
-  // ctx.strokeStyle = '#DAA520'; // darker golden
-  // ctx.stroke();
 
   // save background
   background = ctx.getImageData(0, 0, width, height);
@@ -794,6 +825,12 @@ window.onload = function() {
    radio.addEventListener('change', function() {
      reset_calc();
    });
+ });
+
+ // event listener for heatmap checkbox
+ let checkbox = document.getElementById("heatmap_box");
+ checkbox.addEventListener("change", function (){
+   toggle_heatmap();
  });
 
 }
@@ -1028,8 +1065,14 @@ function start_simulation(){
   if (current_vfield === last_calculated_vfield){
     // clear canvas
     ctx.clearRect(0,0,width,height);
-    // paste heatmap, already has arrows
-    ctx.putImageData(heatmap,0,0);
+
+    if (display_heatmap){
+      // paste heatmap, already has arrows
+      ctx.putImageData(heatmap,0,0);
+    } else {
+      // paste background
+      ctx.putImageData(background,0,0);
+    }
 
     // if boat_pos is empty (reset button was pressed)
     if (boat_pos.length == 0){
@@ -1053,6 +1096,10 @@ function start_simulation(){
 
     // draw heatmap
     draw_heatmap(ctx);
+    // if checkbox unchecked, paste regular background
+    if (!display_heatmap){
+      ctx.putImageData(background,0,0);
+    }
 
     // put boat at a random location
     boat_start();
