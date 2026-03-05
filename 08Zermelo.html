@@ -141,13 +141,15 @@ html { background: white; margin:0;}
 ///////////// GLOBAL VARIABLES /////////////
 const Lx = 5;
 const Ly = 4;
-const h = 0.05;
+const h = 0.025;
 const hsq = Math.pow(h,2);
 const grid_x = Lx/h;
 const grid_y = Ly/h;
 let max_iter = 1000;
-let target_x = 30;
-let target_y = 20;
+const physical_target_x = 1.5;
+const physical_target_y = 1;
+let target_x = Math.round(physical_target_x/h);
+let target_y = Math.round(physical_target_y/h);
 const k = 0.5; // max velocity of the boat
 const sigma = 0.1; // diffusion coefficient
 const sigsq = Math.pow(sigma,2);
@@ -185,10 +187,10 @@ function norm_rand(mu, sigmasq) {
   // return { w1: z1*Math.sqrt(sigmasq) + mu, w2: z2*Math.sqrt(sigmasq) + mu};
 }
 
-// sample a random integer between min and max
-function int_rand(min, max) {
-  return Math.floor(Math.random()*(max-min+1)) + min;
-}
+// // sample a random integer between min and max
+// function int_rand(min, max) {
+//   return Math.floor(Math.random()*(max-min+1)) + min;
+// }
 
 
 // velocity field
@@ -200,47 +202,47 @@ function v(i,j){
   let vy = 0;
 
   if (current_vfield == "one"){
-    let center_y = grid_y / 2;
-    let normalized_y = (j - center_y) / center_y;
+    let center_y = Ly / 2;
+    let normalized_y = (j*h - center_y) / center_y;
 
-    vx = 0.4 * (1 - Math.pow(normalized_y, 2));
+    vx = 0.45 * (1 - Math.pow(normalized_y, 2));
     vy = 0;
   } else if (current_vfield == "two"){
-    let center_x = grid_x / 2;
-    let center_y = grid_y / 2;
+    let center_x = Lx / 2;
+    let center_y = Ly / 2;
 
-    let dx = i - center_x;
-    let dy = j - center_y;
+    let dx = i*h - center_x;
+    let dy = j*h - center_y;
 
     // angular velocity
-    let omega = 0.015;
+    let omega = 0.25;
 
     // rotation
     vx = -omega * dy;
     vy = omega * dx;
 
   } else if (current_vfield == "three"){
-    let center_x = grid_x / 2;
-    let center_y = grid_y / 2;
+    let center_x = Lx / 2;
+    let center_y = Ly / 2;
 
-    let dx = i - center_x;
-    let dy = j - center_y;
+    let dx = i*h - center_x;
+    let dy = j*h - center_y;
 
     // angular velocity
-    let omega = 0.015;
+    let omega = 0.25;
 
     // rotation
     vx = omega * dy;
     vy = -omega * dx;
 
   } else if (current_vfield == "four"){
-    vx = 0.25;
-    let wave_phase = (i / grid_x) * 2 * Math.PI;
-    vy = 0.3 * Math.sin(wave_phase);
+    vx = 0.3;
+    let wave_phase = (i*h / Lx) * 2 * Math.PI;
+    vy = 0.35 * Math.sin(wave_phase);
   } else if (current_vfield == "five"){
-    vx = -0.25;
-    let wave_phase = (i / grid_x) * 2 * Math.PI;
-    vy = -0.3 * Math.sin(wave_phase);
+    vx = -0.3;
+    let wave_phase = (i*h / Lx) * 2 * Math.PI;
+    vy = -0.35 * Math.sin(wave_phase);
   }
 
   return {x: vx, y: vy};
@@ -483,12 +485,12 @@ function VI (){
 
 function boat_start(){
   // generate a random start position for the boat
-  x0 = int_rand(0, grid_x-1);
-  y0 = int_rand(0, grid_y-1);
+  x0 = Math.floor(Math.random()*Lx/h);
+  y0 = Math.floor(Math.random()*Ly/h);
   // try again if (x0,y0) is the target
   while (x0 == target_x && y0 == target_y){
-    x0 = int_rand(0, grid_x-1);
-    y0 = int_rand(0, grid_y-1);
+    x0 = Math.floor(Math.random()*Lx/h);
+    y0 = Math.floor(Math.random()*Ly/h);
   }
 }
 
@@ -760,7 +762,7 @@ function boat_trajectory(u_opt){
     \[
     dY_t = \bigg(v_y(X_t,Y_t) + k\sin\theta_t\bigg)dt + \sigma dW^{2}_t
     \]
-    where \(k = 0.5\) is the motor speed of the boat, and \(\sigma = 0.1\) is the diffusion coefficient that controls the random choppiness of the water due to a storm. The maximum calm water speed is approximately \(0.4\) for the one directional and sinusoidal vector field, and approximately \(0.96\) (in the corners) for the whirlpool. The target island is indicated by the <span style="color:#FFE680">yellow</span> square.
+    where \(k = 0.5\) is the motor speed of the boat, and \(\sigma = 0.1\) is the diffusion coefficient that controls the random choppiness of the water due to a storm. The maximum calm water speed in the horizontal direction is \(0.45\) for the one directional vector field and \(0.3\) for the sinusoidal vector field. The maximum calm water speed in the vertical direction is \(0\) for the one directional vector field and \(0.35\) for the sinusoidal vector field. For the whirlpools, the maximum calm water speed in the radial direction is \(0\), and in the tangential direction the maximum calm water speed is approximately \(0.8\) (at the four corners). The target island is indicated by the <span style="color:#FFE680">yellow</span> square.
     <br>
     <br>
     <div class="slidercontainer">
@@ -844,10 +846,10 @@ function update_environment() {
 
   // make island bigger
   ctx.fillStyle = '#FFE680'; // island yellow
-  ctx.fillRect(target_x * cellSizeX - 1.3*cellSizeX, target_y * cellSizeY - 1.3*cellSizeY, cellSizeX*2.6, cellSizeY*2.6);
+  ctx.fillRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
   ctx.strokeStyle = "#DAA520";
   ctx.lineWidth = 2;
-  ctx.strokeRect(target_x * cellSizeX - 1.3*cellSizeX, target_y * cellSizeY - 1.3*cellSizeY, cellSizeX*2.6, cellSizeY*2.6);
+  ctx.strokeRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
 
   // // make island bigger
   // let island_centerX = target_x * cellSizeX + (cellSizeX / 2);
@@ -892,6 +894,14 @@ function draw_boat(context){
   let py = cellSizeY*y_pos + cellSizeY/2;
 
   let initial_u = u_opt[index(x_pos,y_pos)];
+
+  // for the last frame, keep whatever previous angle
+  if (frame_num >= boat_pos.length - 1){
+    let prev_x = boat_pos[frame_num-1][0];
+    let prev_y = boat_pos[frame_num-1][1];
+    initial_u = u_opt[index(prev_x, prev_y)];
+  }
+
   let angle = initial_u*Math.PI/8;
 
   // draw boat
@@ -971,14 +981,15 @@ function draw_boat_path(context) {
   // increment frame_num
   frame_num++;
 
-  // animation 0.2 second per frame
-  setTimeout(() => {requestAnimationFrame(() => draw_boat_path(context));}, 100);
+  // animation 0.02 second per frame
+  setTimeout(() => {requestAnimationFrame(() => draw_boat_path(context));}, 20);
 
 }
 
 function draw_velocity_field(context) {
-  // only draw an arrow every 8 cells
-  const step = 8;
+  // only draw an arrow every few cells
+  // every 0.4 units of distance
+  const step = Math.max(1, Math.round(0.4/h));
 
   context.strokeStyle = "rgba(255, 255, 255, 0.4)"; // faint white
   context.lineWidth = 1.5;
@@ -993,7 +1004,7 @@ function draw_velocity_field(context) {
       // calculate magnitude
       let mag = Math.sqrt(vel.x*vel.x + vel.y*vel.y);
       // scale arrow length, minimum 4 pixels
-      let arrowLength = Math.max(mag*50, 4);
+      let arrowLength = Math.max(mag*40, 4);
 
       let angle = Math.atan2(vel.y, vel.x);
 
