@@ -168,6 +168,7 @@ let y0 = 2;
 
 // vector field selection
 let current_vfield = "one";
+let last_calculated_vfield = "";
 
 ///////////// HELPER FUNCTIONS /////////////
 // index for float Array
@@ -845,6 +846,11 @@ function draw_boat(context){
 
 /////////////////// draw boat trajectory
 function draw_boat_path(context) {
+  // kill animation if reset is clicked
+  if (boat_pos.length === 0){
+    return;
+  }
+  
   // paste canvas of previous frame (without boat)
   if (frame_num > 0){
     // paste background
@@ -998,33 +1004,36 @@ function draw_heatmap(context) {
 }
 
 function start_simulation(){
-  // check if already has a boat trajectory
-  // do not redo value iteration
-  if (boat_pos.length != 0){
+  // identify vector field
+  let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
+  current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
+
+  // if calculation is already done:
+  if (current_vfield === last_calculated_vfield){
     // clear canvas
     ctx.clearRect(0,0,width,height);
     // paste heatmap, already has arrows
     ctx.putImageData(heatmap,0,0);
-    // // draw velocity field
-    // draw_velocity_field(ctx);
 
-    // reuse same boat start location
+    // if boat_pos is empty (reset button was pressed)
+    if (boat_pos.length() == 0){
+      // put boat at a random location
+      boat_start();
+    }
+
     // calculate boat trajectory
     boat_trajectory(u_opt);
-
     // draw boat path
     frame_num = 0;
     draw_boat_path(ctx);
 
   } else {
-    // identify vector field
-    let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
-    current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
-
-    // // draw velocity field
-    // draw_velocity_field(ctx);
+    // else, new vector field selected
     // run value iteration
     VI();
+
+    // update last calculated field
+    last_calculated_vfield = current_vfield;
 
     // draw heatmap
     draw_heatmap(ctx);
@@ -1047,15 +1056,23 @@ function reset_calc(){
   // reset frame_num
   frame_num = 0;
 
-  // clear canvas
-  ctx.clearRect(0,0,width,height);
-  // paste background
-  ctx.putImageData(background,0,0);
-  // identify vector field
+  // check current radio button vector field
   let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
   current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
-  // draw vector field
-  draw_velocity_field(ctx);
+
+  // clear canvas
+  ctx.clearRect(0,0,width,height);
+
+  if (current_vfield === last_calculated_vfield && heatmap){
+    // if vector field didn't change
+    // paste heatmap
+    ctx.putImageData(heatmap,0,0);
+  } else {
+    // paste background
+    ctx.putImageData(background,0,0);
+    // draw vector field
+    draw_velocity_field(ctx);
+  }
 
 }
 
