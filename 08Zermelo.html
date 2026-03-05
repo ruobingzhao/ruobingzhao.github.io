@@ -1134,8 +1134,15 @@ function reset_calc(){
 
   if (current_vfield === last_calculated_vfield && heatmap){
     // if vector field didn't change
-    // paste heatmap
-    ctx.putImageData(heatmap,0,0);
+    if (display_heatmap){
+      // paste heatmap
+      ctx.putImageData(heatmap,0,0);
+    } else {
+      // paste background
+      ctx.putImageData(background,0,0);
+      // draw vector field
+      draw_velocity_field(ctx);
+    }
   } else {
     // paste background
     ctx.putImageData(background,0,0);
