@@ -611,7 +611,7 @@ function boat_trajectory(u_opt){
     \[
     dY_t = \bigg(v_y(X_t,Y_t) + k\sin\theta_t\bigg)dt + \sigma dW^{2}_t
     \]
-    Again \(\theta\) is the control variable, and \(W^{1}_t\), \(W^2_t\) are independent 1-dimensional Brownian motions, and \(\sigma >0\). The goal is to find the minimum mean exit time (and the optimal control trajectory) from an open set \(\mathcal{O}\in \mathbb{R}^2\), which represents the body of water, and its boundary \(\partial \mathcal{O}\) represents the destination (an island, or the shore). The objective function to be minimized is
+    Again \(\theta\) is the control variable, and \(W^{1}_t\), \(W^2_t\) are independent 1-dimensional Brownian motions, and \(\sigma >0\). The goal is to find the minimum mean exit time (and the optimal control policy) from an open set \(\mathcal{O}\in \mathbb{R}^2\), which represents the body of water, and its boundary \(\partial \mathcal{O}\) represents the destination (for example, an island, or the riverbanks). The objective function to be minimized is
     \[
     J(x,y,\theta) = \mathbb{E}^{x,y} [\int_0^{\tau} 1\; dt] = \mathbb{E}^{x,y} [\tau], \;\; (x,y)\in \mathcal{O}
     \]
@@ -723,7 +723,7 @@ function boat_trajectory(u_opt){
     \]
     Then the value function is
     \[
-    V^h(x,y) = \min_{\theta} \mathbb{E}[\tau^{h,\theta}]
+    V^h(x,y) = \min_{\theta} \mathbb{E}^{x,y}[\tau^{h,\theta}]
     \]
     which satisfies the Bellman equation
     \[
