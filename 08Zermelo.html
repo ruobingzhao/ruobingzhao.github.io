@@ -959,18 +959,30 @@ function draw_heatmap(context) {
     }
   }
 
-  const colors = [
-   "#99ddff", // light
-   "#80d4ff",
-   "#4dc3ff",
-   "#33adff",
-   "#0099FF", // original blue
-   "#0080ff",
-   "#0066ff",
-   "#0040ff",
-   "#0033cc",
-   "#000099"  // dark
- ];
+ //  const colors = [
+ //   "#99ddff", // light
+ //   "#80d4ff",
+ //   "#4dc3ff",
+ //   "#33adff",
+ //   "#0099FF", // original blue
+ //   "#0080ff",
+ //   "#0066ff",
+ //   "#0040ff",
+ //   "#0033cc",
+ //   "#000099"  // dark
+ // ];
+ const colors = [
+ "#99ddff", // light
+ "#80d4ff",
+ "#4dc3ff",
+ "#33adff",
+ "#0099FF", // original blue
+ "#0066ff",
+ "#0040cc",
+ "#002080",
+ "#00114d",
+ "#00051a" // dark
+];
 
   // paint each cell
   for (let i = 0; i < grid_x; i++) {
