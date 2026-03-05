@@ -850,7 +850,7 @@ function draw_boat_path(context) {
   if (boat_pos.length === 0){
     return;
   }
-  
+
   // paste canvas of previous frame (without boat)
   if (frame_num > 0){
     // paste background
@@ -1016,7 +1016,7 @@ function start_simulation(){
     ctx.putImageData(heatmap,0,0);
 
     // if boat_pos is empty (reset button was pressed)
-    if (boat_pos.length() == 0){
+    if (boat_pos.length == 0){
       // put boat at a random location
       boat_start();
     }
