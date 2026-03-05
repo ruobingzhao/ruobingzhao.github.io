@@ -753,14 +753,14 @@ function boat_trajectory(u_opt){
     <br>
     <span id = "sim"><br></span>
     <h4>Simulation</h4>
-    This applet simulates the Zermelo's Navigation Problem. The boat is dropped at a random location in the map (length of map: \(5\), width: \(4\)). The boat location evoles with time and follows the stochastic differential equations:
+    This applet simulates Zermelo's Navigation Problem. The boat is spawned at a random location on the map (length of map: \(5\), width: \(4\)). The boat location evoles with time and follows the stochastic differential equations:
     \[
     dX_t = \bigg(v_x(X_t,Y_t) + k\cos\theta_t\bigg)dt + \sigma dW^{1}_t
     \]
     \[
     dY_t = \bigg(v_y(X_t,Y_t) + k\sin\theta_t\bigg)dt + \sigma dW^{2}_t
     \]
-    where \(k = 0.5\) is the motor speed of the boat, and \(\sigma = 0.1\) is the diffusion coefficient that controls the random choppiness of the water due to a storm. The maximum calm water speed is approximately \(0.4\) for the one directional and sinusoidal vector field, and approximately \(0.96\) (in the corners) for the whirlpool. The target island is indicated by the <span style="color:#FFE680">yellow</span> circle.
+    where \(k = 0.5\) is the motor speed of the boat, and \(\sigma = 0.1\) is the diffusion coefficient that controls the random choppiness of the water due to a storm. The maximum calm water speed is approximately \(0.4\) for the one directional and sinusoidal vector field, and approximately \(0.96\) (in the corners) for the whirlpool. The target island is indicated by the <span style="color:#FFE680">yellow</span> square.
     <br>
     <br>
     <div class="slidercontainer">
@@ -842,20 +842,24 @@ function update_environment() {
   ctx.fillStyle = '#0099FF'; // blue water
   ctx.fillRect(0, 0, width, height);
 
-  // ctx.fillStyle = '#FFE680'; // island yellow
-  // ctx.fillRect(target_x * cellSizeX, target_y * cellSizeY, cellSizeX, cellSizeY);
-
   // make island bigger
-  let island_centerX = target_x * cellSizeX + (cellSizeX / 2);
-  let island_centerY = target_y * cellSizeY + (cellSizeY / 2);
-  let island_radius = cellSizeX * 1.5;
-  ctx.beginPath();
-  ctx.arc(island_centerX, island_centerY, island_radius, 0, 2 * Math.PI);
-  ctx.fillStyle = '#FFE680'; // yellow
-  ctx.fill();
+  ctx.fillStyle = '#FFE680'; // island yellow
+  ctx.fillRect(target_x * cellSizeX - 1.3*cellSizeX, target_y * cellSizeY - 1.3*cellSizeY, cellSizeX*2.6, cellSizeY*2.6);
+  ctx.strokeStyle = "#DAA520";
   ctx.lineWidth = 2;
-  ctx.strokeStyle = '#DAA520'; // darker golden
-  ctx.stroke();
+  ctx.strokeRect(target_x * cellSizeX - 1.3*cellSizeX, target_y * cellSizeY - 1.3*cellSizeY, cellSizeX*2.6, cellSizeY*2.6);
+
+  // // make island bigger
+  // let island_centerX = target_x * cellSizeX + (cellSizeX / 2);
+  // let island_centerY = target_y * cellSizeY + (cellSizeY / 2);
+  // let island_radius = cellSizeX * 1.5;
+  // ctx.beginPath();
+  // ctx.arc(island_centerX, island_centerY, island_radius, 0, 2 * Math.PI);
+  // ctx.fillStyle = '#FFE680'; // yellow
+  // ctx.fill();
+  // ctx.lineWidth = 2;
+  // ctx.strokeStyle = '#DAA520'; // darker golden
+  // ctx.stroke();
 
   // save background
   background = ctx.getImageData(0, 0, width, height);
@@ -968,7 +972,7 @@ function draw_boat_path(context) {
   frame_num++;
 
   // animation 0.2 second per frame
-  setTimeout(() => {requestAnimationFrame(() => draw_boat_path(context));}, 150);
+  setTimeout(() => {requestAnimationFrame(() => draw_boat_path(context));}, 100);
 
 }
 
