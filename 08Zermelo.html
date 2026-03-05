@@ -742,6 +742,8 @@ const cellSizeY = height/grid_y;
 let frame_num = 0;
 // save potential picture
 let background;
+//　heatmap
+let heatmap;
 
 function update_environment() {
   let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
@@ -983,8 +985,8 @@ function start_simulation(){
   if (boat_pos.length != 0){
     // clear canvas
     ctx.clearRect(0,0,width,height);
-    // paste background
-    ctx.putImageData(background,0,0);
+    // paste heatmap
+    ctx.putImageData(heatmap,0,0);
     // draw velocity field
     draw_velocity_field(ctx);
     // reuse same boat start location
@@ -1018,8 +1020,8 @@ function start_simulation(){
     // redraw vector field
     draw_velocity_field(ctx);
 
-    // save background
-    background = ctx.getImageData(0, 0, width, height);
+    // save heatmap with arrows
+    heatmap = ctx.getImageData(0, 0, width, height);
 
     // put boat at a random location
     boat_start();
@@ -1039,17 +1041,15 @@ function reset_calc(){
   // reset frame_num
   frame_num = 0;
 
-  update_environment();
-
-  // // clear canvas
-  // ctx.clearRect(0,0,width,height);
-  // // paste background
-  // ctx.putImageData(background,0,0);
-  // // identify vector field
-  // let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
-  // current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
-  // // draw vector field
-  // draw_velocity_field(ctx);
+  // clear canvas
+  ctx.clearRect(0,0,width,height);
+  // paste background
+  ctx.putImageData(background,0,0);
+  // identify vector field
+  let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
+  current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
+  // draw vector field
+  draw_velocity_field(ctx);
 
 }
 
