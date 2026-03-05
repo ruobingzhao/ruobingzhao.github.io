@@ -695,7 +695,8 @@ function boat_trajectory(u_opt){
     <br>
     Click "Reset" to drop the boat at a new starting location. Then click "Start Simulation" again.
     <br>
-    Color test <b style="color:#99ddff">color1</b><b style="color:#80d4ff">color2</b><b style="color:#4dc3ff">color3</b><b style="color:#33adff">color4</b><b style="color:#0099FF">color5</b><b style="color:#0080ff">color6</b><b style="color:#0066ff">color7</b><b style="color:#0040ff">color8</b><b style="color:#0033cc">color9</b><b style="color:#000099">color10</b>
+    After the calculations are done, you can see a heatmap of the value function \(V(x)\). Darker color means that the average time to get to the target island is longer. Press the button to toggle heatmap.
+    <!-- Color test <b style="color:#99ddff">color1</b><b style="color:#80d4ff">color2</b><b style="color:#4dc3ff">color3</b><b style="color:#33adff">color4</b><b style="color:#0099FF">color5</b><b style="color:#0080ff">color6</b><b style="color:#0066ff">color7</b><b style="color:#0040ff">color8</b><b style="color:#0033cc">color9</b><b style="color:#000099">color10</b> -->
     <br>
     <i>Note: Calculation with a new vector field could take a few seconds.</i>
     <div>
@@ -971,17 +972,19 @@ function draw_heatmap(context) {
  //   "#0033cc",
  //   "#000099"  // dark
  // ];
+
+ // one shade darker than before
  const colors = [
- "#99ddff",
  "#80d4ff",
  "#4dc3ff",
  "#33adff",
  "#0099FF", // original blue
  "#0080ff",
  "#0066ff",
- "#0033cc", // darker
- "#000099", // darker
- "#00004d"  // darker
+ "#0040ff",
+ "#0033cc",
+ "#000099",
+ "#00004d"
 ];
 
 
