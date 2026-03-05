@@ -694,6 +694,8 @@ function boat_trajectory(u_opt){
     <br>
     Click "Reset" to drop the boat at a new starting location. Then click "Start Simulation" again.
     <br>
+    Color test <b style="color:#99ddff">color1</b><b style="color:#80d4ff">color2</b><b style="color:#4dc3ff">color3</b><b style="color:#33adff">color4</b><b style="color:#0099FF">color5</b><b style="color:#0080ff">color6</b><b style="color:#0066ff">color7</b><b style="color:#0040ff">color8</b><b style="color:#0033cc">color9</b><b style="color:#000099">color10</b>
+    <br>
     <i>Note: Calculation with a new vector field could take a few seconds.</i>
     <div>
     <input type ="button" value = "Start Simulation" onClick = "start_simulation()">
@@ -952,16 +954,16 @@ function draw_heatmap(context) {
   }
 
   const colors = [
-   "#ccf2ff", // light
-   "#99e6ff",
-   "#66d9ff",
-   "#66c2ff",
+   "#99ddff", // light
+   "#80d4ff",
+   "#4dc3ff",
    "#33adff",
-   "#0099FF", // 50% - 60% original blue
-   "#0000e6",
-   "#0000b3",
-   "#0000b3",
-   "#000066"  // dark
+   "#0099FF", // original blue
+   "#0080ff",
+   "#0066ff",
+   "#0040ff",
+   "#0033cc",
+   "#000099"  // dark
  ];
 
   // paint each cell
@@ -978,17 +980,34 @@ function draw_heatmap(context) {
       context.fillRect(i * cellSizeX, j * cellSizeY, cellSizeX + 0.5, cellSizeY + 0.5);
     }
   }
+
+  // redraw island
+  ctx.fillStyle = '#FFE680';
+  ctx.fillRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
+  ctx.strokeStyle = "#DAA520";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
+
+  // redraw vector field
+  draw_velocity_field(ctx);
+  // draw vector field twice to make arrows more visible
+  draw_velocity_field(ctx);
+
+  // save heatmap with arrows
+  heatmap = ctx.getImageData(0, 0, width, height);
 }
 
 function start_simulation(){
   // check if already has a boat trajectory
+  // do not redo value iteration
   if (boat_pos.length != 0){
     // clear canvas
     ctx.clearRect(0,0,width,height);
-    // paste heatmap
+    // paste heatmap, already has arrows
     ctx.putImageData(heatmap,0,0);
-    // draw velocity field
-    draw_velocity_field(ctx);
+    // // draw velocity field
+    // draw_velocity_field(ctx);
+
     // reuse same boat start location
     // calculate boat trajectory
     boat_trajectory(u_opt);
@@ -1009,19 +1028,6 @@ function start_simulation(){
 
     // draw heatmap
     draw_heatmap(ctx);
-
-    // redraw island
-    ctx.fillStyle = '#FFE680';
-    ctx.fillRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
-    ctx.strokeStyle = "#DAA520";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
-
-    // redraw vector field
-    draw_velocity_field(ctx);
-
-    // save heatmap with arrows
-    heatmap = ctx.getImageData(0, 0, width, height);
 
     // put boat at a random location
     boat_start();
