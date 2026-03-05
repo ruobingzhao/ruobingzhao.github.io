@@ -286,111 +286,6 @@ function parameters(x,y,u,v_field){
   return {b1: b1val, b2: b2val, b1plus: b1p, b1minus: b1m, b2plus: b2p, b2minus: b2m, b1abs: b1a, b2abs: b2a, Q: Q_val, Delta_t: Deltat, p_right: pright, p_left: pleft, p_up: pup, p_down: pdown};
 }
 
-// // compute b1, b2, Q
-// function b1(x,y,u){
-//   let b1plus = 0;
-//   let b1minus = 0;
-//   let b1abs = 0;
-//   let v_field = v(x,y);
-//   let b1 = v_field.x + k*Math.cos(u*Math.PI/8);
-//
-//   if (b1 >= 0){
-//     b1plus = b1;
-//     b1minus = 0;
-//     b1abs = b1;
-//   } else {
-//     b1plus = 0;
-//     b1minus = -b1;
-//     b1abs = -b1;
-//   }
-//
-//   return {plus: b1plus, minus: b1minus, abs: b1abs};
-// }
-//
-// function b2(x,y,u){
-//   let b2plus = 0;
-//   let b2minus = 0;
-//   let b2abs = 0;
-//   let v_field = v(x,y);
-//   let b2 = v_field.y + k*Math.sin(u*Math.PI/8);
-//
-//   if (b2 >= 0){
-//     b2plus = b2;
-//     b2minus = 0;
-//     b2abs = b2;
-//   } else {
-//     b2plus = 0;
-//     b2minus = -b2;
-//     b2abs = -b2;
-//   }
-//
-//   return {plus: b2plus, minus: b2minus, abs: b2abs};
-// }
-//
-// function Q(x,y,u){
-//   let Q_val = 0;
-//   // Q = |b1|/h + |b2|/h + 2*sigma^2/h^2
-//   let b1val = b1(x,y,u).abs;
-//   let b2val = b2(x,y,u).abs;
-//   Q_val = b1val/h + b2val/h + 2*sigsq/hsq;
-//
-//   return Q_val;
-// }
-//
-// // single step cost
-// function Delta_t(x,y,u) {
-//   // Delta = 1/Q
-//   let Delta = 0;
-//   let Qval = Q(x,y,u);
-//   Delta = 1/Qval;
-//
-//   return Delta;
-// }
-//
-// // transition probabilities
-// function p_right(x,y,u){
-//   let p_right = 0;
-//   // p_right = (b1plus/h + sigma^2/(2*h^2))/Q
-//   let b1p = b1(x,y,u).plus;
-//   let Qval = Q(x,y,u);
-//   p_right = (b1p/h + sigsq/(2*hsq))/Qval;
-//
-//   return p_right;
-// }
-//
-// function p_left(x,y,u){
-//   let p_left = 0;
-//   // p_left = (b1minus/h + sigma^2/(2*h^2))/Q
-//   let b1m = b1(x,y,u).minus;
-//   let Qval = Q(x,y,u);
-//   p_left = (b1m/h + sigsq/(2*hsq))/Qval;
-//
-//   return p_left;
-// }
-//
-// function p_down(x,y,u){
-// // index bigger
-// let p_down = 0;
-// // p_down = (b2plus/h + sigma^2/(2*h^2))/Q
-// let b2p = b2(x,y,u).plus;
-// let Qval = Q(x,y,u);
-// p_down = (b2p/h + sigsq/(2*hsq))/Qval;
-//
-// return p_down;
-// }
-//
-// function p_up(x,y,u){
-// // index smaller
-// let p_up = 0;
-// // p_up = (b2minus/h + sigma^2/(2*h^2))/Q
-// let b2m = b2(x,y,u).minus;
-// let Qval = Q(x,y,u);
-// p_up = (b2m/h + sigsq/(2*hsq))/Qval;
-//
-// return p_up;
-// }
-/////////////// MOVED THESE CALCULATIONS INSIDE THE EXPECTEDVAL FUNCTION
-
 ///////////// COMPUTATIONS /////////////
 // Solve Bellman equation V(x,y) = min E[L + V(x',y')]
 function bellman(x, y){
@@ -1044,6 +939,31 @@ function draw_velocity_field(context) {
   }
 }
 
+////// heat map for value function
+function draw_heatmap(context) {
+  // find max cost
+  let max_V = 0;
+  for (let k = 0; k < V.length; k++) {
+    if (V[k] > max_V && V[k] != Infinity) {
+      max_V = V[k];
+    }
+  }
+
+  // paint each cell
+  for (let i = 0; i < grid_x; i++) {
+    for (let j = 0; j < grid_y; j++) {
+      let cost = V[index(i, j)];
+      let normalized_cost = cost / max_V;
+      // lightness range 60% to 15%
+      let lightness = 60 - (normalized_cost * 45);
+
+      context.fillStyle = `hsl(204, 100%, ${lightness}%)`;
+      
+      context.fillRect(i * cellSizeX, j * cellSizeY, cellSizeX + 0.5, cellSizeY + 0.5);
+    }
+  }
+}
+
 function start_simulation(){
   // check if already has a boat trajectory
   if (boat_pos.length != 0){
@@ -1070,6 +990,22 @@ function start_simulation(){
     // draw_velocity_field(ctx);
     // run value iteration
     VI();
+
+    // draw heatmap
+    draw_heatmap(ctx);
+
+    // redraw island
+    ctx.fillStyle = '#FFE680';
+    ctx.fillRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
+    ctx.strokeStyle = "#DAA520";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(target_x * cellSizeX - 2.5*cellSizeX, target_y * cellSizeY - 2.5*cellSizeY, cellSizeX*5, cellSizeY*5);
+
+    // redraw vector field
+    draw_velocity_field(ctx);
+
+    // save background
+    background = ctx.getImageData(0, 0, width, height);
 
     // put boat at a random location
     boat_start();
