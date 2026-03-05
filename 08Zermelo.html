@@ -1034,19 +1034,22 @@ function start_simulation(){
 }
 
 function reset_calc(){
-  // clear canvas
-  ctx.clearRect(0,0,width,height);
-  // paste background
-  ctx.putImageData(background,0,0);
   // clear boat trajectory
   boat_pos = [];
   // reset frame_num
   frame_num = 0;
-  // identify vector field
-  let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
-  current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
-  // draw vector field
-  draw_velocity_field(ctx);
+
+  update_environment();
+
+  // // clear canvas
+  // ctx.clearRect(0,0,width,height);
+  // // paste background
+  // ctx.putImageData(background,0,0);
+  // // identify vector field
+  // let vfieldTypeElement = document.querySelector('input[name = "vfield"]:checked');
+  // current_vfield = vfieldTypeElement ? vfieldTypeElement.value : "one";// default one direction
+  // // draw vector field
+  // draw_velocity_field(ctx);
 
 }
 
