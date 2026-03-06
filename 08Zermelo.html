@@ -638,7 +638,7 @@ function boat_trajectory(u_opt){
     \[
     V^h(x,y) = \min_{\theta}\mathbb{E}\big[ \Delta_t^{h,\theta} + V^h(\xi_{n+1}^h)\;|\;\xi_n^h = (x,y)\big]
     \]
-    or, written with transition probabilities (compare this to the HJB equation earlier)
+    or, written with transition probabilities (compare this to the discretized HJB equation earlier, notice their similarities after dividing all terms by \(Q^{h,\theta}\), although one must be careful when moving the \(V(x,y)\) term outside the \(\inf_{\theta}\{\cdot\}\))
     \[
     \begin{aligned}
     V^h(x,y) = \min_{\theta}\bigg\{ & \Delta_t^{h,\theta} + p^{h,\theta}(x+h,y|x,y)\cdot V^h(x+h,y) +  p^{h,\theta}(x-h,y|x,y)\cdot V^h(x-h,y)\\
