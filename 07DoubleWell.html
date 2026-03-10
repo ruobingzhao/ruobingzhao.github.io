@@ -328,7 +328,7 @@ function movepath(path) {
     where \(Z \;\dot{=}\;\sum_{n=0}^{\infty}e^{-\frac{E_n}{k_B T}}\) is the partition function (to normalize total probability to 1), \(k_B\) is the Boltzmann constant and \(T\) is the temperature of the system.
     For this simulation, the system is a quantum particle in a double-well potential. A quantum particle satisfies the Schrödinger Equation:
     \[i\hbar\frac{\partial \Psi}{\partial t} = -\frac{\hbar^2}{2m}\frac{\partial^2 \Psi}{\partial x^2} + V\cdot \Psi\]
-    where \(\Psi = \Psi(x,t)\) is the probability amplitude of the particle, meaning that \(|\Psi(x)\Psi^*(x)| = |\Psi(x)|^2\) gives the probability density of the particle at position \(x\) and time \(t\), and \(V\) is the potential field of the system. Assuming that the potential function is not time-dependent, i.e. \(V=V(x)\), we can break \(\Psi(x,t)\) into time-dependent part and space-dependent part and simplify the equation. Let \(\Psi(x,t) = \phi(t)\psi(x)\), substitute this in the Schrödinger Equation and separate variables. We get
+    where \(\Psi = \Psi(x,t)\) is the probability amplitude of the particle, meaning that \(|\Psi\Psi^*| = |\Psi|^2\) gives the probability density of the particle at position \(x\) and time \(t\), and \(V\) is the potential field of the system. Assuming that the potential function is not time-dependent, i.e. \(V=V(x)\), we can break \(\Psi(x,t)\) into time-dependent part and space-dependent part and simplify the equation. Let \(\Psi(x,t) = \phi(t)\psi(x)\), substitute this in the Schrödinger Equation and separate variables. We get
     \[-i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = -\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x)\]
     Since the left side and the right side depend on different variables, the only way that they can be identically equal is that both equals a constant, \(E\), the total energy of the system. Now we get a differential equation for each of the variables:
     \[-i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = E\]
@@ -370,7 +370,7 @@ function movepath(path) {
     & = \sum_{n,m}\psi_n(x_0)e^{-\tau E_n} \int \psi^*_n(x_1)\psi_m(x_1) dx_1 e^{-\tau E_m}\psi^*_m(x_2)
     \end{aligned}
     \]
-    Because \(\psi_n\), \(\psi_m\) are eigenfunctions, \(\psi_n(x)\psi^*_m(x) = \delta_{nm}\), where \(\delta_{nm}\) is the Kronecker delta, the integral simplifies:
+    Because \(\psi_n\), \(\psi_m\) are eigenfunctions, \(\int\psi_n(x)\psi^*_m(x) dx= \delta_{nm}\), where \(\delta_{nm}\) is the Kronecker delta, the integral simplifies:
     \[
     \begin{aligned}
     \int \rho(x_0,x_1,\tau)\rho(x_1,x_2,\tau)dx_1 & = \sum_n\psi_n(x_0)e^{-\tau E_n} e^{-\tau E_n}\psi^*_n(x_2)\\
