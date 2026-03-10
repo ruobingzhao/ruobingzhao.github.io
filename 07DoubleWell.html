@@ -492,7 +492,7 @@ function movepath(path) {
     \end{aligned}
     \]
     Notice that the fraction inside the integral is the probability density of the Wiener process taking a specific path \(x_0\to x_1 \to x_2...\to x_{N-1}\to x_{N}\), given that it starts at
-    \(x_0\) and arrives at \(x_N\), so the right hand side is just the expected value of \(\exp\big(-\Delta_{\tau}\sum_{k=0}^{N-1} V(x_{k})\big)\) with respect to the probability measure conditioned on the Wiener process starting at \(x_0\) and arriving at \(x_N\). Therefore,
+    \(x_0\) and arrives at \(x_N\), so the right hand side is just the expected value of \(\exp\big(-\Delta_{\tau}(\frac{1}{2} V(x_0)+\sum_{k=1}^{N-1} V(x_{k})+\frac{1}{2}V(x_{N}))\big)\) with respect to the probability measure conditioned on the Wiener process starting at \(x_0\) and arriving at \(x_N\). Therefore,
     \[
     \begin{aligned}
     \rho(x_0,x_N,\beta) & = \rho^{\text{free}}(x_0,x_{N},\beta) \cdot\mathbb{E}\bigg[\exp\bigg(-\Delta_{\tau}(\frac{1}{2} V(x_0)+\sum_{k=1}^{N-1} V(x_{k})+\frac{1}{2}V(x_{N}))\bigg)\bigg | X_0 = x_0, X_{\beta} = x_N \bigg]
