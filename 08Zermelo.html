@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="description" content="In this demo we solve the Zermelo's Navigation Problem numerically as a continuous-time stochastic control problem using Markov Chain Approximation." />
+<meta name="description" content="In this tutorial we solve the Zermelo's Navigation Problem numerically as a continuous-time stochastic control problem using Markov Chain Approximation." />
 <meta name="keywords" content="Continuous-Time Stochastic Control, Markov Chain Approximation, Zermelo's Navigation Problem, Numerical Method" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="utf-8">
@@ -504,7 +504,7 @@ function boat_trajectory(u_opt){
       8. Zermelo's Navigation Problem (A Continuous-Time Stochastic Control Problem)
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    In this demo we solve the Zermelo's Navigation Problem numerically as a continuous-time stochastic control problem using Markov Chain Approximation. Click <a href="#sim">here</a> to play with the simulation.
+    In this tutorial we solve the Zermelo's Navigation Problem numerically as a continuous-time stochastic control problem using Markov Chain Approximation. Click <a href="#sim">here</a> to play with the simulation.
     <br>
     The original (deterministic) Zermelo's Navigation Problem was formulated by Ernst Zermelo in his 1931 <a href="https://doi.org/10.1002/zamm.19310110205">paper</a>. A boat in a body of water (or, a zeppelin surrounded by air) is moving at its maximum motor speed \(k\) towards a destination against a variable water current (or wind) given by the vector field \(\vec{v} = (v_x, v_y)\). The boat seeks to minimize the time it takes to arrive at the destination. The boat position \((x,y)\) evolves according to the differential equations:
     \[
@@ -638,7 +638,7 @@ function boat_trajectory(u_opt){
     \[
     V^h(x,y) = \min_{\theta}\mathbb{E}\big[ \Delta_t^{h,\theta} + V^h(\xi_{n+1}^h)\;|\;\xi_n^h = (x,y)\big]
     \]
-    or, written with transition probabilities (compare this to the HJB equation earlier)
+    or, written with transition probabilities (compare this to the discretized HJB equation earlier, notice their similarities after dividing all terms by \(Q^{h,\theta}\), although one must be careful when moving the \(V(x,y)\) term outside the \(\inf_{\theta}\{\cdot\}\))
     \[
     \begin{aligned}
     V^h(x,y) = \min_{\theta}\bigg\{ & \Delta_t^{h,\theta} + p^{h,\theta}(x+h,y|x,y)\cdot V^h(x+h,y) +  p^{h,\theta}(x-h,y|x,y)\cdot V^h(x-h,y)\\
