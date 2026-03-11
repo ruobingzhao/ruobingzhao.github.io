@@ -328,12 +328,12 @@ function movepath(path) {
     where \(Z \;\dot{=}\;\sum_{n=0}^{\infty}e^{-\frac{E_n}{k_B T}}\) is the partition function (to normalize total probability to 1), \(k_B\) is the Boltzmann constant and \(T\) is the temperature of the system.
     For this simulation, the system is a quantum particle in a double-well potential. A quantum particle satisfies the Schrödinger Equation:
     \[i\hbar\frac{\partial \Psi}{\partial t} = -\frac{\hbar^2}{2m}\frac{\partial^2 \Psi}{\partial x^2} + V\cdot \Psi\]
-    where \(\Psi = \Psi(x,t)\) is the probability amplitude of the particle, meaning that \(|\Psi\Psi^*| = |\Psi|^2\) gives the probability density of the particle at position \(x\) and time \(t\), and \(V\) is the potential field of the system. Assuming that the potential function is not time-dependent, i.e. \(V=V(x)\), we can break \(\Psi(x,t)\) into time-dependent part and space-dependent part and simplify the equation. Let \(\Psi(x,t) = \phi(t)\psi(x)\), substitute this in the Schrödinger Equation and separate variables. We get
+    where \(\Psi = \Psi(x,t)\) is the probability amplitude of the particle, meaning that \(\Psi\Psi^* = |\Psi|^2\) gives the probability density of the particle at position \(x\) and time \(t\), and \(V\) is the potential field of the system. Assuming that the potential function is not time-dependent, i.e. \(V=V(x)\), we can break \(\Psi(x,t)\) into time-dependent part and space-dependent part and simplify the equation. Let \(\Psi(x,t) = \phi(t)\psi(x)\), substitute this in the Schrödinger Equation and separate variables. We get
     \[i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = -\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x)\]
     Since the left side and the right side depend on different variables, the only way that they can be identically equal is that both equals a constant, \(E\), the total energy of the system. Now we get a differential equation for each of the variables:
     \[i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = E\]
     \[-\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x) = E\]
-    Note that the solution to the first equation is just \(\phi(t) = e^{-\frac{i E t}{\hbar}}\). Therefore, the wave function \(\Psi\) becomes \(\Psi(x,t) = e^{-\frac{i E t}{\hbar}}\psi(x)\). The probability density of the particle is then \(|\Psi(x,t)|^2 = |e^{-\frac{i E t}{\hbar}}\psi(x)|^2 = |\psi(x)|^2 \). Hence the probability of finding the particle at position \(x\) does not depend on time. Since we are simulating the equilibrium distribution of the particle, we can use \(\psi(x)\) as our probability amplitude function. To simplify the notation a bit, we introduce the operator
+    Note that the solution to the first equation is just \(\phi(t) = e^{-\frac{i E t}{\hbar}}\). Therefore, the wave function \(\Psi\) becomes \(\Psi(x,t) = e^{-\frac{i E t}{\hbar}}\psi(x)\). The probability density of the particle is then \(|\Psi(x,t)|^2 = |e^{-\frac{i E t}{\hbar}}\psi(x)|^2 = |\psi(x)|^2 \). Hence the probability density of the energy eigenfunctions does not depend on time. Since we are simulating the thermal equilibrium distribution of the particle, which is a statistical mixture of energy eigenstates, we use the time-independent Schrödinger Equation. To simplify the notation a bit, we introduce the operator
     \[\hat{H} = -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} + \hat{V}(x) = \hat{K}+\hat{V}\]
     Then the second differential equation simplifies to
     \[\hat{H}\psi = E\psi\]
@@ -395,6 +395,7 @@ function movepath(path) {
     & = \frac{1}{Z}\sum_{n=0}^{\infty}e^{-\beta E_n}\psi_n(x)\psi_n^*(x)\\
     & = \frac{1}{Z}\sum_{n=0}^{\infty}e^{-\beta E_n}\langle x |\psi_n\rangle \langle \psi_n|x\rangle\\
     & = \frac{1}{Z}\sum_{n=0}^{\infty} \langle x |\psi_n\rangle e^{-\beta E_n} \langle \psi_n|x\rangle\\
+    & = \frac{1}{Z}\sum_{n=0}^{\infty} \langle x |\psi_n\rangle \langle \psi_n|e^{-\beta \hat{H}}|x\rangle\\
     & = \frac{1}{Z} \langle x| \bigg(\sum_{n=0}^{\infty}|\psi_n\rangle \langle \psi_n |\bigg) e^{-\beta \hat{H}} |x\rangle\\
     & = \frac{1}{Z} \langle x| e^{-\beta \hat{H}} |x\rangle\end{aligned}\]
     In the last step, since \(\big(\sum_{n=0}^{\infty}|\psi_n\rangle \langle \psi_n |\big) \) is the sum of <a href="https://quantummechanics.ucsd.edu/ph130a/130_notes/node185.html">projection operators</a> across all energy eigenstates, the sum is the identity \(I\).
@@ -481,7 +482,7 @@ function movepath(path) {
     <!-- \sigma & = \sqrt{\frac{\hbar^2}{m}}
     \end{aligned} -->
     \]
-    where \(\sigma = \sqrt{\frac{\hbar^2}{m}}\). However, \(\beta\) is not the real time variable. We are simulating the thermal equilibrium of a system, there is no time variable in our problem (at equilibrium the states do not change with time), as if we are looking at a frozen instant in reality. One can imagine the random walk not as the paths of the particle in time, but as its simultaneous existence in space, due to the Uncertainty Principle.
+    where \(\sigma = \sqrt{\frac{\hbar^2}{m}}\). However, \(\beta\) is not the real time variable. We are simulating the thermal equilibrium of a system, there is no time variable in our problem (at equilibrium the states do not change with time), as if we are looking at a frozen instant in reality. One can imagine the random walk not as the paths of the particle in time, but as its simultaneous existence in space.
     <br>
     <br>
     Going back to the density matrix elements:
