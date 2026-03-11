@@ -329,9 +329,9 @@ function movepath(path) {
     For this simulation, the system is a quantum particle in a double-well potential. A quantum particle satisfies the Schrödinger Equation:
     \[i\hbar\frac{\partial \Psi}{\partial t} = -\frac{\hbar^2}{2m}\frac{\partial^2 \Psi}{\partial x^2} + V\cdot \Psi\]
     where \(\Psi = \Psi(x,t)\) is the probability amplitude of the particle, meaning that \(|\Psi\Psi^*| = |\Psi|^2\) gives the probability density of the particle at position \(x\) and time \(t\), and \(V\) is the potential field of the system. Assuming that the potential function is not time-dependent, i.e. \(V=V(x)\), we can break \(\Psi(x,t)\) into time-dependent part and space-dependent part and simplify the equation. Let \(\Psi(x,t) = \phi(t)\psi(x)\), substitute this in the Schrödinger Equation and separate variables. We get
-    \[-i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = -\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x)\]
+    \[i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = -\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x)\]
     Since the left side and the right side depend on different variables, the only way that they can be identically equal is that both equals a constant, \(E\), the total energy of the system. Now we get a differential equation for each of the variables:
-    \[-i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = E\]
+    \[i\hbar \frac{1}{\phi(t)}\frac{d\phi(t)}{dt} = E\]
     \[-\frac{\hbar^2}{2m}\frac{1}{\psi(x)}\frac{\partial^2 \psi}{\partial x^2} + V(x) = E\]
     Note that the solution to the first equation is just \(\phi(t) = e^{-\frac{i E t}{\hbar}}\). Therefore, the wave function \(\Psi\) becomes \(\Psi(x,t) = e^{-\frac{i E t}{\hbar}}\psi(x)\). The probability density of the particle is then \(|\Psi(x,t)|^2 = |e^{-\frac{i E t}{\hbar}}\psi(x)|^2 = |\psi(x)|^2 \). Hence the probability of finding the particle at position \(x\) does not depend on time. Since we are simulating the equilibrium distribution of the particle, we can use \(\psi(x)\) as our probability amplitude function. To simplify the notation a bit, we introduce the operator
     \[\hat{H} = -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} + \hat{V}(x) = \hat{K}+\hat{V}\]
