@@ -139,7 +139,7 @@ html { background: white; margin:0;}
 
 ///////////// GLOBAL VARIABLES /////////////
 const beta = 5; //inverse temperature (time horizon)
-const L = 5; // length of the box that the particle is in
+const L = 5; // length of observation window
 const M = 200; // number of bins for histogram
 const N = 300;// number of time steps
 const dt = beta/N // size of time increment
@@ -450,7 +450,7 @@ function movepath(path) {
     \[
     \lim_{N\to \infty} ||e^{-t(A+B)}\psi - (e^{-tA/N}e^{-tB/N})^N\psi|| = 0
     \]
-    For a double-well potential confined in a box of the form \(V(x) = ax^4-bx^2\) where \(a, b > 0\), the conditions for Trotter's formula are satisfied (See Theorem 9.39 in <a href = "#reference">[1]</a>).
+    For a double-well potential of the form \(V(x) = ax^4-bx^2\) where \(a, b > 0\), the conditions for Trotter's formula are satisfied (See Theorem 9.39 in <a href = "#reference">[1]</a>).
     <!-- For any \(x, x'\) and \(\tau\) very small, applying Trotter's formula, we can separate \(e^{-\tau\hat{H}}\) into \(e^{-\tau\hat{K}}\) and \(e^{-\tau\hat{V}}\) and obtain:
     \[
     \rho(x,x',\tau) = e^{-\frac{\tau}{2}V(x)}\langle x| e^{-\tau \hat{K}} |x'\rangle e^{-\frac{\tau}{2}V(x')}\] -->
@@ -458,7 +458,7 @@ function movepath(path) {
     \(\Delta_{\tau} = \beta/N\). Applying Trotter's formula, we can separate \(e^{-\Delta_{\tau}\hat{H}}\) into \(e^{-\Delta_{\tau}\hat{K}}\) and \(e^{-\Delta_{\tau}\hat{V}}\) and obtain:
     \[
     \begin{aligned}
-    \rho(x,x',\Delta_{\tau}) & =\langle x| e^{-\frac{\Delta_{\tau}}{2}\hat{V}} e^{-\Delta_{\tau} \hat{K}} e^{-\frac{\Delta_{\tau}}{2}\hat{V}} |x'\rangle \\
+    \rho(x,x',\Delta_{\tau}) & \approx \langle x| e^{-\frac{\Delta_{\tau}}{2}\hat{V}} e^{-\Delta_{\tau} \hat{K}} e^{-\frac{\Delta_{\tau}}{2}\hat{V}} |x'\rangle \\
     <!-- & = e^{-\frac{\Delta_{\tau}}{2}V(x)}\langle x| e^{-\Delta_{\tau} \hat{K}} |x'\rangle e^{-\frac{\Delta_{\tau}}{2}V(x')}\\ -->
     & = e^{-\frac{\Delta_{\tau}}{2}V(x)}\rho^{\text{free}}(x,x',\Delta_{\tau}) e^{-\frac{\Delta_{\tau}}{2}V(x')}
     \end{aligned}
@@ -642,7 +642,7 @@ function movepath(path) {
     <pre>
 ///////////// GLOBAL VARIABLES /////////////
 double beta // inverse temperature (time horizon)
-double L // length of the box that the particle is in
+double L // length of observation window
 int M // number of bins for histogram
 int N // number of time steps
 double dt = beta/N // size of time increment
@@ -707,7 +707,7 @@ function newpath(path) {
   l = int_rand(5, lmax)
 
   // pick a random start node from 0 to N
-  k = int_rand(0, N)
+  k = int_rand(0, N-1)
 
   // endpoints of Brownian bridge
   x_start = path[k]
