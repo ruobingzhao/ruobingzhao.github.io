@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="In this tutorial we simulate ideal Bose gas in a 3-dimensional periodic box of length \(L\)." />
+<meta name="keywords" content="Ideal Bose Gas, Bose-Einstein Condensate, Markov Chain Monte Carlo, Path Integrals, Numerical Method" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>Simulating Ideal Bose Gas and Bose-Einstein Condensate</title>
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+</head>
+<body>
+<style type="text/css">
+#transition-table td, #transition-table th {padding: 2px 2px; font-size: 12px }
+#weight-table td, #weight-table th {padding: 2px 2px; font-size: 12px }
+
+#returns-table td, #returns-table th {padding: 2px 2px; font-size: 12px }
+
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1;
+  height: 350px;
+}
+*/
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
+
+#pseudocode {
+  display: none;
+}
+
+#terrain-table th, #terrain-table td {
+  padding: 2px, 2px;
+  font-size: 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+#terrain-table th {
+  text-align: center;
+}
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+</style>
+<script>
+
+///////////// GLOBAL VARIABLES /////////////
+
+
+///////////// HELPER FUNCTIONS /////////////
+
+
+/////////////// TO REDUCE REDUNDANT EVALUATIONS
+
+
+///////////// COMPUTATIONS /////////////
+
+/////////////// MAIN FUNCTION SEE VISUALIZATION SECTION /////////////////
+
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "container">
+    <br>
+    <br>
+    <br>
+    <i id ="top">All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      9. Simulating Ideal Bose Gas and Bose-Einstein Condensate
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    In this tutorial we simulate ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state. This is a self contained tutorial given basic math and physics knowledge. I will explain in detail the exact steps of building a working simulation. It is recommended that you read the tutorial on <a href = "07DoubleWell.html">the single particle path integrals</a> first. <!--Part of this tutorial is based on Chapter 4 of <a href="#reference">[1]</a>. (Incidentally, there are a few typographical errors and parts that are unclear/imprecise in that book, which I hope to clear up with this tutorial.) -->Click <a href="#sim">here</a> to jump to the simulation.
+    <br>
+    <br>
+    <h4>Bosons and Indistinguishable Particles Density Matrix</h4>
+    All elementary particles are either fermions (half integer spin) or bosons (integer spin). Fermions are distinguishable from one another and obey the Pauli exclusion principle, while bosons are indistinguishable from one another and may occupy the same quantum state. In this simulation we consider ideal Bose gas, meaning that the particles do not interact with (attract or repel) each other.
+    <br>
+    <br>
+    The first step of building the simulation is to derive an expression for the density matrix elements of an \(N\)-indistinguishable-particle system. To achieve that we start with the case of \(N\) distinguishable particles. Let \(\{x\} \equiv \{x_1, ...,x_N\}\) denote the particle positions, i.e. particle \(1\) at \(x_1\), ..., particle \(N\) at \(x_N\), and let \(\{\sigma\} \equiv \{\sigma_1, ..., \sigma_N\}\) represent the macroscopic quantum state where particle \(1\) is in state \(\sigma_1\), ..., particle \(N\) in state \(\sigma_N\). The elements of the density matrix for \(N\)-distinguishable-particle system are given by
+    \[
+    \rho^{\text{dis}}(\{x\},\{x' \}, \beta) = \sum_{\{\sigma\}}\psi_{\{\sigma\}}(x_1,...,x_N)e^{-\beta E_{\{\sigma\}}}\psi_{\{\sigma\}}^*(x_1', ...,x_N')
+    \]
+    where \(\psi_{\{\sigma\}}\)'s are orthonormal wave functions (eigenfunctions) of \(N\)-particle system for (total) energy eigenstate \(E_{\{\sigma\}}\), and \(\beta\) is the inverse temperature, defined as \(\beta = \frac{1}{k_B T}\), where \(T\) is the temperature of the system and \(k_B\) the Boltzmann constant. This is the quantum coherence between state 1: particle \(1\) at \(x_1\), ..., particle \(N\) at \(x_N\), and state 2: particle \(1\) at \(x_1'\), ..., particle \(N\) at \(x_N'\), at temperature \(T\).
+    <br>
+    <br>
+    For ideal particles, the wave function \(\psi_{\{\sigma\}} = \psi_{\{\sigma_1, ..., \sigma_N\}}\) can be written as the product of the single-particle wave functions of each particle, and the total energy \(E_{\{\sigma\}}\) of the \(N\) particles is the sum of the single-particle energy levels:
+    \[
+    \begin{gather}
+    \psi_{\{\sigma\}}(x_1,...,x_N) = \prod_{k=1}^N \psi_{\sigma_k}(x_k)\\
+    E_{\{\sigma\}} = \sum_{k=1}^N E_{\sigma_k}
+    \end{gather}
+    \]
+    Recall that the single particle density matrix elements are
+    \[
+    \rho(x_k, x_k', \beta) = \sum_{\sigma_k}\psi_{\sigma_k}(x_k) e^{-\beta E_{\sigma_k}}\psi_{\sigma_k}^*(x_k')
+    \]
+    Substituting these in \(\rho^{\text{dis}}(\{x\},\{x' \}, \beta)\),  we see that the elements of the \(N\)-ideal-particle system density matrix can be written as the product of single-particle density matrices:
+    \[
+    \rho^{\text{dis}}(\{x\},\{x' \}, \beta) = \prod_{k=1}^N\rho(x_k,x_k',\beta)
+    \]
+    Since bosons are indistinguishable from one another, the wave function of the system of \(N\) ideal bosons must be permutation invariant. If \(\{x_P\} \equiv \{x_{P_1},...,x_{P_N}\}\) is a permutation of \(\{x\} \equiv \{x_1,...,x_N\}\), then we must have
+    \[
+    \psi_{\{\sigma\}}^{\text{bosons}}(x_{P_1},...,x_{P_N}) = \psi_{\{\sigma\}}^{\text{bosons}}(x_1,...,x_N)
+    \]
+    For each eigenstate \(\{\sigma\}\), we derive the wave function \( \psi_{\{\sigma\}}^{\text{bosons}}(x_1,...,x_N)\) for \(N\) bosons, starting with the sum of the \(N\)-distinguishable-particle wavefunctions across all permutations of the spatial coordinates of the particles:
+    \[
+    \Phi_{\{\sigma\}}(x_1,...,x_N) = \sum_{P}\psi_{\{\sigma\}}^{\text{dis}}(x_{P_1},...,x_{P_N}) = \sum_{P}\prod_{k}\psi_{\sigma_k}(x_{P_k})
+    \]
+    Note that \(\Phi\) is permutation invariant. To make the eigenfunctions orthonormal, \(\Phi\) needs to be scaled by a constant factor. Let \(C\) be the factor. We have (notation: \(\int dx\) integrating over the entire measure space of the variable \(x = (x_1, ..., x_N)\))
+    \[
+    \begin{aligned}
+    1 & = \int (C\Phi_{\{\sigma\}}(x_1,...,x_N))(C\Phi_{\{\sigma\}}(x_1,...,x_N))^* dx\\
+    & = |C|^2\int \bigg(\sum_{P}\prod_{k}\psi_{\sigma_k}(x_{P_k})\bigg)\bigg(\sum_{Q}\prod_{k}\psi_{\sigma_k}(x_{Q_k})\bigg)^*dx\\
+    & = |C|^2\int \sum_{P}\sum_{Q}\bigg(\prod_{k}\psi_{\sigma_k}(x_{P_k})\psi_{\sigma_k}^*(x_{Q_k})\bigg)dx
+    \end{aligned}
+    \]
+    where \(P\), \(Q\) are independent permutations. To find \(C\) that normalizes
+    \(\Phi\), we need to evaluate the double sum of integrals. Recall that the single particle wave functions are orthonormal: \(\int \psi_{\sigma_k}\psi_{\sigma_j}^* dx = 1\) if \(\sigma_k = \sigma_j\) and equals \(0\) otherwise. Therefore, in the double sum, only the terms for which variables \(x_{P_k}\) and \(x_{Q_k}\) are mapped to the same state remain. In addition, because bosons are allowed to occupy the same quantum state, some of the integrals that evaluate to \(1\) are repeated because the integrands are the same. For example, for \(N = 3\),  if all three particles are in the ground state, \(\{\sigma\} \equiv \{\sigma_1, \sigma_2, \sigma_3\} =\{0,0,0\}\), then \(|\psi_{\sigma_1}(x_1)|^2|\psi_{\sigma_2}(x_2)|^2|\psi_{\sigma_3}(x_3)|^2\) and \(|\psi_{\sigma_1}(x_2)|^2|\psi_{\sigma_2}(x_3)|^2|\psi_{\sigma_3}(x_1)|^2\) are identical. Let \(n_s\) be the occupation number of each unique state \(s\). For each pair of \(x_{P_k}\) and \(x_{Q_k}\) that are mapped to the same \(\sigma_k\), there are \((n_s!)\) integrals that evaluate to \(1\). The total number of repeated states is \(\prod_s (n_s!)\). Therefore, for \(N\) bosons, counting the spatial permutations and the repeated quantum states, we have
+    \[
+    \begin{gather}
+    1 = |C|^2 (N!)\prod_s (n_s!)
+    \end{gather}
+    \]
+    Hence, \(C = \sqrt{\frac{1}{N!\prod_s (n_s!)}}\), and we have
+    \[
+    \begin{aligned}
+    \psi_{\{\sigma\}}^{\text{bosons}}(x_1,...,x_N) & = \sqrt{\frac{1}{N!\prod_s (n_s!)}}\sum_{P}\psi_{\{\sigma\}}^{\text{dis}}(x_{P_1},...,x_{P_N})\\
+    & = \sqrt{\frac{1}{N!\prod_s (n_s!)}} \sum_{P}\prod_{k}\psi_{\sigma_k}(x_{P_k})
+    \end{aligned}
+    \]
+    <br>
+    Let \(\{n\} = \{n_1, n_2,...\}\) denote the unique states occupied by the \(N\) bosons in states \(\{\sigma\} \equiv \{\sigma_1, ..., \sigma_N\}\) defined by the set of occupation numbers \(n_s\) for each unique state. There are \(C^N_{n_1} C^{N-n_1}_{n_2} C^{N-n_1-n_2}_{n_3}... = \frac{N!}{\prod_s (n_s!)}\) ways the bosons can occupy the unique states. Hence \(\sum_{\{n\}} = \sum_{\{\sigma\}}\frac{\prod_s (n_s!)}{N!}\). The density matrix elements of the \(N\)-boson system are
+    \[
+    \begin{aligned}
+    \rho^{\text{bosons}}(\{x\},\{x' \}, \beta) & = \sum_{\{n\}}\psi_{\{n\}}^{\text{bosons}}(x_1,...,x_N)e^{-\beta E_{\{n\}}}\psi_{\{n\}}^{\text{bosons}*}(x_1', ...,x_N')\\
+    <!-- & = \sum_{\{s\}}\bigg(\sqrt{\frac{1}{(N!)\prod_s (n_s!)}} \sum_{P}\prod_{k}\psi_{\sigma_k}(x_{P_k})\bigg)\bigg(\sqrt{\frac{1}{(N!)\prod_s (n_s!)}} \sum_{P}\prod_{k}\psi_{\sigma_k}(x_{P_k})\bigg)^*\\ -->
+    & = \frac{1}{N!\prod_s (n_s!)}\sum_{\{n\}}\bigg(\sum_{P}\prod_{k}\psi_{\sigma_k}(x_{P_k})\bigg)e^{-\beta E_{\{n\}}} \bigg(\sum_{Q}\prod_{k}\psi_{\sigma_k}(x'_{Q_k})\bigg)^*\\
+    & = \frac{1}{N!\prod_s (n_s!)} \frac{\prod_s (n_s!)}{N!} \sum_{\{\sigma\}}\sum_{P}\sum_{Q}\bigg( \prod_{k}\psi_{\sigma_k}(x_{P_k})e^{-\beta E_{\sigma_k}}\psi_{\sigma_k}^*(x'_{Q_k})\bigg)\\
+    & = \bigg(\frac{1}{N!}\bigg)^2 \sum_{P}\sum_{Q}\sum_{\{\sigma\}}\bigg( \prod_{k}\psi_{\sigma_k}(x_{P_k})e^{-\beta E_{\sigma_k}}\psi_{\sigma_k}^*(x'_{Q_k})\bigg)
+    \end{aligned}
+    \]
+    Because rearranging the terms in the product does not change the value, we can redefine the permutation \(P= P\circ Q^{-1}\), thus absorbing one of the permutations and canceling out one of the \(1/N!\), since we are adding the same number \(N!\) times:
+    \[
+    \begin{aligned}
+    \rho^{\text{bosons}}(\{x\},\{x' \}, \beta) & = \frac{1}{N!} \sum_{P}\sum_{\{\sigma\}}\bigg( \prod_{k}\psi_{\sigma_k}(x_{k})e^{-\beta E_{\sigma_k}}\psi_{\sigma_k}^*(x'_{P_k})\bigg)\\
+    <!-- & = \bigg(\frac{1}{N!}\bigg)^2 \sum_{P}\sum_{Q}\rho^{\text{dis}}(\{x_P\},\{x'_Q\},\beta)\\ -->
+    & = \frac{1}{N!} \sum_{P}\rho^{\text{dis}}(\{x\},\{x'_P\},\beta)
+    \end{aligned}
+    \]
+    Hence the density matrix of \(N\) ideal bosons is the average of the density matrices of \(N\) distinguishable particles across all permutations of spatial coordinates of the particles.
+    <br>
+    <br>
+    <h4>Ideal Bosons Partition Function</h4>
+    Recall that the partition function \(Z\) (size of total statistical weights for all energy eigenstates) is the trace of the density matrix. For \(N\) bosons, the partition function is:
+    \[
+    Z^{\text{bosons}}_N = \sum_{\{n\}}e^{-\beta E_{\{n\}}} = \int \rho^{\text{bosons}}(\{x\},\{x\},\beta) dx
+    \]
+    where \(\{n\} = \{n_1, n_2, ...\}\) is the unique macroscopic state defined by the occupation numbers \(n_s\) of each unique single particle quantum state \(s\), and \(\{x\}\equiv \{x_1,...,x_N\}\) is the spatial coordinates of the particles. Therefore, substituting in the density matrix for \(N\) bosons and \(N\) distinguishable particles, we can write the bosons partition function in terms of single particle density matrix elements:
+    \[
+    \begin{aligned}
+    Z^{\text{bosons}}_N & = \frac{1}{N!}\int \sum_{P}\rho^{\text{dis}}(\{x\},\{x_P\},\beta) dx\\
+    & = \frac{1}{N!} \sum_{P}\int \prod_{k=1}^N\rho(x_k,x_{P_k},\beta) dx\\
+    & = \frac{1}{N!} \sum_{P} Z^P_N
+    \end{aligned}
+    \]
+    where \(P\) is a permutation of the indices of \(\{x\}\). For each permutation, we define \(Z^P_N = \int \prod_{k=1}^N\rho(x_k,x_{P_k},\beta) dx \). This is the statistical weight (unnormalized probability) of a permutation of particle positions \(\{x\} = \{x_1, ..., x_N\}\). Hence \(Z^{\text{bosons}}_N\) is the average of the statistical weights over all permutations of particle positions.
+    <br>
+    <br>
+    Note that \(Z\) may contain off-diagonal elements of the single particle density matrix. For example, for \(N=4\) and the permutation \(P = (1)(234)\) (that is, index \(1 \to 1\), \(2 \to 3\), \(3 \to 4\), \(4 \to 2\)), we have
+    \[
+    Z^{(1)(234)}_4 = \int \int \int \int \underbrace{\rho(x_1,x_1,\beta)}_{\text{diagonal element}} \underbrace{\rho(x_2,x_3,\beta) \rho(x_3,x_4,\beta) \rho(x_4,x_2,\beta)}_{\text{off-diagonal elements}} dx_1dx_2dx_3dx_4
+    \]
+    Recall that \(\rho\) has a convolution property. For integer \(k>1\), we have:
+    \[
+    \rho(x_0,x_{k}, k\beta) = \underbrace{\int\int...\int}_{k-1 \text{ integrals}} \rho(x_0,x_1,\beta)\rho(x_1,x_2,\beta)...\rho(x_{k-1},x_{k},\beta)dx_1dx_2...dx_{k-1}
+    \]
+    Therefore, \(Z^{(1)(234)}_4\) becomes
+    \[
+    \begin{aligned}
+    Z^{(1)(234)}_4 & = \underbrace{\int \rho(x_1,x_1,\beta) dx_1}_{\text{weight of the cycle }(1)} \underbrace{\int \int \int \rho(x_2,x_3,\beta) \rho(x_3,x_4,\beta) \rho(x_4,x_2,\beta) dx_2dx_3dx_4}_{\text{weight of the cycle }(234)}\\
+    & = \int \rho(x_1,x_1,\beta) dx_1 \int \bigg( \int \int \rho(x_2,x_3,\beta) \rho(x_3,x_4,\beta) \rho(x_4,x_2,\beta) dx_3dx_4 \bigg) dx_2\\
+    & = \int \underbrace{\rho(x_1,x_1,\beta)}_{\text{diagonal element}} dx_1 \int \underbrace{\rho(x_2,x_2,3\beta)}_{\text{diagonal element}}\, dx_2
+    \end{aligned}
+    \]
+    We can remove the off-diagonal elements in a permutation cycle of length \(k\) by multiplying the inverse temperature \(\beta\) by \(k\). Now \(Z_4^{(1)(234)}\), which contains two permutation cycles, becomes the product of two single particle partition functions, with \(\beta\) scaled by the lengths of the permutation cycles. From now on we will use lower case \(z\) to denote the single particle partition function and use \(z_k\) for the statistical weight (unnormalized probability) of a cycle of length \(k\). (Note that any cycles of the same length \(k\) are equally weighted, since we can just relabel the variables \(x_i\) and get the identical integral.) Then,
+    \[
+    Z^{(1)(234)}_4 = z_1(\beta)z_3(\beta) = z(\beta)z(3\beta)
+    \]
+    (N.B.) For a free particle (potential \(\hat{V} = 0\)), Wiener process and a Brownian bridge naturally arises from the weight of a permutation cycle of length \(k\). Let \(x_m\), \(x_{m+1}\), ..., \(x_{m+k-1}\) be the particle coordinates in the cycle. We have
+    \[
+    z_k(\beta) = z(k \beta) = \int \rho^{\text{free}}(x_m, x_m, k\beta) dx
+    \]
+    where
+    \[
+    \begin{gather}
+     \rho^{\text{free}}(x_m, x_m, k\beta) = \underbrace{\int\int...\int}_{k-1\text{ integrals}} \rho^{\text{free}}(x_m,x_{m+1},\Delta_{\tau})...\rho^{\text{free}}(x_{m+k-1},x_{m},\Delta_{\tau}) dx_1...dx_{m+k-1}\\
+    \text{where }\;\Delta_{\tau} = \frac{k\beta}{k} = \beta, \;
+    \text{ and }\; \rho^{\text{free}}(x_j, x_{j+1}, \Delta_{\tau}) = \sqrt{\frac{m}{2\pi\hbar^2 \Delta_{\tau}}} e^{-\frac{m(x_j-x_{j+1})^2}{2\hbar^2\Delta_{\tau}}}
+    \end{gather}
+    \]
+    If we treat \(\Delta_{\tau} = \beta\) as the "time increment", then this describes the path of a Wiener process
+    \[
+    dX_t = \sqrt{\frac{\hbar^2}{m}} dW_t
+    \]
+    This means that we can sample the spatial coordinates \(x_{m}\), ..., \(x_{m+k-1}\) from a path of the Wiener process that starts at \(x_{m}\) at time \(0\) and arrives at \(x_{m}\) again at time \(k \beta\), and the inbetween nodes with time increment \(\beta\) are the coordinates \(x_{m+1}\), ..., \(x_{m+k-1}\).
+    <br>
+    <br>
+    (The density matrix becomes slightly different when we enforce a periodic boundary condition on the free particle, but it still describes a Wiener process, which will be discussed later.)
+    <br>
+    <br>
+    <h4>Recursive Relationship of Partition Function</h4>
+    For the simulation, we need to sample from the (unnormalized) probabilities \(Z^P_N\) of permutations of \(\{x\}\) to get the particles' spatial coordinates. However, because for \(N\) particles there is a total of \(N!\) permutations, for large \(N\) it becomes difficult to write out the statistical weights for all of them. A better way is to use a recursive method that allows us to sample from only \(N\) probabilities.
+    <br>
+    <br>
+    For any permutation of \(N\) elements (e.g. \(\{x_1, ..., x_N\}\)), the cycle that contains element \(N\) is called the <i>last element cycle</i> (element \(N\) is not special, but is chosen for convenience; one can choose any other element). If the last element cycle has length \(k\), then there are \(N-k\) elements that are not in this cycle. We can compute the partition function \(Z_N\) by summing up the statistical weights of the last element cycles from length \(1\) to length \(N\):
+    \[
+    \begin{aligned}
+    Z^{\text{bosons}}_N & = \frac{1}{N!}\underbrace{\sum_P Z^P_N}_{\substack{\text{total weight of}\\ \text{all permutations}\\ \text{of }N \text{ elements}}}\\
+    & = \frac{1}{N!} \cdot \underbrace{\sum_{k = 1}^N}_{\substack{\text{loop over all}\\ \text{possible}\\ \text{last element}\\ \text{cycle lengths}}} \bigg( \underbrace{z_k}_{\substack{\text{weight of a last}\\ \text{element cycle of} \\ \text{length }k }} \cdot \underbrace{C^{N-1}_{k-1}}_{\substack{\text{ways to choose the}\\ \text{remaining } k-1\\ \text{elements in the}\\ \text{last element cycle}}} \cdot \underbrace{(k-1)!}_{\substack{\text{number of}\\ \text{permutations} \\ \text{of }k \text{ elements in}\\ \text{last element cycle}}} \cdot \underbrace{(\sum_{\substack{\text{permutation}\\Q}} Z^Q_{N-k})}_{\substack{\text{unconstrained}\\ \text{total weight of}\\ \text{the remaining}\\ N-k \text{ elements}}}\bigg)\\
+    & = \frac{1}{N!} \cdot \sum_{k = 1}^N \bigg( z_k \cdot \frac{(N-1)!}{(k-1)!(N-k)!} \cdot (k-1)! \cdot (N-k)!Z^{\text{bosons}}_{N-k}\bigg)\\
+    & = \frac{1}{N}\sum_{k = 1}^N z_k Z^{\text{bosons}}_{N-k}
+    \end{aligned}
+    \]
+    \(Z^{\text{bosons}}_N\) can be calculated entirely from partition functions \(Z^{\text{bosons}}_M\) with \(M < N\) and single particle partition functions \(z(k\beta) = z_k(\beta)\) with \(k \leq N\), which we know how to compute from analytical solution. From this recursive relationship, we can find the probability of the last element cycle (the cycle that contains particle \(N\)) having length \(k\).
+    \[
+    \underbrace{Z^{\text{bosons}}_N}_{\substack{\text{total statistical}\\ \text{weight of }N \text{ bosons}}} = \underbrace{ \frac{1}{N} z_1 Z^{\text{bosons}}_{N-1} }_{\substack{\text{weight of last}\\ \text{element cycle}\\ \text{having length }1}} +
+    \underbrace{ \frac{1}{N} z_2 Z^{\text{bosons}}_{N-2} }_{\substack{\text{weight of last}\\ \text{element cycle}\\ \text{having length }2}} + \; ... \; +
+    \underbrace{ \frac{1}{N} z_N Z^{\text{bosons}}_{0} }_{\substack{\text{weight of last}\\ \text{element cycle}\\ \text{having length }N}}
+    \]
+    \[
+    \pi_k = \frac{\frac{1}{N} z_k Z^{\text{bosons}}_{N-k}}{Z^{\text{bosons}}_N} = \frac{1}{N} \frac{z_k Z^{\text{bosons}}_{N-k}}{Z^{\text{bosons}}_N} \propto z_k Z^{\text{bosons}}_{N-k}
+    \]
+    where \(\pi_k\) is the probability of the last element cycle having length \(k\).
+    <br>
+    <br>
+    <h4>Algorithm (Main Loop)</h4>
+    The last equation allows us to sample all random permutations of the spatial coordinates of \(N\) ideal bosons following these steps:
+    <br>
+    <br>1. Compute the values of \(z_k(\beta) = z(k\beta) \equiv \sum_{s}e^{-k\beta E_s}\) from single particle energy levels. Compute the values of \(Z_{N-k}\) for \(k = 1,..., N\) from the recursive relationship \(Z^{\text{bosons}}_N = \frac{1}{N}\sum_{k = 1}^N z_k Z^{\text{bosons}}_{N-k}\) and the trivial starting condition \(Z^{\text{bosons}}_0 = 1\).
+    <br>
+    <br>2. Recursively sample from the probabilities \(z_1Z_{M-1},\,...\,,z_MZ_0\) to get the length \(k\) of the last element cycle, starting with \(M = N\), then \(M = N-k\), and so on. Save the total number of cycles and their lengths. For example, \(4\) cycles of length \(5\), \(3\) cycles of length \(4\), \(8\) cycles of length \(3\), etc.
+    <br>
+    <br>3. For each cycle generated in step 2, because \(z_k(\beta) = z(k\beta)\), we can sample the \(k\) particle coordinates as if they were nodes on a path of a Wiener process, with time increment \(\beta\), starting and ending at the same point in space in \(k\) time units.
+    <br>
+    <br>4. For particles in 3d, repeat step 3 to get the \(x\), \(y\), and \(z\) coordinates of each particle.
+    <br>
+    <br>
+    <h4>Single Free Particle in Periodic Box</h4>
+    There are two things we still need to implement the algorithm. First, we need the analytical solution of the single free particle in a periodic box, to compute \(z_k\) in Step 1. Second, we need to derive its density matrix,  so we can use the probability distribution to sample the cycles (paths of the Wiener process) in Step 3.
+    <br>
+    <br>
+    To find the partition function, we start from the Schrödinger equation. The free particle wave function \(\psi(x)\) solves the time-independent Schrödinger equation \(\hat{H}\psi = E\psi\), where \(\hat{H} = -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2}\), with a periodic boundary condition. \(L\) is the length of the box.
+    \[
+    -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} \psi = E\psi
+    \]
+    \[
+    \text{(B.C.) }\;\; \psi(x+L) = \psi(x)
+    \]
+    The solutions (eigen functions and energy levels) are
+    \[
+    \psi_n(x) = \sqrt{\frac{1}{L}}\exp( \frac{\mathrm{i}2n\pi x}{L} )
+    \]
+    \[
+    E_n = \frac{2\pi^2 \hbar^2 n^2}{mL^2}
+    \]
+    \[\text{where }n = -\infty, ..., -2, -1, 0, 1, 2, ..., \infty\]
+    The (1-dimensional) single particle partition function is:
+    \[
+    z_k(\beta) = z(k\beta) = \sum_{n = -\infty}^{\infty} e^{-k \beta E_n}
+    \]
+    Since the energy level grows with \(n^2\), the exponential in \(z(k\beta)\) decays quickly. For the numerical solution, we can truncate \(n\) at \(n_{max} \approx 10\), or truncate when \(e^{-k \beta E_n}\) is near floating point error.
+    <br>
+    <br>
+    For a 3-dimensional box, the partition function is
+    \[
+    z_k(\beta) = z(k\beta) = \bigg(\sum_{n = -\infty}^{\infty} e^{-k \beta E_n}\bigg)^3
+    \]
+    To derive the density matrix, we start with the Fourier transform
+    <br>
+    <br>
+    <br>
+    <h5 id = "reference"> </h5>
+    <br>
+    <br>
+    <h5>Reference</h5>
+    [1] Werner Krauth (2006), <i>Statistical Mechanics: Algorithms and Computations</i>, Oxford University Press.
+    <br>
+    <span id = "sim"><br></span>
+    <h4>Simulation</h4>
+    This applet simulates ideal Bose gas in a 3-dimensional periodic box of length \(L\). The simulation shows a 2d projection of the box. At low temperature, you can see the Bose-Einstein Condenstate forming.
+    <br>
+    <a href="#pseudocode" onclick="toggle_vis('pseudocode')">View/hide pseudocode</a>
+    <br>
+    <div id ="pseudocode">
+      <br>
+    <pre>
+///////////// GLOBAL VARIABLES /////////////
+double beta // inverse temperature (time horizon)
+double L // length of box
+int N // number of bosons
+double bosonsX[N] = zeros // array that stores the x coordinates of bosons
+double bosonsY[N] = zeros // array that stores the y coordinates of bosons
+double bosonsZ[N] = zeros // not needed because only plotting the projection on xy-plane
+double zk[N] = 0// cycle weight of length k (from 1 to N) / single particle partition function
+double Z_bosons[N] = 0// Bosons partition function (from 0 bosons to N-1 bosons)
+// for simplicity, set hbar = m = 1
+double hbar = 1
+double m = 1
+
+max_iter = 100000
+
+///////////// HELPER FUNCTIONS /////////////
+// May use built in functions from libraries
+
+// sample from a list where the items occur with probabilities p1, p2, ...
+// rejection free tower sampling
+function tower(){
+
+}
+
+// sample from normal distribution
+// Box Muller transform
+function norm_rand(mu, sigmasq) {
+  u1 = rand(0,1);
+  u2 = rand(0,1);
+  z0 = sqrt(-2*log(u1))*cos(2*pi*u2);
+  return z0*sqrt(sigmasq) + mu
+}
+
+function rand(min, max) // sample a random number between min and max
+
+///////////// COMPUTATIONS /////////////
+function main(){
+
+}
+
+function compute_zk() {
+
+}
+
+function compute_Z(zk) {
+
+}
+
+function brownian_bridge() {
+
+}
+    </pre>
+  </div>
+    <div>
+    <input type ="button" value = "Start Simulation" onClick = "start_simulation()">&emsp;
+    <input type ="button" value = "Reset" onClick = "reset_calc()">
+    </div>
+</div>
+    <div class ="graph-container">
+      <div class ="graph-container" style = "display: flex; flex-wrap: wrap; justify-content: left; gap: 20px; align-items: flex-start;">
+
+        <div>
+          <div style="text-align: center; font-weight: bold; margin-bottom: 5px;">Ideal Bose Gas</div>
+          <canvas id="box" style="border:2px solid #333;">
+          </canvas>
+        </div>
+
+
+
+      </div>
+    </div>
+<a href="#top">Back to Page Top</a>
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+//////////// Visualization Script
+//////////// Setting up canvas
+
+const canvas = document.getElementById("box");
+
+// Set canvas dimensions
+if (canvas.width != 500) canvas.width = 500;
+if (canvas.height != 400) canvas.height = 400;
+
+// Get the canvas context
+const ctx = canvas.getContext('2d');
+const width = canvas.width;
+const height = canvas.height;
+const cellSizeX = width/grid_x;
+const cellSizeY = height/grid_y;
+
+///////////// HELPERS
+
+
+//////////// Display
+window.onload = function() {
+
+}
+
+
+function start_simulation(){
+
+}
+
+function reset_calc(){
+
+}
+
+function toggle_vis(id) {
+       var cont = document.getElementById(id);
+       if(cont.style.display == 'block')
+          cont.style.display = 'none';
+       else
+          cont.style.display = 'block';
+    }
+
+</script>
+
+</body>
+</html>
