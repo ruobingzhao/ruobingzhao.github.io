@@ -304,19 +304,19 @@ html { background: white; margin:0;}
     \[
     Z^{(1)(234)}_4 = z_1(\beta)z_3(\beta) = z(\beta)z(3\beta)
     \]
-    (N.B.) For a free particle (potential \(\hat{V} = 0\)), Wiener process and a Brownian bridge naturally arises from the weight of a permutation cycle of length \(k\). Let \(x_m\), \(x_{m+1}\), ..., \(x_{m+k-1}\) be the particle coordinates in the cycle. We have
+    (N.B.) For a free particle (potential \(\hat{V} = 0\)), a Wiener process and a Brownian bridge naturally arise from the weight of a permutation cycle of length \(k\). Let \(x_m\), \(x_{m+1}\), ..., \(x_{m+k-1}\) be the particle coordinates in the cycle. We have
     \[
     z_k(\beta) = z(k \beta) = \int \rho^{\text{free}}(x_m, x_m, k\beta) dx
     \]
     where
     \[
     \begin{gather}
-     \rho^{\text{free}}(x_m, x_m, k\beta) = \underbrace{\int\int...\int}_{k-1\text{ integrals}} \rho^{\text{free}}(x_m,x_{m+1},\Delta_{\tau})...\rho^{\text{free}}(x_{m+k-1},x_{m},\Delta_{\tau}) dx_1...dx_{m+k-1}\\
+     \rho^{\text{free}}(x_m, x_m, k\beta) = \underbrace{\int...\int}_{k-1\text{ integrals}} \rho^{\text{free}}(x_m,x_{m+1},\Delta_{\tau})...\rho^{\text{free}}(x_{m+k-1},x_{m},\Delta_{\tau}) dx_{m+1}...dx_{m+k-1}\\
     \text{where }\;\Delta_{\tau} = \frac{k\beta}{k} = \beta, \;
     \text{ and }\; \rho^{\text{free}}(x_j, x_{j+1}, \Delta_{\tau}) = \sqrt{\frac{m}{2\pi\hbar^2 \Delta_{\tau}}} e^{-\frac{m(x_j-x_{j+1})^2}{2\hbar^2\Delta_{\tau}}}
     \end{gather}
     \]
-    If we treat \(\Delta_{\tau} = \beta\) as the "time increment", then this describes the path of a Wiener process
+    If we treat \(\Delta_{\tau} = \beta\) as the time increment, then this describes the path of a Wiener process
     \[
     dX_t = \sqrt{\frac{\hbar^2}{m}} dW_t
     \]
