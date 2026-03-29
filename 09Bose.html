@@ -393,7 +393,14 @@ html { background: white; margin:0;}
     \[
     z_k(\beta) = z(k\beta) = \bigg(\sum_{n = -\infty}^{\infty} e^{-k \beta E_n}\bigg)^3
     \]
-    To derive the density matrix, we start with the Fourier transform
+    The elements of the density matrix of the (1-dimensional) particle are
+    \[
+    \begin{aligned}
+    \rho(x,x',\beta) & = \sum_{n = -\infty}^{\infty}\psi_n(x)e^{-\beta E_n}\psi_n^*(x')\\
+    & = \frac{1}{L}\sum_{n = -\infty}^{\infty} \exp\bigg(\frac{\mathrm{i}2n\pi x}{L}\bigg)\exp\bigg(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\bigg)\exp\bigg(-\frac{\mathrm{i}2n\pi x'}{L}\bigg)\\
+    & = \frac{1}{L}\sum_{n = -\infty}^{\infty} \exp\bigg(\frac{\mathrm{i}2n\pi (x-x')}{L}\bigg)\exp\bigg(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\bigg)
+    \end{aligned}
+    \]
     <br>
     <br>
     <br>
