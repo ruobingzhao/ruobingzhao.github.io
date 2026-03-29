@@ -191,10 +191,10 @@ html { background: white; margin:0;}
     <br>
     <br>
     <h4>Bosons and Indistinguishable Particles Density Matrix</h4>
-    All elementary particles are either fermions (half integer spin) or bosons (integer spin). Fermions are distinguishable from one another and obey the Pauli exclusion principle, while bosons are indistinguishable from one another and may occupy the same quantum state. In this simulation we consider ideal Bose gas, meaning that the particles do not interact with (attract or repel) each other.
+    All elementary particles are either fermions (half integer spin) or bosons (integer spin). Fermions obey the Pauli exclusion principle, while bosons may occupy the same quantum state. In this simulation we consider ideal Bose gas, meaning that the particles do not interact with (attract or repel) each other.
     <br>
     <br>
-    The first step of building the simulation is to derive an expression for the density matrix elements of an \(N\)-indistinguishable-particle system. To achieve that we start with the case of \(N\) distinguishable particles. Let \(\{x\} \equiv \{x_1, ...,x_N\}\) denote the particle positions, i.e. particle \(1\) at \(x_1\), ..., particle \(N\) at \(x_N\), and let \(\{\sigma\} \equiv \{\sigma_1, ..., \sigma_N\}\) represent the macroscopic quantum state where particle \(1\) is in state \(\sigma_1\), ..., particle \(N\) in state \(\sigma_N\). The elements of the density matrix for \(N\)-distinguishable-particle system are given by
+    The first step of building the simulation is to derive an expression for the density matrix elements of an \(N\)-indistinguishable-particle system. To achieve that we start with the case of \(N\) distinguishable particles. Let \(\{x\} \equiv \{x_1, ...,x_N\}\) denote the particle positions, i.e. particle \(1\) at \(x_1\), ..., particle \(N\) at \(x_N\), and let \(\{\sigma\} \equiv \{\sigma_1, ..., \sigma_N\}\) represent the system's quantum state where particle \(1\) is in state \(\sigma_1\), ..., particle \(N\) in state \(\sigma_N\). The elements of the density matrix for \(N\)-distinguishable-particle system are given by
     \[
     \rho^{\text{dis}}(\{x\},\{x' \}, \beta) = \sum_{\{\sigma\}}\psi_{\{\sigma\}}(x_1,...,x_N)e^{-\beta E_{\{\sigma\}}}\psi_{\{\sigma\}}^*(x_1', ...,x_N')
     \]
@@ -273,7 +273,7 @@ html { background: white; margin:0;}
     \[
     Z^{\text{bosons}}_N = \sum_{\{n\}}e^{-\beta E_{\{n\}}} = \int \rho^{\text{bosons}}(\{x\},\{x\},\beta) dx
     \]
-    where \(\{n\} = \{n_1, n_2, ...\}\) is the unique macroscopic state defined by the occupation numbers \(n_s\) of each unique single particle quantum state \(s\), and \(\{x\}\equiv \{x_1,...,x_N\}\) is the spatial coordinates of the particles. Therefore, substituting in the density matrix for \(N\) bosons and \(N\) distinguishable particles, we can write the bosons partition function in terms of single particle density matrix elements:
+    where \(\{n\} = \{n_1, n_2, ...\}\) is the unique system state defined by the occupation numbers \(n_s\) of each unique single particle quantum state \(s\), and \(\{x\}\equiv \{x_1,...,x_N\}\) is the spatial coordinates of the particles. Therefore, substituting in the density matrix for \(N\) bosons and \(N\) distinguishable particles, we can write the bosons partition function in terms of single particle density matrix elements:
     \[
     \begin{aligned}
     Z^{\text{bosons}}_N & = \frac{1}{N!}\int \sum_{P}\rho^{\text{dis}}(\{x\},\{x_P\},\beta) dx\\
@@ -358,7 +358,7 @@ html { background: white; margin:0;}
     <br>
     <br>2. Recursively sample from the probabilities \(z_1Z_{M-1},\,...\,,z_MZ_0\) to get the length \(k\) of the last element cycle, starting with \(M = N\), then \(M = N-k\), and so on. Save the total number of cycles and their lengths. For example, \(4\) cycles of length \(5\), \(3\) cycles of length \(4\), \(8\) cycles of length \(3\), etc.
     <br>
-    <br>3. For each cycle generated in step 2, because \(z_k(\beta) = z(k\beta)\), we can sample the \(k\) particle coordinates as if they were nodes on a path of a Wiener process, with time increment \(\beta\), starting and ending at the same point in space in \(k\) time units.
+    <br>3. For each cycle generated in step 2, because \(z_k(\beta) = z(k\beta)\), we can sample the \(k\) particle coordinates as if they were nodes on a path of a Wiener process, with time increment \(\beta\), over a finite horizon of \(k\) time units.
     <br>
     <br>4. For particles in 3d, repeat step 3 to get the \(x\), \(y\), and \(z\) coordinates of each particle.
     <br>
@@ -396,11 +396,74 @@ html { background: white; margin:0;}
     The elements of the density matrix of the (1-dimensional) particle are
     \[
     \begin{aligned}
-    \rho(x,x',\beta) & = \sum_{n = -\infty}^{\infty}\psi_n(x)e^{-\beta E_n}\psi_n^*(x')\\
+    \rho^{\text{per, }L}(x,x',\beta) & = \sum_{n = -\infty}^{\infty}\psi_n(x)e^{-\beta E_n}\psi_n^*(x')\\
     & = \frac{1}{L}\sum_{n = -\infty}^{\infty} \exp\bigg(\frac{\mathrm{i}2n\pi x}{L}\bigg)\exp\bigg(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\bigg)\exp\bigg(-\frac{\mathrm{i}2n\pi x'}{L}\bigg)\\
     & = \frac{1}{L}\sum_{n = -\infty}^{\infty} \exp\bigg(\frac{\mathrm{i}2n\pi (x-x')}{L}\bigg)\exp\bigg(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\bigg)
     \end{aligned}
     \]
+    Let \(f(n) \equiv \exp\big(\frac{\mathrm{i}2n\pi (x-x')}{L}\big)\exp\big(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\big)\). Then \(f(n)\in C^{\infty}(\mathbb{R})\), and \(n^{\alpha}\mathrm{d}^{\beta}f(n)\) is bounded for every pair of \(\alpha,\beta\in \mathbb{Z}\), that is, \(f(n)\) is a complex-valued smooth function whose derivatives are rapidly decreasing. Hence, \(f(n)\) is a Schwartz function, and we can apply the Poisson summation formula:
+    \[
+    \sum_{n=-\infty}^{\infty} f(n) = \sum_{w=-\infty}^{\infty} \hat{f}(w)
+    \]
+    where \(\hat{f}(w)\) are the Fourier coefficients of \(f(n)\):
+    \[
+    \hat{f}(w) = \int_{-\infty}^{\infty} f(n)e^{-2\pi \mathrm{i} n w} dn
+    \]
+    Substituting this back to \(\rho^{\text{per, }L}(x,x',\beta)\), we get:
+    <!-- \[
+    \begin{aligned}
+    \rho(x,x',\beta) & = \frac{1}{L}\sum_{w=-\infty}^{\infty} \hat{f}(w)\\
+    & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\int_{-\infty}^{\infty} e^{\frac{\mathrm{i}2n\pi (x-x')}{L}}e^{- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}}e^{-2\pi \mathrm{i} n w} dn\\
+    & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\int_{-\infty}^{\infty} e^{\frac{\mathrm{i}2n\pi (x-x' - wL)}{L}}e^{- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}} dn
+    \end{aligned}
+    \] -->
+    \[
+    \begin{aligned}
+    \rho^{\text{per, }L}(x,x',\beta) & = \frac{1}{L}\sum_{w=-\infty}^{\infty} \hat{f}(w)\\
+    & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\int_{-\infty}^{\infty} \exp\bigg(\frac{\mathrm{i}2n\pi (x-x')}{L}\bigg)\exp\bigg(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\bigg)\exp(-2\pi \mathrm{i} n w) dn\\
+    & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\int_{-\infty}^{\infty} \exp\bigg(\frac{\mathrm{i}2n\pi (x-x' - wL)}{L}\bigg)\exp\bigg(-\frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\bigg) dn
+    \end{aligned}
+    \]
+    Let \(a = \frac{4\pi^2 \hbar^2\beta}{mL^2}\), \(b = \frac{2\pi (x-x' - wL)}{L}\). The integral becomes
+    \[
+    \begin{aligned}
+    \rho^{\text{per, }L}(x,x',\beta) & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\int_{-\infty}^{\infty} \exp\bigg(\mathrm{i}bn\bigg)\exp\bigg(-\frac{1}{2}an^2\bigg) dn\\
+    & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\int_{-\infty}^{\infty} \exp\bigg(-\frac{1}{2}a(n^2 - \mathrm{i}\frac{2b}{a}n)\bigg) dn\\
+    & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\int_{-\infty}^{\infty} \exp\bigg(-\frac{1}{2}a(n^2 - \mathrm{i}\frac{2b}{a}n - \frac{b^2}{a^2} + \frac{b^2}{a^2})\bigg) dn\\
+    & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\exp\bigg(-\frac{b^2}{2a}\bigg)\int_{-\infty}^{\infty} \exp\bigg(-\frac{1}{2}a(n- \mathrm{i}\frac{b}{a})^2\bigg) dn\\
+    & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\exp\bigg(-\frac{b^2}{2a}\bigg)\sqrt{\frac{2\pi}{a}}
+    \end{aligned}
+    \]
+    In the last line, because of the presence of the imaginary unit \(\mathrm{i}\), to evaluate the integral we must use Cauchy's Integral Theorem, which states that a holomorphic function \(f(z)\) satisfies \(\oint_C f(z) dz = 0\) for all closed loops \(C\). (Here \(\mathrm{Re}(a) = \frac{4\pi^2 \hbar^2\beta}{mL^2}\) clearly \(> 0\), and \(f(z) = \exp(-\frac{1}{2}az^2)\) for \(z\in \mathbb{C}\)). Substituting \(a\), \(b\) back, we get
+    \[
+    \begin{aligned}
+    \rho^{\text{per, }L}(x,x',\beta) & = \frac{1}{L}\sum_{w=-\infty}^{\infty}\exp\bigg(-\frac{(\frac{2\pi (x-x' - wL)}{L})^2}{\frac{8\pi^2 \hbar^2\beta}{mL^2}}\bigg)\sqrt{\frac{2\pi}{\frac{4\pi^2 \hbar^2\beta}{mL^2}}}\\
+    <!-- & = \sqrt{\frac{m}{2\pi \hbar^2\beta}}\sum_{w=-\infty}^{\infty}\exp\bigg(-\frac{m(x-x' - wL)^2}{2\hbar^2\beta}\bigg)\\ -->
+    & = \sqrt{\frac{m}{2\pi \hbar^2\beta}}\sum_{w=-\infty}^{\infty}\exp\bigg(-\frac{m(x-(x' + wL))^2}{2\hbar^2\beta}\bigg)
+    \end{aligned}
+    \]
+    Compare this to the density matrix without the periodic boundary condition:
+    \[
+    \rho^{\text{free}}(x, x', \beta) = \sqrt{\frac{m}{2\pi\hbar^2 \beta}} \exp\bigg(-\frac{m(x-x')^2}{2\hbar^2\beta}\bigg)
+    \]
+    In the periodic boundary case, \(w\) is the winding number, which is the number of times the particle winds around the box of length \(L\). The density matrix in a periodic box is thus the sum of the free particle's density matrix over all winding numbers \(w\):
+    \[
+    \rho^{\text{per, }L}(x,x',\beta) = \sum_{w=-\infty}^{\infty}\rho^{\text{free}}(x, x'+wL, \beta)
+    \]
+    where each \(w\) carries a statistical weight that is \(\rho^{\text{free}}(x, x'+wL, \beta)\). For the Monte Carlo simulation of a cycle of length \(k\) with coordinates \(x_{m}\), ..., \(x_{m+k-1}\), we can therefore sample \(w\) from the (unnormalized) probabilities \(\rho^{\text{free}}(x_m, x_m+wL, k\beta)\) and construct a Brownian path with time increment \(\Delta_{\tau} = \beta\). This is a Brownian bridge starting from \(x_m\) at time \(0\) and arrives at \(x_m + wL\) at time \(k\beta\).
+    <br>
+    <br>
+    In a 3-dimensional box, \(x = (\eta,\zeta,\xi)\), the density matrix is
+    \[
+    \begin{aligned}
+    \rho^{\text{per, }L}(x,x',\beta) & = \rho^{\text{per, }L}(\eta,\eta',\beta)\cdot \rho^{\text{per, }L}(\zeta,\zeta',\beta) \cdot \rho^{\text{per, }L}(\xi,\xi',\beta)
+    <!-- & = \bigg(\sum_{w_x=-\infty}^{\infty}\rho^{\text{free}}(x, x'+w_xL, \beta)\bigg)\bigg(\sum_{w_y=-\infty}^{\infty}\rho^{\text{free}}(y, y'+w_yL, \beta)\bigg)\bigg(\sum_{w_z=-\infty}^{\infty}\rho^{\text{free}}(z, z'+w_zL, \beta)\bigg) -->
+    \end{aligned}
+    \]
+    and each spatial component has its own winding number that is independent from the others.
+    <br>
+    <br>
+    Now we have everything we need to build the simulation. You can find the pseudocode at the bottom of this page.
     <br>
     <br>
     <br>
