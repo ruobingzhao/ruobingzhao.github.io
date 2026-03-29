@@ -367,9 +367,9 @@ html { background: white; margin:0;}
     There are two things we still need to implement the algorithm. First, we need the partition function of the single free particle in a periodic box, to compute \(z_k\) in Step 1. Second, we need to derive its density matrix,  so we can use the probability distribution to sample the cycles (paths of the Wiener process) in Step 3.
     <br>
     <br>
-    To find the partition function, we start from the Schrödinger equation. The free particle wave function \(\psi(x)\) solves the time-independent Schrödinger equation \(\hat{H}\psi = E\psi\), where \(\hat{H} = -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2}\), with a periodic boundary condition. \(L\) is the length of the box.
+    To find the partition function, we start from the Schrödinger equation of a single free particle in a 1-dimensional box. The free particle wave function \(\psi(x)\) solves the time-independent Schrödinger equation \(\hat{H}\psi = E\psi\), where \(\hat{H} = -\frac{\hbar^2}{2m}\frac{d^2}{d x^2}\), with a periodic boundary condition. \(L\) is the length of the box.
     \[
-    -\frac{\hbar^2}{2m}\frac{\partial^2}{\partial x^2} \psi = E\psi
+    -\frac{\hbar^2}{2m}\frac{d^2}{d x^2} \psi = E\psi
     \]
     \[
     \text{(B.C.) }\;\; \psi(x+L) = \psi(x)
@@ -401,7 +401,7 @@ html { background: white; margin:0;}
     & = \frac{1}{L}\sum_{n = -\infty}^{\infty} \exp\bigg(\frac{\mathrm{i}2n\pi (x-x')}{L}\bigg)\exp\bigg(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\bigg)
     \end{aligned}
     \]
-    Let \(f(n) \equiv \exp\big(\frac{\mathrm{i}2n\pi (x-x')}{L}\big)\exp\big(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\big)\). Then \(f(n)\in C^{\infty}(\mathbb{R})\), and \(n^{\alpha}\mathrm{d}^{\beta}f(n)\) is bounded for every pair of \(\alpha,\beta\in \mathbb{Z}\), that is, \(f(n)\) is a complex-valued smooth function whose derivatives are rapidly decreasing. Hence, \(f(n)\) is a Schwartz function, and we can apply the Poisson summation formula:
+    Let \(f(n) \equiv \exp\big(\frac{\mathrm{i}2n\pi (x-x')}{L}\big)\exp\big(- \frac{2\pi^2 \hbar^2 n^2 \beta}{mL^2}\big)\). Then \(f(n)\in C^{\infty}(\mathbb{R})\), and \(n^{\alpha}\mathrm{d}^{l}f(n)\) is bounded for every pair of \(\alpha,l\in \mathbb{Z}\), that is, \(f(n)\) is a complex-valued smooth function whose derivatives are rapidly decreasing. Hence, \(f(n)\) is a Schwartz function, and we can apply the Poisson summation formula:
     \[
     \sum_{n=-\infty}^{\infty} f(n) = \sum_{w=-\infty}^{\infty} \hat{f}(w)
     \]
