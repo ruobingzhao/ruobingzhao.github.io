@@ -222,7 +222,7 @@ html { background: white; margin:0;}
     \]
     For each eigenstate \(\{\sigma\}\), we derive the wave function \( \psi_{\{\sigma\}}^{\text{bosons}}(x_1,...,x_N)\) for \(N\) bosons, starting with the sum of the \(N\)-distinguishable-particle wavefunctions across all permutations of the spatial coordinates of the particles:
     \[
-    \Phi_{\{\sigma\}}(x_1,...,x_N) = \sum_{P}\psi_{\{\sigma\}}^{\text{dis}}(x_{P_1},...,x_{P_N}) = \sum_{P}\prod_{k}\psi_{\sigma_k}(x_{P_k})
+    \Phi_{\{\sigma\}}(x_1,...,x_N) \equiv \sum_{P}\psi_{\{\sigma\}}^{\text{dis}}(x_{P_1},...,x_{P_N}) = \sum_{P}\prod_{k}\psi_{\sigma_k}(x_{P_k})
     \]
     Note that \(\Phi\) is permutation invariant. To make the eigenfunctions orthonormal, \(\Phi\) needs to be scaled by a constant factor. Let \(C\) be the factor. We have (notation: \(\int dx\) integrating over the entire measure space of the variable \(x = (x_1, ..., x_N)\))
     \[
