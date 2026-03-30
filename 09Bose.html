@@ -187,7 +187,7 @@ html { background: white; margin:0;}
       9. Simulating Ideal Bose Gas and Bose-Einstein Condensate
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    In this tutorial, I will explain the exact steps of building a working simulation of ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state. This is a self contained tutorial given basic math and physics knowledge. <!--Part of this tutorial is based on Chapter 4 of <a href="#reference">[1]</a>. (Incidentally, there are a few typographical errors and parts that are unclear/imprecise in that book, which I hope to clear up with this tutorial.) -->Click <a href="#sim">here</a> to jump to the simulation.
+    In this tutorial, I will explain the exact steps of building a working simulation of ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state. <!--Part of this tutorial is based on Chapter 4 of <a href="#reference">[1]</a>. (Incidentally, there are a few typographical errors and parts that are unclear/imprecise in that book, which I hope to clear up with this tutorial.) -->Click <a href="#sim">here</a> to jump to the simulation.
     <br>
     <br>
     <h4>Bosons and Indistinguishable Particles Density Matrix</h4>
@@ -486,14 +486,32 @@ html { background: white; margin:0;}
 double beta // inverse temperature (time horizon)
 double L // length of box
 int N // number of bosons
-double bosonsX[N] = zeros // array that stores the x coordinates of bosons
-double bosonsY[N] = zeros // array that stores the y coordinates of bosons
-double bosonsZ[N] = zeros // not needed because only plotting the projection on xy-plane
-double zk[N] = 0// cycle weight of length k (from 1 to N) / single particle partition function
-double Z_bosons[N] = 0// Bosons partition function (from 0 bosons to N-1 bosons)
+double bosonsX[N] // array of size N that stores the x coordinates of bosons
+double bosonsY[N] // array of size N that stores the y coordinates of bosons
+double bosonsZ[N] // not needed for xy-plane projection
+
+// cycle weight of length k (from 1 to N) / single particle partition function
+// array of size N all initialized to zero
+double zk[N] = 0
+
+// Bosons partition function (from 0 bosons to N bosons)
+// array of size N+1
+double Z_bosons[N+1] = 0
+Z_bosons[0] = 1 // initialize Z_0 = 1
+
+// stores the number of permutatine cycles of length from 1 to N
+// array of size N, all initialized to zero
+int cycle_count[N] = 0
+
 // for simplicity, set hbar = m = 1
 double hbar = 1
 double m = 1
+
+// for visualization with heatmap
+int grid_size = 50;
+double cellSizeX = L / grid_size;
+double cellSizeY = L / grid_size;
+double heatmap[grid_size][grid_size]
 
 max_iter = 100000
 
@@ -501,8 +519,9 @@ max_iter = 100000
 // May use built in functions from libraries
 
 // sample from a list where the items occur with probabilities p1, p2, ...
+// array of probabilities as input
 // rejection free tower sampling
-function tower(){
+function tower(prob){
 
 }
 
@@ -520,19 +539,227 @@ function rand(min, max) // sample a random number between min and max
 ///////////// COMPUTATIONS /////////////
 function main(){
 
+  // compute single particle partition function
+  compute_zk();
+  // compute partition function for N particles
+  compute_Z(zk);
+
+  // Monte Carlo loop
+  // Sample N particle positions, repeat max_iter times
+  for iter from 0 to max_iter, iter++ {
+
+    // reset cycle counts
+    cycle_count = all zeros;
+
+    // sample permutation cycles
+    sample_cycles();
+
+    // particle index count
+    int index = 0;
+
+    // compute coordinates of particles in each cycle, length from 1 to N
+    for i from 0 to N-1 {
+      // skip if the number of cycles of length i+1 is zero
+      if (cycle_count[i] == 0){
+        continue;
+      } else {
+        // sample coordinates of each cycle of length i+1
+        // cycle_count[0] is the number of cycles of length 1, and so on
+        for j from 1 to cycle_count[i] {
+
+          // x direction
+          // random starting coordinate of first particle
+          int x_start = rand(0, L);
+          // sample a winding number
+          // only consider winding number between -10 to 10
+          // larger winding numbers probability becomes too low
+          int wx = sample_w(x_start, x_start, (i+1)*beta);
+          // sample a path of length i+1
+          // "1" - x direction
+          brownian_bridge(x_start, x_start + wx*L, (i+1)*beta, beta, 1, index);
+
+          // y direction
+          // random starting coordinate of first particle
+          int y_start = rand(0, L);
+          // sample a winding number
+          int wy = sample_w(y_start, y_start, (i+1)*beta);
+          // sample a path of length i+1
+          // "2" - y direction
+          brownian_bridge(y_start, y_start + wy*L, (i+1)*beta, beta, 2, index);
+
+          // z direction, not needed for bird view projection
+
+          // increment index
+          index += i+1
+        }
+      }
+    }
+
+    // register x and y coordinates of N particles to heatmap
+    for idx from 0 to N-1 {
+      // go throught the coordinates of particles and add to heatmap cell
+      int cellIndex_x = floor(bosonsX[idx]/cellSizeX);
+      int cellIndex_y = floor(bosonsY[idx]/cellSizeY);
+      if (cellIndex_x == grid_size){
+        cellIndex_x--;
+      }
+      if (cellIndex_y == grid_size){
+        cellIndex_y--;
+      }
+      heatmap[cellIndex_x][cellIndex_y] += 1;
+    }
+
+    // clear current particle coordinates for next iteration
+    bosonsX = all zeros
+    bosonsY = all zeros
+  }
+
 }
 
 function compute_zk() {
+  // for cycle length from 1 to N
+  for k from 1 to N {
+    double sum = 0;
 
+    // for states s = 0, 1, 2, ..., max = 20
+    // e^(k beta E_s) is an even function
+    // only calculate for positive s
+    for s from 0 to 20 {
+      // energy level
+      E_s = 2*pi^2*hbar^2*s^2/(m*L^2);
+      // compute e^(k beta E_s)
+      z = exp(-k*beta*E_s);
+      // truncate s if z is very small
+      if (z < 0.0000000000000002){
+        break;
+      } else {
+        // times 2 for the negative side (even function)
+        if (s > 0){
+          z *= 2;
+        }
+        // add to sum
+        sum += z;
+      }
+    }
+    // cube sum for 3-dimensional box
+    sum = sum^3;
+    // store value of zk
+    zk[k-1] = sum;
+  }
 }
 
 function compute_Z(zk) {
-
+  // Recursively calculate Z_N
+  // Z_0 = 1
+  for m from 1 to N {
+    // Use recursive formula to compute Z
+    for k from 1 to m {
+      Z_bosons[m] += zk[k-1]*Z_bosons[m-k];
+    }
+    Z_bosons[m] *= 1/m;
+  }
 }
 
-function brownian_bridge() {
+function sample_cycles(){
 
+  // declare a variable to keep track of the number of particles left
+  int M = N
+
+  // Recursively sample cycle lengths using these probabilities
+  while (M > 0) {
+    // declare a variable to store probabilities of cycle length
+    double current_prob[M]
+    // compute the probabilities
+    for k from 1 to M {
+      current_prob[k-1] = zk[k-1]*Z_bosons[M-k];
+    }
+
+    // sample length of last element cycle
+    int l = tower(current_prob) + 1;
+    // number of remaining particles
+    M = M-l;
+    // increment count for cycles of length l
+    cycle_count[l-1] += 1;
+  }
 }
+
+function brownian_bridge(x_start, x_end, T, dt, dir, index) {
+  // number of nodes in the path
+  int length = floor(T/dt);
+
+  // coordinates of first node
+  // "1" - x direction
+  // "2" - y direction
+  // "3" - z direction (not needed for xy-plane projection)
+  if (dir == 1){
+    // make the result stay in the visualization window,
+    // add L to prevent negative value
+    bosonsX[index] = x_start;
+  } else if (dir == 2){
+    bosonsY[index] = x_start;
+  } else {
+    bosonsZ[index] = x_start;
+  }
+
+  // generate new nodes between index and index+length
+  for i from 1 to length-1 {
+    // compute mean and variance of the inbetween nodes of the brownian bridge
+    // one step at a time
+    mean = x_start + (1/(length-i+1))*(x_end - x_start);
+    variance = (hbar^2/m)*(length-i)*dt/(length-i+1);
+
+    // take a sample from normal distribution
+    new_x = norm_rand(mean, variance);
+
+    // update x_start
+    x_start = new_x
+
+    // modify value of bosonsX, bosonsY, bosonsZ
+    if (dir == 1){
+      // make the result stay in the visualization window,
+      // add L to prevent negative value
+      bosonsX[index+i] = new_x - L*floor(new_x/L);
+    } else if (dir == 2){
+      bosonsY[index+i] = new_x - L*floor(new_x/L);
+    } else {
+      bosonsZ[index+i] = new_x - L*floor(new_x/L);
+    }
+  }
+  // manually set the value of the last node
+  if (dir == 1){
+    bosonsX[index+length-1] = x_end - L*floor(x_end/L);
+  } else if (dir == 2){
+    bosonsY[index+length-1] = x_end - L*floor(x_end/L);
+  } else {
+    bosonsZ[index+length-1] = x_end - L*floor(x_end/L);
+  }
+}
+
+sample_w(x_start, x_end, inv_T){
+  int result
+
+  // compute constant factors
+  // probability proportional to exp(-b*(x_start-(x_end+w*L))^2)
+  double b = m/(2*hbar^2*inv_T);
+
+  // compute probabilities for winding number between -10 to 10
+  // larger winding numbers probability becomes too low
+  // declare variable to store probabilities
+  double pr[21];
+  // compute probabilities
+  for w from -10 to 10{
+    pr[w+10] = exp(-b*(x_start-(x_end+w*L))^2);
+  }
+
+  // tower sampling
+  result = tower(pr);
+
+  // convert result to actual winding number
+  result -= 10;
+
+  return result;
+}
+
     </pre>
   </div>
     <div>
