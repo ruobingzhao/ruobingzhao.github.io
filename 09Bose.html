@@ -187,7 +187,7 @@ html { background: white; margin:0;}
       9. Simulating Ideal Bose Gas and Bose-Einstein Condensate
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    In this tutorial we simulate ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state. This is a self contained tutorial given basic math and physics knowledge. I will explain in detail the exact steps of building a working simulation. It is recommended that you read the tutorial on <a href = "07DoubleWell.html">the single particle path integrals</a> first. <!--Part of this tutorial is based on Chapter 4 of <a href="#reference">[1]</a>. (Incidentally, there are a few typographical errors and parts that are unclear/imprecise in that book, which I hope to clear up with this tutorial.) -->Click <a href="#sim">here</a> to jump to the simulation.
+    In this tutorial, I will explain the exact steps of building a working simulation of ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state. This is a self contained tutorial given basic math and physics knowledge. <!--Part of this tutorial is based on Chapter 4 of <a href="#reference">[1]</a>. (Incidentally, there are a few typographical errors and parts that are unclear/imprecise in that book, which I hope to clear up with this tutorial.) -->Click <a href="#sim">here</a> to jump to the simulation.
     <br>
     <br>
     <h4>Bosons and Indistinguishable Particles Density Matrix</h4>
@@ -320,7 +320,7 @@ html { background: white; margin:0;}
     \[
     dX_t = \sqrt{\frac{\hbar^2}{m}} dW_t
     \]
-    This means that we can sample the spatial coordinates \(x_{m}\), ..., \(x_{m+k-1}\) from a path of the Wiener process that starts at \(x_{m}\) at time \(0\) and arrives at \(x_{m}\) again at time \(k \beta\), and the inbetween nodes with time increment \(\beta\) are the coordinates \(x_{m+1}\), ..., \(x_{m+k-1}\).
+    This means that we can sample the spatial coordinates \(x_{m}\), ..., \(x_{m+k-1}\) from a path of the Wiener process that starts at \(x_{m}\) at time \(0\) and arrives at \(x_{m}\) again at time \(k \beta\), and the inbetween nodes with time increment \(\beta\) are the coordinates \(x_{m+1}\), ..., \(x_{m+k-1}\), each node anchored to the previous one. For the derivation of the Brownian bridge distribution, check out  <a href = "07DoubleWell.html">this page</a>.
     <br>
     <br>
     (The density matrix becomes slightly different when we enforce a periodic boundary condition on the free particle, but it still describes a Wiener process, which will be discussed later.)
