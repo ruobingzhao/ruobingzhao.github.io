@@ -571,8 +571,6 @@ function main(){
           // random starting coordinate of first particle
           int x_start = rand(0, L);
           // sample a winding number
-          // only consider winding number between -10 to 10
-          // larger winding numbers probability becomes too low
           int wx = sample_w(x_start, x_start, (i+1)*beta);
           // sample a path of length i+1
           // "1" - x direction
@@ -621,25 +619,27 @@ function compute_zk() {
   for k from 1 to N {
     double sum = 0;
 
-    // for states s = 0, 1, 2, ..., max = 20
     // e^(k beta E_s) is an even function
     // only calculate for positive s
-    for s from 0 to 20 {
+    int s = 0;
+    while (true) {
       // energy level
       E_s = 2*pi^2*hbar^2*s^2/(m*L^2);
       // compute e^(k beta E_s)
       z = exp(-k*beta*E_s);
-      // truncate s if z is very small
+
+      // stop loop if z is very small
       if (z < 0.0000000000000002){
         break;
-      } else {
-        // times 2 for the negative side (even function)
-        if (s > 0){
-          z *= 2;
-        }
-        // add to sum
-        sum += z;
       }
+
+      // times 2 for the negative side (even function)
+      if (s > 0){
+        z *= 2;
+      }
+      // add to sum and increment s
+      sum += z;
+      s++;
     }
     // cube sum for 3-dimensional box
     sum = sum^3;
@@ -701,7 +701,7 @@ function brownian_bridge(x_start, x_end, T, dt, dir, index) {
     bosonsZ[index] = x_start;
   }
 
-  // generate new nodes between index and index+length
+  // generate new nodes between (not inclusive) start and end
   for i from 1 to length-1 {
     // compute mean and variance of the inbetween nodes of the brownian bridge
     // one step at a time
@@ -725,14 +725,6 @@ function brownian_bridge(x_start, x_end, T, dt, dir, index) {
       bosonsZ[index+i] = new_x - L*floor(new_x/L);
     }
   }
-  // manually set the value of the last node
-  if (dir == 1){
-    bosonsX[index+length-1] = x_end - L*floor(x_end/L);
-  } else if (dir == 2){
-    bosonsY[index+length-1] = x_end - L*floor(x_end/L);
-  } else {
-    bosonsZ[index+length-1] = x_end - L*floor(x_end/L);
-  }
 }
 
 sample_w(x_start, x_end, inv_T){
@@ -742,20 +734,38 @@ sample_w(x_start, x_end, inv_T){
   // probability proportional to exp(-b*(x_start-(x_end+w*L))^2)
   double b = m/(2*hbar^2*inv_T);
 
-  // compute probabilities for winding number between -10 to 10
-  // larger winding numbers probability becomes too low
-  // declare variable to store probabilities
-  double pr[21];
+  // find the max winding number until floating point error
+  // generic x_start and x_end
+  int w_0 = round((x_start - x_end)/L);
+  int offset = 0;
+  while (true) {
+    double p_plus = exp(-b*(x_start-(x_end+(w_0 + offset)*L))^2);
+    double p_minus = exp(-b*(x_start-(x_end+(w_0 - offset)*L))^2);
+
+    // stop loop when both are small
+    if (p_plus < 0.0000000000000002 && p_minus < 0.0000000000000002){
+      break;
+    }
+    //increment offset
+    offset++;
+  }
+
+  // w range: [w_0 - offset, w_0 + offset]
+  // declare a variable to store these probabilities
+  // array size 2*offset + 1
+  double pr[2*offset + 1];
+
   // compute probabilities
-  for w from -10 to 10{
-    pr[w+10] = exp(-b*(x_start-(x_end+w*L))^2);
+  for i from 0 to 2*offset {
+    int w = w_0 - offset + i;
+    pr[i] = exp(-b*(x_start-(x_end+w*L))^2);
   }
 
   // tower sampling
   result = tower(pr);
 
   // convert result to actual winding number
-  result -= 10;
+  result += w_0 - offset;
 
   return result;
 }
