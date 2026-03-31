@@ -212,7 +212,7 @@ function sample(prob){
     }
   }
 
-return prob_index;
+return min_index;
 
 }
 
@@ -855,7 +855,7 @@ function sample(prob){
     }
   }
 
-return prob_index;
+return min_index;
 
 }
 
@@ -932,7 +932,7 @@ function main(){
 
   // Compute the average number of cycles of different lengths
   // over max_iter runs
-  for iter from 0 to max_iter {
+  for iter from 1 to max_iter {
     cycle_count = all zeros;
     sample_cycles();
     for i from 0 to N-1 {
