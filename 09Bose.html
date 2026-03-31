@@ -519,9 +519,49 @@ max_iter = 100000
 // May use built in functions from libraries
 
 // sample from a list where the items occur with probabilities p1, p2, ...
-// array of probabilities as input
-// rejection free tower sampling
-function tower(prob){
+// array of (unnormalized) probabilities as input
+// returns index of the sampled item
+function sample(prob){
+  // normalize probabilities
+  double sum = 0;
+  for i from 0 to prob.length - 1 {
+    sum += prob[i];
+  }
+
+  double normalized_prob[prob.length] = all zeros;
+  for i from 0 to prob.length - 1 {
+    normalized_prob[i] = prob[i]/sum;
+  }
+
+  // build tower of cumulative probabilities
+  double tower_prob[prob.length] = all zeros;
+  tower_prob[0] = normalized_prob[0];
+  for i from 1 to prob.length - 2 {
+    tower_prob[i] += normalized_prob[i-1];
+  }
+  tower_prob[prob.length - 1] = 1;
+
+  // generate random number from 0 to 1
+  r = rand(0,1);
+
+  // find out which bracket r belongs in
+  int prob_index = 0;
+  int min_index = 0;
+  int max_index = prob.length;
+  while(true) {
+    // bisection for efficiency
+    prob_index = round((min_index + max_index)/2);
+
+    if (tower_prob[prob_index] < r) {
+      min_index = prob_index;
+    } else if (tower_prob[prob_index] > r) {
+      max_index = prob_index;
+    } else {
+      break;
+    }
+  }
+
+return prob_index;
 
 }
 
@@ -534,7 +574,13 @@ function norm_rand(mu, sigmasq) {
   return z0*sqrt(sigmasq) + mu
 }
 
-function rand(min, max) // sample a random number between min and max
+// sample a random number (double) between min and max
+function rand(min, max){
+  double r = rand(0,1);
+
+  return r*(max-min) + min;
+}
+
 
 ///////////// COMPUTATIONS /////////////
 function main(){
@@ -569,7 +615,7 @@ function main(){
 
           // x direction
           // random starting coordinate of first particle
-          int x_start = rand(0, L);
+          double x_start = rand(0, L);
           // sample a winding number
           int wx = sample_w(x_start, x_start, (i+1)*beta);
           // sample a path of length i+1
@@ -578,7 +624,7 @@ function main(){
 
           // y direction
           // random starting coordinate of first particle
-          int y_start = rand(0, L);
+          double y_start = rand(0, L);
           // sample a winding number
           int wy = sample_w(y_start, y_start, (i+1)*beta);
           // sample a path of length i+1
@@ -610,6 +656,19 @@ function main(){
     // clear current particle coordinates for next iteration
     bosonsX = all zeros
     bosonsY = all zeros
+  }
+
+  // normalize heatmap
+  double heatmap_sum = 0;
+  for i from 0 to grid_size - 1 {
+    for j from 0 to grid_size - 1 {
+      heatmap_sum += heatmap[i][j];
+    }
+  }
+  for i from 0 to grid_size - 1 {
+    for j from 0 to grid_size - 1 {
+      heatmap[i][j] = heatmap[i][j]/heatmap_sum;
+    }
   }
 
 }
@@ -675,7 +734,7 @@ function sample_cycles(){
     }
 
     // sample length of last element cycle
-    int l = tower(current_prob) + 1;
+    int l = sample(current_prob) + 1;
     // number of remaining particles
     M = M-l;
     // increment count for cycles of length l
@@ -761,8 +820,8 @@ sample_w(x_start, x_end, inv_T){
     pr[i] = exp(-b*(x_start-(x_end+w*L))^2);
   }
 
-  // tower sampling
-  result = tower(pr);
+  // sample from probabilities
+  result = sample(pr);
 
   // convert result to actual winding number
   result += w_0 - offset;
