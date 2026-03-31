@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="description" content="In this tutorial, I will explain the exact steps of building a working simulation of ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state." />
+<meta name="description" content="In this tutorial, I will explain the exact steps of building a working simulation of ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered past the critical temperature, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state." />
 <meta name="keywords" content="Ideal Bose Gas, Bose-Einstein Condensate, Markov Chain Monte Carlo, Path Integrals, Numerical Method" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="utf-8">
@@ -139,17 +139,314 @@ html { background: white; margin:0;}
 <script>
 
 ///////////// GLOBAL VARIABLES /////////////
+let beta = 0.01; // inverse temperature (time horizon) DEFAULT VALUE
 
+let L = 10// length of box
+const N = 500// number of bosons
+let bosonsX = new Float64Array(N) // array of size N that stores the x coordinates of bosons
+let bosonsY = new Float64Array(N) // array of size N that stores the y coordinates of bosons
+let bosonsZ = new Float64Array(N) // not needed for xy-plane projection
+
+// cycle weight of length k (from 1 to N) / single particle partition function
+// array of size N all initialized to zero
+let zk = new Float64Array(N)
+zk.fill(0);
+
+// Bosons partition function (from 0 bosons to N bosons)
+// array of size N+1
+let Z_bosons = new Float64Array(N+1);
+Z_bosons[0] = 1 // initialize Z_0 = 1
+
+// stores the number of permutatine cycles of length from 1 to N
+// array of size N, all initialized to zero
+let cycle_count = new Int32Array(N);
+cycle_count.fill(0);
+
+// for simplicity, set hbar = m = 1
+const hbar = 1
+const m = 1
 
 ///////////// HELPER FUNCTIONS /////////////
+// May use built in functions from libraries
 
+// sample from a list where the items occur with probabilities p1, p2, ...
+// array of (unnormalized) probabilities as input
+// returns index of the sampled item
+function sample(prob){
+  // normalize probabilities
+  let sum = 0;
+  for (let i = 0; i < prob.length; i++) {
+    sum += prob[i];
+  }
 
-/////////////// TO REDUCE REDUNDANT EVALUATIONS
+  let normalized_prob = new Float64Array(prob.length);
+  normalized_prob.fill(0);
+  for (let i = 0; i < prob.length; i++) {
+    normalized_prob[i] = prob[i]/sum;
+  }
 
+  // build tower of cumulative probabilities
+  let tower_prob = new Float64Array(prob.length);
+  tower_prob.fill(0);
+  tower_prob[0] = normalized_prob[0];
+  for (let i = 1; i < prob.length - 1; i++) {
+    tower_prob[i] = tower_prob[i-1] + normalized_prob[i-1];
+  }
+  tower_prob[prob.length - 1] = 1;
+
+  // generate random number from 0 to 1
+  let r = Math.random();
+
+  // find out which bracket r belongs in
+  let prob_index = 0;
+  let min_index = 0;
+  let max_index = prob.length - 1;
+  while(min_index < max_index) {
+    // bisection for efficiency
+    prob_index = Math.floor((min_index + max_index)/2);
+
+    if (tower_prob[prob_index] < r) {
+      min_index = prob_index + 1;
+    } else {
+      max_index = prob_index;
+    }
+  }
+
+return prob_index;
+
+}
+
+// sample from normal distribution
+// Box Muller transform
+function norm_rand(mu, sigmasq) {
+  let u1 = 1.0-Math.random();
+  let u2 = 1.0-Math.random();// prevents log(0)
+  let z0 = Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+  return z0*Math.sqrt(sigmasq) + mu;
+}
+
+// sample a random number (double) between min and max
+function rand(min, max){
+  let r = Math.random();
+  return r*(max-min) + min;
+}
 
 ///////////// COMPUTATIONS /////////////
+function compute_zk() {
+  // for cycle length from 1 to N
+  for (let k = 1; k < N+1; k++){
+    let sum = 0;
+
+    // e^(k beta E_s) is an even function
+    // only calculate for positive s
+    let s = 0;
+    while (true) {
+      // energy level
+      let E_s = 2*(Math.PI**2)*(hbar**2)*(s**2)/(m*(L**2));
+      // compute e^(k beta E_s)
+      let z = Math.exp(-k*beta*E_s);
+
+      // stop loop if z is very small
+      if (z < 0.0000000000000002){
+        break;
+      }
+
+      // times 2 for the negative side (even function)
+      if (s > 0){
+        z *= 2;
+      }
+      // add to sum and increment s
+      sum += z;
+      s++;
+    }
+    // cube sum for 3-dimensional box
+    sum = Math.pow(sum,3);
+    // store value of zk
+    zk[k-1] = sum;
+  }
+}
+
+function compute_Z(zk) {
+  // Recursively calculate Z_N
+  // Z_0 = 1
+  for (let m = 1; m < N+1; m++) {
+    // Use recursive formula to compute Z
+    for (let k = 1; k < m+1; k++) {
+      Z_bosons[m] += zk[k-1]*Z_bosons[m-k];
+    }
+    Z_bosons[m] *= 1/m;
+  }
+}
+
+function sample_cycles(){
+
+  // declare a variable to keep track of the number of particles left
+  let M = N
+
+  // Recursively sample cycle lengths using these probabilities
+  while (M > 0) {
+    // declare a variable to store probabilities of cycle length
+    let current_prob = new Float64Array(M);
+    // compute the probabilities
+    for (let k = 1; k <= M; k++) {
+      current_prob[k-1] = zk[k-1]*Z_bosons[M-k];
+    }
+
+    // sample length of last element cycle
+    let l = sample(current_prob) + 1;
+    // number of remaining particles
+    M = M-l;
+    // increment count for cycles of length l
+    cycle_count[l-1] += 1;
+  }
+}
+
+function brownian_bridge(x_start, x_end, T, dt, dir, index) {
+  // number of nodes in the path
+  let length = Math.floor(T/dt);
+
+  // coordinates of first node
+  // "1" - x direction
+  // "2" - y direction
+  // "3" - z direction (not needed for xy-plane projection)
+  if (dir == 1){
+    // make the result stay in the visualization window,
+    // add L to prevent negative value
+    bosonsX[index] = x_start;
+  } else if (dir == 2){
+    bosonsY[index] = x_start;
+  } else {
+    bosonsZ[index] = x_start;
+  }
+
+  // generate new nodes between (not inclusive) start and end
+  for (let i = 1; i <= length - 1; i++) {
+    // compute mean and variance of the inbetween nodes of the brownian bridge
+    // one step at a time
+    let mean = x_start + (1/(length-i+1))*(x_end - x_start);
+    let variance = ((hbar**2)/m)*(length-i)*dt/(length-i+1);
+
+    // take a sample from normal distribution
+    let new_x = norm_rand(mean, variance);
+
+    // update x_start
+    x_start = new_x;
+
+    // modify value of bosonsX, bosonsY, bosonsZ
+    if (dir == 1){
+      // make the result stay in the visualization window,
+      // add L to prevent negative value
+      bosonsX[index+i] = new_x - L*Math.floor(new_x/L);
+    } else if (dir == 2){
+      bosonsY[index+i] = new_x - L*Math.floor(new_x/L);
+    } else {
+      bosonsZ[index+i] = new_x - L*Math.floor(new_x/L);
+    }
+  }
+}
+
+function sample_w(x_start, x_end, inv_T){
+  let result;
+
+  // compute constant factors
+  // probability proportional to exp(-b*(x_start-(x_end+w*L))^2)
+  let b = m/(2*(hbar**2)*inv_T);
+
+  // find the max winding number until floating point error
+  // generic x_start and x_end
+  let w_0 = Math.round((x_start - x_end)/L);
+  let offset = 0;
+  let p_plus = 0;
+  let p_minus = 0;
+  while (true) {
+    p_plus = Math.exp(-b*((x_start-(x_end+(w_0 + offset)*L))**2));
+    p_minus = Math.exp(-b*((x_start-(x_end+(w_0 - offset)*L))**2));
+
+    // stop loop when both are small
+    if (p_plus < 0.0000000000000002 && p_minus < 0.0000000000000002){
+      break;
+    }
+    //increment offset
+    offset++;
+  }
+
+  // w range: [w_0 - offset, w_0 + offset]
+  // declare a variable to store these probabilities
+  // array size 2*offset + 1
+  let pr = new Float64Array(2*offset + 1);
+
+  // compute probabilities
+  for (let i = 0; i <= 2*offset; i++){
+    let w = w_0 - offset + i;
+    pr[i] = Math.exp(-b*((x_start-(x_end+w*L))**2));
+  }
+
+  // sample from probabilities
+  result = sample(pr);
+
+  // convert result to actual winding number
+  result += w_0 - offset;
+
+  return result;
+}
 
 /////////////// MAIN FUNCTION SEE VISUALIZATION SECTION /////////////////
+
+function main(){
+
+  // compute single particle partition function
+  compute_zk();
+  // compute partition function for N particles
+  compute_Z(zk);
+
+  // Sample N particle positions
+
+  // reset cycle counts
+  cycle_count.fill(0);
+
+  // sample permutation cycles
+  sample_cycles();
+
+  // particle index count
+  let index = 0;
+
+  // compute coordinates of particles in each cycle, length from 1 to N
+  for (let i = 0; i < N; i++) {
+    // skip if the number of cycles of length i+1 is zero
+    if (cycle_count[i] == 0){
+      continue;
+    } else {
+      // sample coordinates of each cycle of length i+1
+      // cycle_count[0] is the number of cycles of length 1, and so on
+      for (let j = 1; j < cycle_count[i] +1; j++){
+        // x direction
+        // random starting coordinate of first particle
+        let x_start = rand(0, L);
+        // sample a winding number
+        let wx = sample_w(x_start, x_start, (i+1)*beta);
+        // sample a path of length i+1
+        // "1" - x direction
+        brownian_bridge(x_start, x_start + wx*L, (i+1)*beta, beta, 1, index);
+
+        // y direction
+        // random starting coordinate of first particle
+        let y_start = rand(0, L);
+        // sample a winding number
+        let wy = sample_w(y_start, y_start, (i+1)*beta);
+        // sample a path of length i+1
+        // "2" - y direction
+        brownian_bridge(y_start, y_start + wy*L, (i+1)*beta, beta, 2, index);
+
+        // z direction, not needed for bird view projection
+
+        // increment index
+        index += i+1
+      }
+    }
+  }
+
+}
+
 
 
 </script>
@@ -187,7 +484,7 @@ html { background: white; margin:0;}
       9. Simulating Ideal Bose Gas and Bose-Einstein Condensate
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    In this tutorial, I will explain the exact steps of building a working simulation of ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state. <!--Part of this tutorial is based on Chapter 4 of <a href="#reference">[1]</a>. (Incidentally, there are a few typographical errors and parts that are unclear/imprecise in that book, which I hope to clear up with this tutorial.) -->Click <a href="#sim">here</a> to jump to the simulation.
+    In this tutorial, I will explain the exact steps of building a working simulation of ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered past the critical temperature, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state. <!--Part of this tutorial is based on Chapter 4 of <a href="#reference">[1]</a>. (Incidentally, there are a few typographical errors and parts that are unclear/imprecise in that book, which I hope to clear up with this tutorial.) -->Click <a href="#sim">here</a> if you would like to skip the tutorial and play with the simulation.
     <br>
     <br>
     <h4>Bosons and Indistinguishable Particles Density Matrix</h4>
@@ -475,7 +772,7 @@ html { background: white; margin:0;}
     <br>
     <span id = "sim"><br></span>
     <h4>Simulation</h4>
-    This applet simulates ideal Bose gas in a 3-dimensional periodic box of length \(L\). The simulation shows a 2d projection of the box. At low temperature, you can see the Bose-Einstein Condenstate forming.
+    This applet simulates ideal Bose gas in a 3-dimensional periodic box of length \(L\). The simulation shows a 2d projection of the box. As the temperature is lowered past the critical temperature close to absolute zero, a large fraction of bosons simultaneously occupy the ground state. These bosons merge into a single quantum entity. One can see the Bose-Einstein Condenstate forming (long permutation cycles start to appear).
     <br>
     <a href="#pseudocode" onclick="toggle_vis('pseudocode')">View/hide pseudocode</a>
     <br>
@@ -536,7 +833,7 @@ function sample(prob){
   double tower_prob[prob.length] = all zeros;
   tower_prob[0] = normalized_prob[0];
   for i from 1 to prob.length - 2 {
-    tower_prob[i] += normalized_prob[i-1];
+    tower_prob[i] = tower_prob[i-1] + normalized_prob[i-1];
   }
   tower_prob[prob.length - 1] = 1;
 
@@ -546,17 +843,15 @@ function sample(prob){
   // find out which bracket r belongs in
   int prob_index = 0;
   int min_index = 0;
-  int max_index = prob.length;
-  while(true) {
+  int max_index = prob.length - 1;
+  while(min_index < max_index) {
     // bisection for efficiency
-    prob_index = round((min_index + max_index)/2);
+    prob_index = floor((min_index + max_index)/2);
 
     if (tower_prob[prob_index] < r) {
-      min_index = prob_index;
-    } else if (tower_prob[prob_index] > r) {
-      max_index = prob_index;
+      min_index = prob_index + 1;
     } else {
-      break;
+      max_index = prob_index;
     }
   }
 
@@ -762,7 +1057,7 @@ function brownian_bridge(x_start, x_end, T, dt, dir, index) {
   }
 }
 
-sample_w(x_start, x_end, inv_T){
+function sample_w(x_start, x_end, inv_T){
   int result
 
   // compute constant factors
@@ -807,9 +1102,16 @@ sample_w(x_start, x_end, inv_T){
 
     </pre>
   </div>
-    <div>
-    <input type ="button" value = "Start Simulation" onClick = "start_simulation()">&emsp;
-    <input type ="button" value = "Reset" onClick = "reset_calc()">
+  <br>
+    <div class = "slider-row">
+    <label>Temperature slider: &emsp; </label>
+    <span>High temperature</span>
+    <div class="slidercontainer">
+      <!-- High temperature -->
+      <input type="range" id="betaSlider" name="betaSlider" min="0" max="1" step="0.01" value="0">
+      <!-- Low temperature -->
+    </div>
+    <span>Low temperature</span>
     </div>
 </div>
     <div class ="graph-container">
@@ -839,32 +1141,126 @@ sample_w(x_start, x_end, inv_T){
 const canvas = document.getElementById("box");
 
 // Set canvas dimensions
-if (canvas.width != 500) canvas.width = 500;
-if (canvas.height != 400) canvas.height = 400;
+if (canvas.width != 300) canvas.width = 300;
+if (canvas.height != 200) canvas.height = 200;
 
 // Get the canvas context
 const ctx = canvas.getContext('2d');
 const width = canvas.width;
 const height = canvas.height;
-const cellSizeX = width/grid_x;
-const cellSizeY = height/grid_y;
 
 ///////////// HELPERS
 
 
 //////////// Display
 window.onload = function() {
+  // temperature slider
+  const beta_slider = document.getElementById("betaSlider");
+  beta_slider.addEventListener("input", function(){
+    const beta_min = 0.01;
+    const beta_max = 50;
+
+    // parse beta value from slider (log scale)
+    let raw_val = parseFloat(this.value);
+    beta = beta_min*Math.pow(beta_max/beta_min, raw_val);
+
+    // reset Z_bosons array
+    Z_bosons.fill(0);
+    Z_bosons[0] = 1;
+
+    // run main function
+    main();
+    draw_sim();
+  });
+
+  // initial run with default value
+  main();
+  draw_sim();
+}
+
+function draw_sim(){
+  // clear canvas
+  ctx.clearRect(0,0,width,height);
+
+  // track array index
+  let index = 0;
+
+  // for each cycle draw the path of the cycle
+  for (let i = 0; i <= N-1; i++){
+    if (cycle_count[i] == 0){
+      continue;
+    } else {
+      for (let j = 1; j <= cycle_count[i]; j++){
+        // get cycle length
+        let cycle_length = i + 1;
+
+        // draw bird view bosonsX bosonsY
+        draw_path(index, cycle_length);
+
+        // increment index
+        index += cycle_length;
+      }
+    }
+  }
+}
+
+function draw_path(start_index, length){
+  ctx.beginPath();
+
+  // draw particles in the cycle one by one
+  for (let i = 0; i < length; i++){
+    let curr_idx = start_index + i;
+
+    // find the right pixels coordinates
+    let px = (bosonsX[curr_idx]/L)*width;
+    let py = (bosonsY[curr_idx]/L)*height;
+
+    if (i == 0){
+      // first node in the cycle
+      ctx.moveTo(px,py);
+    } else {
+      let prev_idx = start_index + i - 1;
+
+      // check if wrapped around boundary
+      let dx = Math.abs(bosonsX[curr_idx] - bosonsX[prev_idx]);
+      let dy = Math.abs(bosonsY[curr_idx] - bosonsY[prev_idx]);
+
+      if (dx > L/2 || dy > L/2){
+        // if wrapped around, don't connect line, move cursor
+        ctx.moveTo(px,py);
+      } else {
+        // if not wrapped around, draw line
+        ctx.lineTo(px,py);
+      }
+    }
+  }
+
+  ctx.strokeStyle = "rgba(0,150,255,0.6)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // draw circles for particles
+  for (let i = 0; i < length; i++){
+    let curr_idx = start_index + i;
+    // find the right pixels coordinates
+    let px = (bosonsX[curr_idx]/L)*width;
+    let py = (bosonsY[curr_idx]/L)*height;
+
+    ctx.beginPath();
+    ctx.arc(px,py, 3, 0, 2*Math.PI);
+    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+    ctx.fill();
+  }
 
 }
 
-
-function start_simulation(){
-
-}
-
-function reset_calc(){
-
-}
+// function start_simulation(){
+//
+// }
+//
+// function reset_calc(){
+//
+// }
 
 function toggle_vis(id) {
        var cont = document.getElementById(id);
