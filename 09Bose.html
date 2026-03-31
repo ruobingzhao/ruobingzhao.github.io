@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="description" content="In this tutorial we simulate ideal Bose gas in a 3-dimensional periodic box of length \(L\)." />
+<meta name="description" content="In this tutorial, I will explain the exact steps of building a working simulation of ideal Bose gas in a 3-dimensional periodic box of length \(L\). As the temperature is lowered, one can see the Bose-Einstein Condensate forming, as a large fraction of bosons occupy the ground state." />
 <meta name="keywords" content="Ideal Bose Gas, Bose-Einstein Condensate, Markov Chain Monte Carlo, Path Integrals, Numerical Method" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="utf-8">
@@ -191,7 +191,7 @@ html { background: white; margin:0;}
     <br>
     <br>
     <h4>Bosons and Indistinguishable Particles Density Matrix</h4>
-    All elementary particles are either fermions (half integer spin) or bosons (integer spin). Fermions obey the Pauli exclusion principle, while bosons may occupy the same quantum state. In this simulation we consider ideal Bose gas, meaning that the particles do not interact with (attract or repel) each other.
+    All elementary particles are either fermions (half integer spin) or bosons (integer spin). They are both indistinguishable from one another, but fermions obey the Pauli exclusion principle, while bosons may occupy the same quantum state. In this simulation we consider ideal Bose gas, meaning that the particles do not interact with (attract or repel) each other.
     <br>
     <br>
     The first step of building the simulation is to derive an expression for the density matrix elements of an \(N\)-indistinguishable-particle system. To achieve that we start with the case of \(N\) distinguishable particles. Let \(\{x\} \equiv \{x_1, ...,x_N\}\) denote the particle positions, i.e. particle \(1\) at \(x_1\), ..., particle \(N\) at \(x_N\), and let \(\{\sigma\} \equiv \{\sigma_1, ..., \sigma_N\}\) represent the system's quantum state where particle \(1\) is in state \(\sigma_1\), ..., particle \(N\) in state \(\sigma_N\). The elements of the density matrix for \(N\)-distinguishable-particle system are given by
@@ -507,11 +507,10 @@ int cycle_count[N] = 0
 double hbar = 1
 double m = 1
 
-// for visualization with heatmap
-int grid_size = 50;
-double cellSizeX = L / grid_size;
-double cellSizeY = L / grid_size;
-double heatmap[grid_size][grid_size]
+// for data analysis
+// compute the average number of cycles of different length between iterations
+// array of size N
+double average_count[N]
 
 max_iter = 100000
 
@@ -590,87 +589,64 @@ function main(){
   // compute partition function for N particles
   compute_Z(zk);
 
-  // Monte Carlo loop
-  // Sample N particle positions, repeat max_iter times
-  for iter from 0 to max_iter, iter++ {
+  // Sample N particle positions
 
-    // reset cycle counts
+  // reset cycle counts
+  cycle_count = all zeros;
+
+  // sample permutation cycles
+  sample_cycles();
+
+  // particle index count
+  int index = 0;
+
+  // compute coordinates of particles in each cycle, length from 1 to N
+  for i from 0 to N-1 {
+    // skip if the number of cycles of length i+1 is zero
+    if (cycle_count[i] == 0){
+      continue;
+    } else {
+      // sample coordinates of each cycle of length i+1
+      // cycle_count[0] is the number of cycles of length 1, and so on
+      for j from 1 to cycle_count[i] {
+        // x direction
+        // random starting coordinate of first particle
+        double x_start = rand(0, L);
+        // sample a winding number
+        int wx = sample_w(x_start, x_start, (i+1)*beta);
+        // sample a path of length i+1
+        // "1" - x direction
+        brownian_bridge(x_start, x_start + wx*L, (i+1)*beta, beta, 1, index);
+
+        // y direction
+        // random starting coordinate of first particle
+        double y_start = rand(0, L);
+        // sample a winding number
+        int wy = sample_w(y_start, y_start, (i+1)*beta);
+        // sample a path of length i+1
+        // "2" - y direction
+        brownian_bridge(y_start, y_start + wy*L, (i+1)*beta, beta, 2, index);
+
+        // z direction, not needed for bird view projection
+
+        // increment index
+        index += i+1
+      }
+    }
+  }
+
+  // Compute the average number of cycles of different lengths
+  // over max_iter runs
+  for iter from 0 to max_iter {
     cycle_count = all zeros;
-
-    // sample permutation cycles
     sample_cycles();
-
-    // particle index count
-    int index = 0;
-
-    // compute coordinates of particles in each cycle, length from 1 to N
     for i from 0 to N-1 {
-      // skip if the number of cycles of length i+1 is zero
-      if (cycle_count[i] == 0){
-        continue;
-      } else {
-        // sample coordinates of each cycle of length i+1
-        // cycle_count[0] is the number of cycles of length 1, and so on
-        for j from 1 to cycle_count[i] {
-
-          // x direction
-          // random starting coordinate of first particle
-          double x_start = rand(0, L);
-          // sample a winding number
-          int wx = sample_w(x_start, x_start, (i+1)*beta);
-          // sample a path of length i+1
-          // "1" - x direction
-          brownian_bridge(x_start, x_start + wx*L, (i+1)*beta, beta, 1, index);
-
-          // y direction
-          // random starting coordinate of first particle
-          double y_start = rand(0, L);
-          // sample a winding number
-          int wy = sample_w(y_start, y_start, (i+1)*beta);
-          // sample a path of length i+1
-          // "2" - y direction
-          brownian_bridge(y_start, y_start + wy*L, (i+1)*beta, beta, 2, index);
-
-          // z direction, not needed for bird view projection
-
-          // increment index
-          index += i+1
-        }
-      }
-    }
-
-    // register x and y coordinates of N particles to heatmap
-    for idx from 0 to N-1 {
-      // go throught the coordinates of particles and add to heatmap cell
-      int cellIndex_x = floor(bosonsX[idx]/cellSizeX);
-      int cellIndex_y = floor(bosonsY[idx]/cellSizeY);
-      if (cellIndex_x == grid_size){
-        cellIndex_x--;
-      }
-      if (cellIndex_y == grid_size){
-        cellIndex_y--;
-      }
-      heatmap[cellIndex_x][cellIndex_y] += 1;
-    }
-
-    // clear current particle coordinates for next iteration
-    bosonsX = all zeros
-    bosonsY = all zeros
-  }
-
-  // normalize heatmap
-  double heatmap_sum = 0;
-  for i from 0 to grid_size - 1 {
-    for j from 0 to grid_size - 1 {
-      heatmap_sum += heatmap[i][j];
+      average_count[i] += cycle_count[i];
     }
   }
-  for i from 0 to grid_size - 1 {
-    for j from 0 to grid_size - 1 {
-      heatmap[i][j] = heatmap[i][j]/heatmap_sum;
-    }
+  for i from 0 to N-1 {
+    average_count[i] /= max_iter;
   }
-
 }
 
 function compute_zk() {
