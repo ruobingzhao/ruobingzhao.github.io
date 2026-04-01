@@ -807,13 +807,6 @@ int cycle_count[N] = 0
 double hbar = 1
 double m = 1
 
-// for data analysis
-// compute the average number of cycles of different length between iterations
-// array of size N
-double average_count[N]
-
-max_iter = 100000
-
 ///////////// HELPER FUNCTIONS /////////////
 // May use built in functions from libraries
 
@@ -887,7 +880,7 @@ function main(){
   // compute partition function for N particles
   compute_Z(zk);
 
-  // Sample N particle positions
+  // Sample N particle positions (ONE SAMPLE)
 
   // reset cycle counts
   cycle_count = all zeros;
@@ -933,18 +926,6 @@ function main(){
     }
   }
 
-  // Compute the average number of cycles of different lengths
-  // over max_iter runs
-  for iter from 1 to max_iter {
-    cycle_count = all zeros;
-    sample_cycles();
-    for i from 0 to N-1 {
-      average_count[i] += cycle_count[i];
-    }
-  }
-  for i from 0 to N-1 {
-    average_count[i] /= max_iter;
-  }
 }
 
 function compute_zk() {
