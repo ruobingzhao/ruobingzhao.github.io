@@ -1236,23 +1236,29 @@ function draw_path(start_index, length){
       // first node in the cycle
       ctx.moveTo(px_wrap, py_wrap);
     } else {
-      // calculate exact displacement of raw coordinates
-      let dx = x - x_prev;
-      let dy = y - y_prev;
+      // check for wrapping
+      if ((Math.floor(x/L) != Math.floor(x_prev/L))|| (Math.floor(y/L) != Math.floor(y_prev/L))){
+        // calculate exact displacement of raw coordinates
+        let dx = x - x_prev;
+        let dy = y - y_prev;
 
-      // convert to pixels
-      let dpx = (dx / L) * width;
-      let dpy = (dy / L) * height;
+        // convert to pixels
+        let dpx = (dx / L) * width;
+        let dpy = (dy / L) * height;
 
-      // for wrapping: canvas autoclips out of bounds portion
-      // draw outgoing direction
-      ctx.lineTo(px_wrap_prev + dpx, py_wrap_prev + dpy);
+        // for wrapping: canvas autoclips out of bounds portion
+        // draw outgoing direction
+        ctx.lineTo(px_wrap_prev + dpx, py_wrap_prev + dpy);
 
-      // move to incoming direction
-      ctx.moveTo(px_wrap - dpx, py_wrap - dpy);
+        // move to incoming direction
+        ctx.moveTo(px_wrap - dpx, py_wrap - dpy);
 
-      // draw incoming direction
-      ctx.lineTo(px_wrap, py_wrap);
+        // draw incoming direction
+        ctx.lineTo(px_wrap, py_wrap);
+      } else {
+        // no wrapping, draw line
+        ctx.lineTo(px_wrap, py_wrap);
+      }
     }
 
     // save coordinates for next node
