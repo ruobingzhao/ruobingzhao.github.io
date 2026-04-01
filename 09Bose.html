@@ -334,13 +334,16 @@ function brownian_bridge(x_start, x_end, T, dt, dir, index) {
 
     // modify value of bosonsX, bosonsY, bosonsZ
     if (dir == 1){
-      // make the result stay in the visualization window,
-      // add L to prevent negative value
-      bosonsX[index+i] = new_x - L*Math.floor(new_x/L);
+      bosonsX[index+i] = new_x;
+      // // make the result stay in the visualization window,
+      // // add L to prevent negative value
+      // bosonsX[index+i] = new_x - L*Math.floor(new_x/L);
     } else if (dir == 2){
-      bosonsY[index+i] = new_x - L*Math.floor(new_x/L);
+      bosonsY[index+i] = new_x;
+      // bosonsY[index+i] = new_x - L*Math.floor(new_x/L);
     } else {
-      bosonsZ[index+i] = new_x - L*Math.floor(new_x/L);
+      bosonsZ[index+i] = new_x;
+      // bosonsZ[index+i] = new_x - L*Math.floor(new_x/L);
     }
   }
 }
@@ -1045,14 +1048,15 @@ function brownian_bridge(x_start, x_end, T, dt, dir, index) {
     x_start = new_x
 
     // modify value of bosonsX, bosonsY, bosonsZ
+    // outputs raw coordinates
+    // (making particles appear in visualization window (0, L))
+    // (is handled separately by visualization code)
     if (dir == 1){
-      // make the result stay in the visualization window,
-      // add L to prevent negative value
-      bosonsX[index+i] = new_x - L*floor(new_x/L);
+      bosonsX[index+i] = new_x;
     } else if (dir == 2){
-      bosonsY[index+i] = new_x - L*floor(new_x/L);
+      bosonsY[index+i] = new_x;
     } else {
-      bosonsZ[index+i] = new_x - L*floor(new_x/L);
+      bosonsZ[index+i] = new_x;
     }
   }
 }
@@ -1207,32 +1211,55 @@ function draw_sim(){
 function draw_path(start_index, length){
   ctx.beginPath();
 
-  // draw particles in the cycle one by one
+  // keep track of last particle coordinates
+  // initialize to zeros
+  let px_wrap_prev = 0;
+  let py_wrap_prev = 0;
+  let x_prev = 0;
+  let y_prev = 0;
+
   for (let i = 0; i < length; i++){
     let curr_idx = start_index + i;
 
+    let x = bosonsX[curr_idx];
+    let y = bosonsY[curr_idx];
+
+    // find the wrapped coordinate in (0,L)
+    let x_wrap = x - L * Math.floor(x / L);
+    let y_wrap = y - L * Math.floor(y / L);
+
     // find the right pixels coordinates
-    let px = (bosonsX[curr_idx]/L)*width;
-    let py = (bosonsY[curr_idx]/L)*height;
+    let px_wrap = (x_wrap / L) * width;
+    let py_wrap = (y_wrap / L) * height;
 
     if (i == 0){
       // first node in the cycle
-      ctx.moveTo(px,py);
+      ctx.moveTo(px_wrap, py_wrap);
     } else {
-      let prev_idx = start_index + i - 1;
+      // calculate exact displacement of raw coordinates
+      let dx = x - x_prev;
+      let dy = y - y_prev;
 
-      // check if wrapped around boundary
-      let dx = Math.abs(bosonsX[curr_idx] - bosonsX[prev_idx]);
-      let dy = Math.abs(bosonsY[curr_idx] - bosonsY[prev_idx]);
+      // convert to pixels
+      let dpx = (dx / L) * width;
+      let dpy = (dy / L) * height;
 
-      if (dx > L/2 || dy > L/2){
-        // if wrapped around, don't connect line, move cursor
-        ctx.moveTo(px,py);
-      } else {
-        // if not wrapped around, draw line
-        ctx.lineTo(px,py);
-      }
+      // for wrapping: canvas autoclips out of bounds portion
+      // draw outgoing direction
+      ctx.lineTo(px_wrap_prev + dpx, py_wrap_prev + dpy);
+
+      // move to incoming direction
+      ctx.moveTo(px_wrap - dpx, py_wrap - dpy);
+
+      // draw incoming direction
+      ctx.lineTo(px_wrap, py_wrap);
     }
+
+    // save coordinates for next node
+    px_wrap_prev = px_wrap;
+    py_wrap_prev = py_wrap;
+    x_prev = x;
+    y_prev = y;
   }
 
   ctx.strokeStyle = "rgba(0,150,255,0.6)";
@@ -1242,16 +1269,21 @@ function draw_path(start_index, length){
   // draw circles for particles
   for (let i = 0; i < length; i++){
     let curr_idx = start_index + i;
-    // find the right pixels coordinates
-    let px = (bosonsX[curr_idx]/L)*width;
-    let py = (bosonsY[curr_idx]/L)*height;
+
+    let x = bosonsX[curr_idx];
+    let y = bosonsY[curr_idx];
+
+    let x_wrap = x - L * Math.floor(x / L);
+    let y_wrap = y - L * Math.floor(y / L);
+
+    let px = (x_wrap / L) * width;
+    let py = (y_wrap / L) * height;
 
     ctx.beginPath();
-    ctx.arc(px,py, 3, 0, 2*Math.PI);
+    ctx.arc(px, py, 3, 0, 2 * Math.PI);
     ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
     ctx.fill();
   }
-
 }
 
 // function start_simulation(){
