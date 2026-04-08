@@ -694,6 +694,26 @@ for (let iter = 1; iter <= 50000; iter++){
     The parameters are given in the tables.<br>
     <div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
       <div>
+      <table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
+      <label>Benchmark portfolios</label>
+      <thead>
+        <tr>
+        <th>Strategy</th>
+        <th>Stocks (%)</th>
+        <th>Bonds (%)</th>
+        <th>Cash (%)</th>
+      </tr>
+      <tr><td>All Stocks</td><td>100</td><td>0</td><td>0</td></tr>
+      <tr><td>Aggressive</td><td>70</td><td>20</td><td>10</td></tr>
+      <tr><td>Moderate</td><td>50</td><td>30</td><td>20</td></tr>
+      <tr><td>Conservative</td><td>30</td><td>40</td><td>30</td></tr>
+      <tr><td>All cash</td><td>0</td><td>0</td><td>100</td></tr>
+      </thead>
+      <tbody>
+      </tbody>
+      </table>
+      </div>
+      <div>
       <table id = "transition-table" class = "table table-bordered table-condensed" style="width:auto;">
         <label>Transition Probabilities</label>
         <thead>
@@ -729,6 +749,8 @@ for (let iter = 1; iter <= 50000; iter++){
       </tbody>
     </table>
   </div>
+</div>
+    <div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
   <div>
   <table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
     <label>Covariance matrix (bear)</label>
@@ -785,29 +807,6 @@ for (let iter = 1; iter <= 50000; iter++){
 </div>
 </div>
 <!-- <br> -->
-<div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
-<div>
-<table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
-<label>Benchmark portfolios</label>
-<thead>
-  <tr>
-  <th>Strategy</th>
-  <th>Stocks (%)</th>
-  <th>Bonds (%)</th>
-  <th>Cash (%)</th>
-</tr>
-<tr><td>All Stocks</td><td>100</td><td>0</td><td>0</td></tr>
-<tr><td>Aggressive</td><td>70</td><td>20</td><td>10</td></tr>
-<tr><td>Moderate</td><td>50</td><td>30</td><td>20</td></tr>
-<tr><td>Conservative</td><td>30</td><td>40</td><td>30</td></tr>
-<tr><td>All cash</td><td>0</td><td>0</td><td>100</td></tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-</div>
-</div>
-
     <hr>
     <div class ="main-container">
     <label>Risk-aversion (&lambda;) level:</label>
