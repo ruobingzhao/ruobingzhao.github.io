@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="description" content="This simple applet models investment portfolio management as a Markov Decision Process. In this problem, at the beginning of each trading period (1 year), the manager rebalances the portfolio based on their knowledge of the previous year's market condition (bear, normal, bull), adopting one of the following strategies: all stocks, aggressive, moderate, conservative, all cash. A risk-adjusted return function is used to compute the Bellman equation. You can compare the performance of the optimal strategy against benchmark portfolios." />
+<meta name="keywords" content="Markov Decision Process, Numerical Methods" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Markov Decision Process Demo</title>
+<meta name="author" content="Ruobing Zhao">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<style type="text/css">
+#transition-table td, #transition-table th {padding: 2px 2px; font-size: 12px }
+#weight-table td, #weight-table th {padding: 2px 2px; font-size: 12px }
+
+#returns-table td, #returns-table th {padding: 2px 2px; font-size: 12px }
+
+/* .main-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.plots-container {
+  flex: 0 0 75%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  padding: 10px;
+}
+
+.plot {
+  flex: 1;
+  height: 350px;
+}
+*/
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.slidercontainer {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+input[type="range"] {
+  width: 120px;
+  margin: 0 5px;
+}
+
+@media all and (min-width: 630px) {
+  /* two column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: row wrap ;
+  }
+  #left_col {
+    order: 1 ;
+    width: 70%;
+  }
+  #right_col {
+    order: 2 ;
+    width: 30% ;
+  }
+  .main-container {
+    flex-direction: column;
+  }
+
+  .form-container {
+    flex: 0 0 auto;
+    width: calc(100% - 30px); /* Full width minus margins */
+  }
+
+  .plots-container {
+    flex: 0 0 auto;
+    width: calc(100% - 20px); /* Full width minus padding */
+  }
+}
+@media all and (max-width: 629px) {
+  /* one column code */
+  #container {
+    display: flex ;
+    align-items: stretch ;
+    flex-flow: column wrap ;
+  }
+  #right_col {
+    order: 1 ;
+    width: 100% ;
+  }
+	#left_col {
+    order: 2 ;
+    width: 100%;
+  }
+  .plots-container {
+    flex-direction: column;
+  }
+
+  .plot {
+    margin-bottom: 15px;
+  }
+}
+
+html { background: white; margin:0;}
+ /* #wrap {margin:0 auto;}
+ #left_col {float:left;}
+ #right_col {float:right;} */
+</style>
+<script>
+
+// Constants: Returns of assets under market conditions and market condition transition matrix
+const RETURNS =  {
+  bear : { stocks: -25, bonds: 6, cash: 1},
+  normal: {stocks: 8, bonds: 4, cash: 2},
+  bull: {stocks: 25, bonds: 3, cash: 2}
+};
+
+// Transition matrix
+const Pr =  {
+  bear : { bear: 0.4, normal: 0.5, bull: 0.1},
+  normal: {bear: 0.2, normal: 0.6, bull: 0.2},
+  bull: {bear: 0.1, normal: 0.35, bull: 0.55}
+};
+
+const MARKET_COND = ["bear", "normal", "bull"];
+const RISK_FREE_RATE = 0.02;
+const DISCOUNT = Math.exp(-RISK_FREE_RATE*1);
+
+const STRATEGIES = {
+  "allStocks": {stocks: 1, bonds: 0, cash: 0},
+ "aggressive": {stocks: 0.7, bonds: 0.2, cash: 0.1},
+  "moderate": {stocks: 0.5, bonds: 0.3, cash: 0.2},
+  "conservative": {stocks: 0.3, bonds: 0.4, cash: 0.3},
+  "allCash": {stocks: 0, bonds: 0, cash: 1}};
+
+  const STRATEGY_NAME = ["allStocks", "aggressive", "moderate","conservative","allCash"];
+
+// Variables
+let lambda, init_cond, strategy, market, T_length;
+
+//////////// Display
+
+window.onload = function() {
+  // Display lambda, T duration values
+  const l_slider = document.getElementById("LambdaSlider");
+  const t_slider = document.getElementById("TimeSlider");
+  const radioButtons = document.querySelectorAll('input[name = "init_cond"]');
+
+  // Display lambda, T duration values
+  l_slider.addEventListener("input", function(){
+    document.getElementById("display_lambda").textContent = this.value
+  });
+  t_slider.addEventListener("input", function(){
+    document.getElementById("display_time").textContent = this.value;
+    document.getElementById("sim_T_length").textContent = this.value
+  });
+
+  // Radio button for market condition
+  radioButtons.forEach(radio => {
+    radio.addEventListener("change", function()
+    {
+      document.getElementById("display_cond").textContent = this.value;
+      document.getElementById("table_init_cond").textContent = this.value;
+    })
+  });
+
+}
+
+//////////// COMPUTATIONS
+
+function compare_strategy(){
+
+  const lambda = document.getElementById("LambdaSlider").value/10;
+  const market = document.querySelector('input[name="init_cond"]:checked').value;
+  const time = document.getElementById("TimeSlider").value;
+
+  // // Optimal Policy
+  // const bestIndex
+
+  // Run value iteration
+  const results = ValueIteration(lambda);
+  // display = 0;
+
+  // if (market == "bear"){
+  //   display = results.values.bear;
+  // } else if (market == "normal") {
+  //   display = results.values.normal;
+  // } else if (market == "bull") {
+  //   display = results.values.bull;
+  // }
+
+  const optimal_policy = [STRATEGY_NAME[results.policy.bear],STRATEGY_NAME[results.policy.normal],STRATEGY_NAME[results.policy.bull]];
+
+  // Display results
+  // document.getElementById("ValueFunc_display").textContent = display;
+  document.getElementById("bear_policy").textContent = optimal_policy[0];
+  document.getElementById("normal_policy").textContent = optimal_policy[1];
+  document.getElementById("bull_policy").textContent = optimal_policy[2];
+  // document.getElementById("AllStocksVal_display").textContent = 1;
+  // document.getElementById("AggressiveVal_display").textContent = 2;
+  // document.getElementById("ModerateVal_display").textContent = 3;
+  // document.getElementById("ConservativeVal_display").textContent = 4;
+  // document.getElementById("AllCashVal_display").textContent = 5;
+
+  // Simulate path
+  const avg_performance = simulate_path(lambda, market, time, optimal_policy)
+
+    // Display average performance
+    document.getElementById("opt_perf").textContent = avg_performance.opt_avg.toFixed(2);
+    document.getElementById("allStocks_perf").textContent = avg_performance.allStocks_avg.toFixed(2);
+    document.getElementById("aggressive_perf").textContent = avg_performance.aggressive_avg.toFixed(2);
+    document.getElementById("moderate_perf").textContent = avg_performance.moderate_avg.toFixed(2);
+    document.getElementById("conservative_perf").textContent = avg_performance.conservative_avg.toFixed(2);
+    document.getElementById("allCash_perf").textContent = avg_performance.allCash_avg.toFixed(2);
+
+
+}
+
+// Portfolio return before risk adjustment
+function r_p(strategy, market){
+  // return of the portfolio given a strategy and known market condition
+  const w = STRATEGIES[strategy];
+  const r = RETURNS[market];
+  return (w.stocks*r.stocks + w.bonds*r.bonds + w.cash*r.cash)/100;
+}
+
+// Risk adjusted return
+function r_adj(strategy, market, lambda){
+
+let mean;
+let variance;
+
+  // given market in previous period
+  if (market == "bear"){
+  mean = r_p(strategy, "bear")*Pr.bear.bear + r_p(strategy, "normal")*Pr.bear.normal + r_p(strategy, "bull")*Pr.bear.bull;
+  variance = Pr.bear.bear*(r_p(strategy, "bear")-mean)**2 + Pr.bear.normal*(r_p(strategy, "normal")-mean)**2 + Pr.bear.bull*(r_p(strategy, "bull")-mean)**2;
+} else if (market == "normal"){
+mean = r_p(strategy, "bear")*Pr.normal.bear + r_p(strategy, "normal")*Pr.normal.normal + r_p(strategy, "bull")*Pr.normal.bull;
+variance = Pr.normal.bear*(r_p(strategy, "bear")-mean)**2 + Pr.normal.normal*(r_p(strategy, "normal")-mean)**2 + Pr.normal.bull*(r_p(strategy, "bull")-mean)**2;
+} else if (market == "bull"){
+mean = r_p(strategy, "bear")*Pr.bull.bear + r_p(strategy, "normal")*Pr.bull.normal + r_p(strategy, "bull")*Pr.bull.bull;
+variance = Pr.bull.bear*(r_p(strategy, "bear")-mean)**2 + Pr.bull.normal*(r_p(strategy, "normal")-mean)**2 + Pr.bull.bull*(r_p(strategy, "bull")-mean)**2;
+}
+
+// Return risk adjusted return
+return mean - lambda*variance;
+
+}
+
+function ValueIteration(lambda) {
+
+  // Initialize every value to zero
+  let V_bear = 0;
+  let V_normal = 0;
+  let V_bull = 0;
+  let policy = {bear: 0, normal: 0, bull: 0};
+  const w_states = ["allStocks", "aggressive", "moderate", "conservative", "allCash"];
+
+  // max_iter = 200, error = 0.001
+  for (var i = 0; i < 200; i++){
+    let V_old = [V_bear, V_normal, V_bull];
+
+    let bear_calc = [r_adj(w_states[0],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
+  r_adj(w_states[1],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
+r_adj(w_states[2],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
+r_adj(w_states[3],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
+r_adj(w_states[4],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull)];
+
+let normal_calc = [r_adj(w_states[0],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
+r_adj(w_states[1],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
+r_adj(w_states[2],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
+r_adj(w_states[3],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
+r_adj(w_states[4],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull)];
+
+let bull_calc = [r_adj(w_states[0],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
+r_adj(w_states[1],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
+r_adj(w_states[2],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
+r_adj(w_states[3],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
+r_adj(w_states[4],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull)];
+
+
+        V_bear = Math.max(...bear_calc);
+
+// Extract optimal policy
+policy.bear = bear_calc.indexOf(V_bear);
+
+        V_normal  = Math.max(...normal_calc);
+
+// Extract optimal Policy
+policy.normal  = normal_calc.indexOf(V_normal);
+
+        V_bull  = Math.max(...bull_calc);
+
+    // Extract optimal policy
+    policy.bull  = bull_calc.indexOf(V_bull);
+
+
+    let V_new = [V_bear, V_normal, V_bull];
+
+   // Break the iteration if converged
+   if (math.norm(math.subtract(V_new,V_old), 'inf') < 0.01){
+     break;
+   }
+
+  }
+
+  // return the value function
+  return { values: {bear: V_bear, normal: V_normal, bull: V_bull },
+policy: policy}
+}
+
+//////////// Simulation
+
+function simulate_path(lambda, market, time, opt_pol){
+  // For simulation table
+  const tbody = document.getElementById("simulation_body");
+  tbody.innerHTML = ""; // Clear previous results
+  let html = "";
+
+  let prevMarket = market;
+  let currentMarket = market;
+  let portfolio_value = 10000;
+  let portfolio_value_sum = 0; // for computing average
+  let current_strategy = "allCash";
+  let rand = 0;
+  let final_time = Number(time)+1;
+  let probs = Pr[prevMarket];
+  let mktColor = "black";
+
+  // Benchmark portfolios
+  let PV1 = 10000; // all stocks
+  let PV2 = 10000; // aggressive
+  let PV3 = 10000; // moderate
+  let PV4 = 10000; // conservative
+  let PV5 = 10000; // all cash
+
+  // for computing average
+  let PV1_sum = 0;
+  let PV2_sum = 0;
+  let PV3_sum = 0;
+  let PV4_sum = 0;
+  let PV5_sum = 0;
+
+// iterations to compute average
+for (let iter = 1; iter <= 50000; iter++){
+  html = "";// clear table (only display the last iteration)
+
+  // reset market initial condition
+  prevMarket = market;
+
+  // reset portfolio_value
+  portfolio_value = 10000;
+  PV1 = 10000;
+  PV2 = 10000;
+  PV3 = 10000;
+  PV4 = 10000;
+  PV5 = 10000;
+
+  for( let t = 1; t < final_time; t++){
+    // adopt optimal strategy
+    if (prevMarket == "bear"){
+      current_strategy = opt_pol[0];
+    } else if (prevMarket == "normal"){
+      current_strategy = opt_pol[1];
+    } else if (prevMarket == "bull"){
+      current_strategy = opt_pol[2];
+    }
+
+    // market transition given previous mar;ket
+    rand = Math.random();
+    if (rand < probs.bear){
+      currentMarket = "bear";
+    } else if (rand < (probs.bear+probs.normal)){
+      currentMarket = "normal";
+    } else {
+      currentMarket = "bull";
+    }
+
+    // update probability
+    probs = Pr[currentMarket];
+
+    // update market color
+    if (currentMarket == "bear"){
+      mktColor = "red";
+    } else if (currentMarket == "normal"){
+      mktColor = "#ffcc00";
+    } else if (currentMarket == "bull"){
+      mktColor = "#00cc00";
+    }
+
+    // Compute portfolio value under current strategy and transitioned market
+    portfolio_value = (1+r_p(current_strategy,currentMarket))*portfolio_value;
+
+    // Compute benchmark portfolio values
+    PV1 = (1+r_p("allStocks",currentMarket))*PV1;
+    PV2 = (1+r_p("aggressive",currentMarket))*PV2;
+    PV3 = (1+r_p("moderate",currentMarket))*PV3;
+    PV4 = (1+r_p("conservative",currentMarket))*PV4;
+    PV5 = (1+r_p("allCash",currentMarket))*PV5;
+
+    // Update table
+    html += `<tr><td>${t}</td><td style = "color: ${mktColor}"; font-weight: bold;>${currentMarket}</td><td>${current_strategy}</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td>`;
+
+    // For next iteration
+    prevMarket = currentMarket;
+
+    }
+    // compute sums of portfolio values for each Strategy
+    portfolio_value_sum += portfolio_value;
+    PV1_sum += PV1;
+    PV2_sum += PV2;
+    PV3_sum += PV3;
+    PV4_sum += PV4;
+    PV5_sum += PV5;
+  }
+
+    tbody.innerHTML = html;
+
+    // compute average portfolio values (50000 iterations)
+    portfolio_value_sum = portfolio_value_sum/50000;
+    PV1_sum = PV1_sum/50000;
+    PV2_sum = PV2_sum/50000;
+    PV3_sum = PV3_sum/50000;
+    PV4_sum = PV4_sum/50000;
+    PV5_sum = PV5_sum/50000;
+
+    return {opt_avg: portfolio_value_sum, allStocks_avg: PV1_sum, aggressive_avg: PV2_sum, moderate_avg: PV3_sum, conservative_avg: PV4_sum, allCash_avg : PV5_sum}
+
+  }
+
+
+
+
+</script>
+<div id="wrap">
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+   <div class="container-fluid">
+     <div class="navbar-header">
+       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand" href="index.html">Ruobing Zhao's Homepage</a>
+     </div>
+     <div class="collapse navbar-collapse" id="myNavbar">
+     <ul class="nav navbar-nav">
+       <li><a href="index.html">Home</a></li>
+       <li><a href="teaching.html">Teaching</a></li>
+       <!-- <li><a href="music.html">Music</a></li>
+       <li><a href="memoriam.html">In Memoriam</a></li> -->
+       <!-- <li><a href="cv.pdf">CV</a></li> -->
+       <li class="active"><a href="#">Numerical Methods</a></li>
+     </ul>
+   </div>
+   </div>
+ </nav>
+<div class = "container" id = "container">
+<div class = "row">
+  <div class = "container">
+    <br>
+    <br>
+    <br>
+    <i>All contents are created by Ruobing Zhao. Copyright &copy; 2019 Ruobing Zhao. All rights reserved.</i>
+    <h4>
+      4. Markov Decision Process + Convex Optimization Demo
+    </h4>
+    <a href="num_meth.html">Back to Contents</a><br>
+    This simple applet models investment portfolio management as a Markov Decision Process. In this problem, at the beginning of each trading period (1 quarter), the manager rebalances the portfolio based on their knowledge of the previous quarter's market condition (bear, normal, bull), selecting a strategy \(\mathbf{w} = (w_{stocks}, w_{bonds}, w_{cash})^T\), where \(w_i\) is the weight of the asset type in the portfolio. A risk-adjusted return function based on the <a href="https://doi.org/10.1111/j.1540-6261.1952.tb01525.x">Markowitz Portfolio Theory</a> is used to compute the Bellman equation.
+    <br>
+    For each market condition \(s\), the return rates of the assets are given by a vector of random variables
+    \[
+    \mathbf{r}_s = \begin{pmatrix}r_{\text{stocks}} \\ r_{\text{bonds}} \\ r_{\text{cash}}\end{pmatrix}
+    \]
+    with mean return rate and covariance matrix
+    \[
+    \begin{gather}
+    \mu_s =
+    \begin{pmatrix}
+    \bar{r}_{\text{stocks}} \\ \bar{r}_{\text{bonds}} \\ \bar{r}_{\text{cash}}
+    \end{pmatrix}\\
+    \Sigma_s = \begin{pmatrix}
+    \sigma_{\text{stocks}, \text{stocks}} & \sigma_{\text{stocks}, \text{bonds}} & \sigma_{\text{stocks}, \text{cash}} \\
+    \sigma_{\text{bonds}, \text{stocks}} & \sigma_{\text{bonds}, \text{bonds}} & \sigma_{\text{bonds}, \text{cash}}\\
+    \sigma_{\text{cash}, \text{stocks}} & \sigma_{\text{cash}, \text{bonds}} & \sigma_{\text{cash}, \text{cash}}
+    \end{pmatrix}
+    \end{gather}
+    \]
+    The raw return (capital gain) of a portfolio \(\mathbf{w}\) under market condition \(s\) is defined as
+    \[
+    g(\mathbf{w},s) = \mathbf{w}^T \mathbf{r}_s
+    \]
+    where \(\mathbf{r}_s\) is return vector of the coming quarter.
+    <!-- The risk-adjusted gain of portfolio under market condition \(s\) and risk-aversion parameter \(\lambda\) is given by
+    \[
+    \begin{aligned}
+    g_{\text{adj}}(\mathbf{w},s) & = \mathbb{E}[g(\mathbf{w},s)] - \lambda \cdot \mathrm{Var}(g(\mathbf{w},s))\\
+    & = \mathbf{w}^T \mu_s - \lambda\cdot \mathbf{w}^T \Sigma_s \mathbf{w}
+    \end{aligned}
+    \] -->
+    Since the manager cannot predict the future and only makes decisions at the beginning of each trading period based on the knowledge of the <i>previous</i> market condition, the risk-adjusted gain of a portfolio \(\mathbf{w}\) under <i>previous</i> market condition \(s\) and risk-aversion parameter \(\lambda\) is defined as (Notation: \(\mathbb{E}^s[\cdot]\) denotes conditional expectation on \(s_{\text{prev}} = s\))
+    \[
+    \begin{aligned}
+    g_{\text{adj}}(\mathbf{w},s) & = \mathbb{E}^s[g(\mathbf{w},s')] - \lambda \cdot \mathrm{Var}^s(g(\mathbf{w},s'))\\
+    & = \mathbf{w}^T\bar{\mu}_{s} - \lambda\cdot \bigg(\mathbb{E}^s[\mathrm{Var} (g(\mathbf{w},s'))] + \mathrm{Var}^s(\mathbb{E}[g(\mathbf{w},s')])\bigg)\\
+    & = \mathbf{w}^T\bar{\mu}_{s} - \lambda\cdot \bigg(\mathbf{w}^T\bar{\Sigma}_{s}\mathbf{w} + \sum_{s'}P(s'|s)(\mathbb{E}[g(\mathbf{w},s')] - \mathbb{E}^s[\mathbb{E}[g(\mathbf{w},s')]])^2\bigg)\\
+    & = \mathbf{w}^T\bar{\mu}_{s} - \lambda\cdot \bigg(\mathbf{w}^T\bar{\Sigma}_{s}\mathbf{w} + \sum_{s'}P(s'|s)(\mathbf{w}^T \mu_{s'} - \mathbf{w}^T \bar{\mu}_{s} )^2\bigg)\\
+    & = \mathbf{w}^T\bar{\mu}_{s} - \lambda\cdot \bigg(\mathbf{w}^T\bar{\Sigma}_{s}\mathbf{w} + \mathbf{w}^T\bar{\Sigma}_{s\to s'}\mathbf{w} \bigg)
+    \end{aligned}
+    \]
+    where
+    \[
+    \begin{gather}
+    \bar{\mu}_{s} \equiv \sum_{s'}P(s'|s)\mu_{s'}\\
+    \bar{\Sigma}_{s} \equiv \sum_{s'}P(s'|s)\Sigma_{s'}\\
+    \bar{\Sigma}_{s\to s'} \equiv \sum_{s'}P(s'|s)(\mu_{s'} - \bar{\mu}_{s})(\mu_{s'} - \bar{\mu}_{s})^T
+    \end{gather}
+    \]
+    The value function and the Bellman equation are
+    \[
+    \begin{gather}
+    V(s) = \max_{\mathbf{\{w_t\}}}\;\sum_{t = 0}^{\infty} \gamma^{t}\cdot\mathbb{E}^{s_0 = s} [g_{\text{adj}}(\mathbf{w_t},s_t)]\\
+    V(s) = \max_{\mathbf{w}}\; \bigg\{g_{\text{adj}}(\mathbf{w},s) + \gamma\cdot \mathbb{E}^{s}\big[ V(s')\big]\bigg\}
+    \end{gather}
+    \]
+    where \(\gamma \equiv e^{-(\text{risk free rate})\cdot\Delta t}\) is the discount factor. Because the term \(\gamma\cdot\mathbb{E}^{s}\big[ V(s')\big] = \gamma\cdot \sum_{s'}P(s'|s) V(s')\) does not depend on \(\mathbf{w}\), this becomes a quadratic programming (QP) problem:
+    \[
+    \begin{aligned}
+    \max_{\mathbf{w}} \;\; \mathbf{w}^T\bar{\mu}_{s} - \lambda\cdot & \bigg(\mathbf{w}^T\bar{\Sigma}_{s}\mathbf{w} + \mathbf{w}^T\bar{\Sigma}_{s\to s'}\mathbf{w} \bigg)\\
+    \mathrm{s.t.}\;\;\;\;\;\; w_i & \geq 0\\
+    \sum_i w_i & = 1
+    \end{aligned}
+    \]
+    The QP can be solved using the interior point method. The maximization problem is equivalent to
+    \[
+    \begin{aligned}
+    \min_{x} \;\; \frac{1}{2}x^T Q x & + c^T x\\
+    \mathrm{s.t.}\;\;\;\;\;\; Ax & \geq b\\
+    Gx & = h
+    \end{aligned}
+    \]
+    where
+    \[
+    \begin{gather}
+    x = \mathbf{w}\\
+    Q = 2\lambda \cdot (\bar{\Sigma}_{s} + \bar{\Sigma}_{s\to s'})\\
+    c = -\bar{\mu}_{s}\\
+    A = I,\; \;b = \begin{pmatrix}0, ..., 0\end{pmatrix}^T\\
+    G = \begin{pmatrix}1, ..., 1\end{pmatrix},\;\; h = 1
+    \end{gather}
+    \]
+    Then the Lagrangian is
+    \[
+    L(x,y,z,s) = \frac{1}{2}x^T Q x + c^T x - y^T(Ax-s-b) - z^T(Gx-h)
+    \]
+    where \(y\), \(z\) are Lagrange multipliers, and \(s>0\) is the slack variable (to turn inequality constraint into equality constraint). The optimality conditions are
+    \[
+    \begin{gather}
+    Qx + c - A^T y - G^T z = 0\\
+    Ax - s - b = 0\\
+    Gx - h = 0\\
+    y \geq 0\\
+    s \geq 0\\
+    YSe = 0
+    \end{gather}
+    \]
+    where \(Y\) is the diagonal matrix where the diagonal elements are \(y_i\), \(S\) is the diagonal matrix where the diagonal elements are \(s_i\), and \(e = \begin{pmatrix}1,...,1\end{pmatrix}^T\). The first three equations are from the method of Lagrange multipliers to find critical points (\(\frac{\partial L}{\partial x} = 0\), \(\frac{\partial L}{\partial y} = 0\), \(\frac{\partial L}{\partial z} = 0\)). The other three equations are feasibility and slack variable conditions (at the optimal solution, either \(y_i = 0\) and \(s_i > 0\) for inactive constraints, or \(s_i = 0\) and \(y_i>0\) for active constraints). The primal-dual gap is defined as \(\eta = y^Ts\). Geometrically, when \(\eta = 0\), the level set of the objective function and the constraint curves are touching. An interior point of the feasible set satisfies
+    \[
+    YSe = \delta e
+    \]
+    for some \(\delta > 0\), and the solution to the problem with interior points converges to the true solution as \(\delta \to 0\). This ensures \(y\) and \(s\) are both strictly greater than \(0\). The optimality conditions then become a linear system with 4 equations and 4 unknowns:
+    \[
+    \begin{aligned}
+    Qx + c - A^T y - G^T z & = 0\\
+    Ax - s - b & = 0\\
+    Gx - h & = 0\\
+    YSe & = \delta e
+    \end{aligned}
+    \]
+    This can be solved using Newton's method:
+    <br>
+    Start with an initial guess \((x^{(0)},y^{(0)},z^{(0)}, s^{(0)})\). At the \(k\)-th iteration, first calculate
+    \[
+    \begin{gather}
+    \eta^{(k)} = (y^{(k)})^T s^{(k)}\\
+    \delta^{(k)} =q \cdot \frac{\eta^{(k)}}{m}
+    \end{gather}
+    \]
+    where \(m\) is the number of original inequality constraints (\(Ax\geq b\)), and \(q>0\) is a parameter to be chosen (for example \(q = 0.1\) or \(q = 0.5\)).
+    Then calculate \((\Delta x, \Delta y, \Delta z, \Delta s)\) from \((x^{(k)},y^{(k)},z^{(k)}, s^{(k)})\) by solving
+    \[
+    \underbrace{\begin{pmatrix}
+    Q & -A^T & -G^T & 0\\
+    A & 0 & 0 & -I\\
+    G & 0 & 0 & 0\\
+    0 & S^{(k)} & 0 & Y^{(k)}
+    \end{pmatrix}}_{\text{Jacobian}}
+    \begin{pmatrix}
+    \Delta x\\
+    \Delta y\\
+    \Delta z\\
+    \Delta s
+    \end{pmatrix} = - \begin{pmatrix}
+    Qx^{(k)} + c - A^T y^{(k)} - G^T z^{(k)}\\
+    Ax^{(k)} - s^{(k)} - b\\
+    Gx^{(k)} - h\\
+    Y^{(k)}S^{(k)}e-\delta^{(k)} e
+    \end{pmatrix}
+    \]
+    Instead of updating \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)}) = (x^{(k)},y^{(k)},z^{(k)}, s^{(k)}) + (\Delta x, \Delta y, \Delta z, \Delta s)\), first check the maximum increment so that \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)})\) stays in the interior of the feasible set:
+    \[
+    \alpha_{\text{max}} = \min \bigg\{ 1, \; \min \{-\frac{y_i^{(k)}}{\Delta y_i} : \Delta y_i < 0\}, \; \min \{-\frac{s_i^{(k)}}{\Delta s_i} : \Delta s_i < 0\}\bigg\}
+    \]
+    If \(\Delta y_i \geq 0\), \(\Delta s_i \geq 0\) for all \(i\), set \(\min \big\{-\frac{y_i^{(k)}}{\Delta y_i} : \Delta y_i < 0\big\} = \infty\), \(\min \big\{-\frac{s_i^{(k)}}{\Delta s_i} : \Delta s_i < 0\big\} = \infty\).
+    Then update the state (multiply \(\alpha_{\text{max}}\) by \(0.99\) to make sure it stays in the feasible set):
+    \[
+    \begin{aligned}
+    x^{(k+1)} & = x^{(k)} + 0.99\alpha_{\text{max}}\Delta x\\
+    y^{(k+1)} & = y^{(k)} + 0.99\alpha_{\text{max}}\Delta y\\
+    z^{(k+1)} & = z^{(k)} + 0.99\alpha_{\text{max}}\Delta z\\
+    s^{(k+1)} & = s^{(k)} + 0.99\alpha_{\text{max}}\Delta s
+    \end{aligned}
+    \]
+    Repeat until
+    \[
+    \begin{gather}
+    \left\|Qx^{(k)} + c - A^T y^{(k)} - G^T z^{(k)}\right\|_2 < \epsilon\\
+    \left\|Ax^{(k)} - s^{(k)} - b\right\|_2 < \epsilon\\
+    \left\|Gx^{(k)} - h\right\|_2 < \epsilon\\
+    \eta^{(k)} < \epsilon
+    \end{gather}
+    \]
+    <!-- \[
+    Y = \begin{pmatrix}y_1 & 0 & 0 & ... & 0\\
+    0 & y_2 & 0 & ... & 0\end{pmatrix}
+    \] -->
+    <!-- The Bellman equation is
+    \[
+    \begin{aligned}
+    V(s) & = \max_{\mathbf{w}}\; \bigg\{\mathbb{E}^{s}\big[g_{\text{adj}}(\mathbf{w},s') + \gamma  V(s')\big]\bigg\}\\
+    & = \max_{\mathbf{w}}\; \bigg\{\mathbb{E}^{s}\big[g_{\text{adj}}(\mathbf{w},s')\big] + \gamma  \sum_{s'}P(s'|s)\cdot V(s')\bigg\}\\
+    & = \max_{\mathbf{w}}\; \bigg\{\mathbb{E}^{s}\big[\mathbf{w}^T \mu_{s'} - \lambda\cdot \mathbf{w}^T \Sigma_{s'} \mathbf{w}\big] + \gamma  \sum_{s'}P(s'|s)\cdot V(s')\bigg\}\\
+    & = \max_{\mathbf{w}}\; \bigg\{\sum_{s'}P(s'|s)\cdot\mathbf{w}^T \mu_{s'} - \lambda\cdot \mathbf{w}^T \sum_{s'}P(s'|s)\Sigma_{s'} \mathbf{w} + \gamma  \sum_{s'}P(s'|s)\cdot V(s')\bigg\}
+    \end{aligned}
+    \]
+    The last term does not depend on \(\mathbf{w}\). Therefore, this becomes a quadratic programming (QP) problem:
+    \[
+    \begin{aligned}
+    \max_{\mathbf{w}} \;\; & \sum_{s'}P(s'|s)\cdot\mathbf{w}^T \mu_{s'} - \lambda\cdot \mathbf{w}^T \sum_{s'}P(s'|s)\Sigma_{s'} \mathbf{w}\\
+    \mathrm{s.t.}\; & w_i \geq 0\\
+    & \sum_i w_i = 1
+    \end{aligned}
+    \] -->
+    <!-- The mean return of a given portfolio strategy \(w\) and the previous market condition \(s\), is given by
+    \[
+    \mathbb{E}[r(w,s)] = w^T \bar{\mu}_s, \;\text{ where }\;\bar{\mu}_s \equiv \sum_{s'}P(s'|s)\mu_{s'}
+    \]
+    This is the expected return of the coming quarter with market condition \(s'\) after having selected a strategy \(w\) based on the knowledge of the previous quarter's market condition \(s\). The variance of return is defined as
+    \[
+    \mathrm{Var}[r(w,s)] = \sum_{s'}P(s'|s)\cdot w^T \,\Sigma_{s'} \,w + \sum_{s'} P(s'|s)\cdot (w^T\mu_{s'} - w^T\bar{\mu}_s)^2
+    \]
+    where \(\Sigma_{s'}\) is the covariance matrix between the asset types under market condition \(s'\). Note that the <a href = "https://en.wikipedia.org/wiki/Law_of_total_variance">Law of Total Variance</a> is applied here. Finally, the risk-adjusted return is defined as
+    \[
+    r_{\text{adj}}(w,s) = \mathbb{E}[r(w,s)] - \lambda \cdot \mathrm{Var} [r(w,s)]
+    \]
+    where \(\lambda\) is the risk aversion level. -->
+    <!-- The Bellman equation is
+    \[
+    V(s) = \max_w \bigg\{r_{adj}(w,s) + \gamma \sum_{s'}P(s'|s)\cdot V(s')\bigg\}
+    \]
+    where \(\gamma \equiv e^{-{(\text{risk free rate})\cdot \Delta t}}\) is the discount factor. This is a quadratic programming (QP) problem:
+    \[
+    \begin{aligned}
+    \max_w \;\; & w^T\bar{\mu}_s - \lambda\cdot w^T \,\Sigma_{\text{total}} \,w\\
+    \mathrm{s.t.}\; & w_i \geq 0\\
+    & \sum_i w_i = 1
+    \end{aligned}
+    \] -->
+    You can compare the performance of the optimal strategy against benchmark portfolios (all stocks, aggressive, moderate, conservative, all cash).
+    <br>
+    The parameters are given in the tables.<br>
+    <div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
+      <div>
+      <table id = "transition-table" class = "table table-bordered table-condensed" style="width:auto;">
+        <label>Transition Probabilities</label>
+        <thead>
+          <tr>
+          <th>Market</th>
+          <th>To Bear</th>
+          <th>To Normal</th>
+          <th>To Bull</th>
+        </tr>
+        </thead>
+        <tbody>
+          <tr><td>Bear</td><td>0.4</td><td>0.5</td><td>0.1</td></tr>
+          <tr><td>Normal</td><td>0.2</td><td>0.6</td><td>0.2</td></tr>
+          <tr><td>Bull</td><td>0.1</td><td>0.35</td><td>0.55</td></tr>
+        </tbody>
+      </table>
+    </div>
+  <div>
+    <table id = "returns-table" class = "table table-bordered table-condensed" style="width:auto;">
+      <label>Mean return rate \(\mu_s\)</label>
+      <thead>
+        <tr>
+        <th>Asset</th>
+        <th>Bear</th>
+        <th>Normal</th>
+        <th>Bull</th>
+      </tr>
+      <tr><td>Stocks</td><td>-25%</td><td>8%</td><td>25%</td></tr>
+      <tr><td>Bonds</td><td>6%</td><td>4%</td><td>3%</td></tr>
+      <tr><td>Cash</td><td>1%</td><td>2%</td><td>2%</td></tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+  <div>
+  <table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
+    <label>Covariance matrix (bear)</label>
+    <thead>
+      <tr>
+        <td>\(\sigma_{ij}\)</td>
+      <td>Stocks</td>
+      <td>Bonds</td>
+      <td>Cash</td>
+    </tr>
+    </thead>
+    <tbody>
+      <tr><td>Stocks</td><td>100</td><td>0</td><td>0</td></tr>
+      <tr><td>Bonds</td><td>70</td><td>20</td><td>10</td></tr>
+      <tr><td>Cash</td><td>50</td><td>30</td><td>20</td></tr>
+    </tbody>
+  </table>
+</div>
+<div>
+  <table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
+    <label>Covariance matrix (normal)</label>
+    <thead>
+      <tr>
+        <td>\(\sigma_{ij}\)</td>
+      <td>Stocks</td>
+      <td>Bonds</td>
+      <td>Cash</td>
+    </tr>
+    </thead>
+    <tbody>
+      <tr><td>Stocks</td><td>100</td><td>0</td><td>0</td></tr>
+      <tr><td>Bonds</td><td>70</td><td>20</td><td>10</td></tr>
+      <tr><td>Cash</td><td>50</td><td>30</td><td>20</td></tr>
+    </tbody>
+  </table>
+</div>
+<div>
+<table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
+  <label>Covariance matrix (bull)</label>
+  <thead>
+    <tr>
+      <td>\(\sigma_{ij}\)</td>
+    <td>Stocks</td>
+    <td>Bonds</td>
+    <td>Cash</td>
+  </tr>
+  </thead>
+  <tbody>
+    <tr><td>Stocks</td><td>100</td><td>0</td><td>0</td></tr>
+    <tr><td>Bonds</td><td>70</td><td>20</td><td>10</td></tr>
+    <tr><td>Cash</td><td>50</td><td>30</td><td>20</td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+<!-- <br> -->
+<div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
+<div>
+<table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
+<label>Benchmark portfolios</label>
+<thead>
+  <tr>
+  <th>Strategy</th>
+  <th>Stocks (%)</th>
+  <th>Bonds (%)</th>
+  <th>Cash (%)</th>
+</tr>
+<tr><td>All Stocks</td><td>100</td><td>0</td><td>0</td></tr>
+<tr><td>Aggressive</td><td>70</td><td>20</td><td>10</td></tr>
+<tr><td>Moderate</td><td>50</td><td>30</td><td>20</td></tr>
+<tr><td>Conservative</td><td>30</td><td>40</td><td>30</td></tr>
+<tr><td>All cash</td><td>0</td><td>0</td><td>100</td></tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+</div>
+</div>
+
+    <hr>
+    <div class ="main-container">
+    <label>Risk-aversion (&lambda;) level:</label>
+    <span id="display_lambda" class="slider-value">0</span>
+    <div class ="form-container">
+      <form name = "Risk_aversion">
+        <div class = "sliderrow">
+        <div class="slidercontainer">
+          Risk neutral
+          <input type="range" id="LambdaSlider" name="lambda" min="0" max="12" step="0.5" value="0">
+          Risk averse
+        </div>
+        <div class="form-group">
+  <label>Initial condition (market condition of the previous year): </label>
+  <span id = "display_cond">bear</span>
+  <div class="initial_condition">
+    <input type="radio" name="init_cond" value="bear" checked> bear
+    <input type="radio" name="init_cond" value="normal" > normal
+    <input type="radio" name="init_cond" value="bull" > bull
+  </div>
+  <label>Number of trading periods T = </label>
+  <span id = "display_time">24</span>
+  <div class="Time">
+    <div class="slidercontainer">
+      <input type="range" id="TimeSlider" min="10" max="50" step="1" value="24">
+    </div>
+  </div>
+</div>
+      </div>
+        <input type ="button" value = "Start Simulation" onClick = "compare_strategy()">
+        <br>
+      </form>
+    </div>
+    <div class = "Optimal policy">
+      <label>Optimal policy given previous market condition:</label><br>
+      bear: <span id="bear_policy"></span><br>
+      normal: <span id="normal_policy"></span><br>
+      bull: <span id="bull_policy"></span><br>
+    </div>
+    <div class ="compare results">
+      <label>Compare results: Simulated course of <span id = "sim_T_length">24</span> years: optimal strategy vs. benchmark portfolios.<br> Initial investment: $10000 </label><br>
+      Average Optimal Strategy Performance: $<span id="opt_perf"></span><br>
+      Average All Stocks Performance: $<span id="allStocks_perf"></span><br>
+      Average Aggressive Performance: $<span id="aggressive_perf"></span><br>
+      Average Moderate Performance: $<span id="moderate_perf"></span><br>
+      Average Conservative Performance: $<span id="conservative_perf"></span><br>
+      Average All Cash Performance: $<span id="allCash_perf"></span><br>
+      <label>Last iteration:</label>
+      <table class = "table table-striped" id = "sim_table">
+        <thead>
+          <tr>
+          <th>Year</th>
+          <th>Market Condition</th>
+          <th>Strategy Chosen</th>
+          <th>Portfolio Value (Optimal Policy)</th>
+          <th>All Stocks</th>
+          <th>Aggressive</th>
+          <th>Moderate</th>
+          <th>Conservative</th>
+          <th>All Cash</th>
+        </tr>
+        <tr><td>0</td><td><span id = "table_init_cond">bear</span></td><td>allCash</td><td>10000</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+        </thead>
+        <tbody id="simulation_body">
+        </tbody>
+      </table>
+
+      <!-- Optimal strategy: <span id="ValueFunc_display"></span><br>
+      All stocks: <span id="AllStocksVal_display"></span><br>
+      Aggressive: <span id="AggressiveVal_display"></span><br>
+      Moderate: <span id="ModerateVal_display"></span><br>
+      Conservative: <span id="ConservativeVal_display"></span><br>
+      All cash: <span id="AllCashVal_display"></span> -->
+    </div>
+
+    </div>
+
+    <hr>
+  </div>
+</div>
+</div>
+</div>
+</body>
+</html>
