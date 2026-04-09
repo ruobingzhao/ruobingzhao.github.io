@@ -618,7 +618,7 @@ for (let iter = 1; iter <= iter_num; iter++){
     // Update table
     // ONLY FOR LAST ITERATION
     if (iter == iter_num){
-      html += `<tr><td>${t}</td><td style = "color: ${mktColor}; font-weight: bold;">${market_text}</td><td>[${current_strategy.map(w => w[0].toFixed(2)).join(', ')}]</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td><td>${PV6.toFixed(2)}</td>`;
+      html += `<tr><td>${t}</td><td style = "color: ${mktColor}; font-weight: bold;">${market_text}</td><td>[${current_strategy.map(w => w[0].toFixed(2)).join(', ')}]</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td><td>${PV6.toFixed(2)}</td></tr>`;
     }
 
     // For next iteration
@@ -1043,7 +1043,7 @@ for (let iter = 1; iter <= iter_num; iter++){
           <th>All Bonds</th>
           <th>All Cash</th>
         </tr>
-        <tr><td>0</td><td><span id = "table_init_cond">bear</span></td><td> </td><td>10000</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+        <tr><td>0</td><td><span id = "table_init_cond">bear</span></td><td> </td><td>10000</td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
         </thead>
         <tbody id="simulation_body">
         </tbody>
