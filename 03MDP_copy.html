@@ -423,32 +423,44 @@ function cholesky(M){
 
 //////////////////////// RANDOM CORRELATED RETURN RATE
 // use pre-computed cholesky
-function return_rate(mu, L){
-  let l = math.size(mu).get([0]);
+function return_rate(mu_array, L_array){
+  // let l = math.size(mu).get([0]);
+  let l = mu_array.length;
+  let X = [0,0,0];
 
   let Z_array = [];
   for (let i = 0; i<l; i++){
-    Z_array.push([norm_rand()]);
+    Z_array.push(norm_rand());
   }
-  let Z = math.matrix(Z_array);
+  // let Z = math.matrix(Z_array);
   // let L = cholesky(Sigma);
-  let X = math.add(mu,math.multiply(L,Z));
+  // let X = math.add(mu,math.multiply(L,Z));
+
+  // Manual matrix multiplication
+  for (let i = 0; i < l; i++){
+    let L_times_Z = 0;
+    for (let j = 0; j<=i; j++){
+      L_times_Z += L_array[i][j]* Z_array[j];
+    }
+    X[i] = mu_array[i][0]+ L_times_Z;
+  }
 
   return X;
 }
 
 ////////////////////////// Portfolio return before risk adjustment
-function r_p(strategy, market){
+function r_p(strategy_array, market, mu_array, L_array){
   // strategy = [w_stocks, w_bonds, w_cash]^T;
   // market = 0,1,2 bear normal bull
   // get mu_s_quarter, and covariance
-  let mu = math.column(mu_s_quarter,market);
-  let cov = convariance_quarter[market]
+  let mu = mu_array[market];
+  // let cov = convariance_quarter[market];
 
   // return of the portfolio given a strategy and known market condition
-  let L = L_matrices[market];
+  let L = L_array[market];
   let rate = return_rate(mu,L);
-  let net_rate = strategy.get([0,0])*rate.get([0,0])+strategy.get([1,0])*rate.get([1,0])+strategy.get([2,0])*rate.get([2,0])
+  let net_rate = strategy_array[0][0]*rate[0] + strategy_array[1][0]*rate[1] + strategy_array[2][0]*rate[2];
+  // let net_rate = strategy.get([0,0])*rate.get([0,0])+strategy.get([1,0])*rate.get([1,0])+strategy.get([2,0])*rate.get([2,0])
 
   // const w = STRATEGIES[strategy];
   // const r = RETURNS[market];
@@ -503,6 +515,18 @@ function simulate_path(lambda, market, time, opt_pol){
   tbody.innerHTML = ""; // Clear previous results
   let html = "";
 
+  const opt_pol_array = [math.column(opt_pol,0).toArray(),math.column(opt_pol,1).toArray(),math.column(opt_pol,2).toArray()];
+  const mu_array = [math.column(mu_s_quarter,0).toArray(),math.column(mu_s_quarter,1).toArray(),math.column(mu_s_quarter,2).toArray()];
+  const L_array = [L_matrices[0].toArray(),L_matrices[1].toArray(),L_matrices[2].toArray()];
+  const P_array = P_quarter.toArray();
+
+  // benchmark strategy arrays
+  const bench1 = math.column(benchmark_strategy,0).toArray();
+  const bench2 = math.column(benchmark_strategy,1).toArray();
+  const bench3 = math.column(benchmark_strategy,2).toArray();
+  const bench4 = math.column(benchmark_strategy,3).toArray();
+  const bench5 = math.column(benchmark_strategy,4).toArray();
+
   let prevMarket = market;
   let currentMarket = market;
   let portfolio_value = 10000;
@@ -510,7 +534,7 @@ function simulate_path(lambda, market, time, opt_pol){
   let current_strategy = "N/A";
   let rand = 0;
   let final_time = Number(time)+1;
-  let probs = math.row(P_quarter, market);
+  // let probs = math.row(P_quarter, market);
   let mktColor = "black";
 
   // Benchmark portfolios
@@ -528,12 +552,12 @@ function simulate_path(lambda, market, time, opt_pol){
   let PV5_sum = 0;
 
 // iterations to compute average
-let iter_num = 10000;
+let iter_num = 50000;
 for (let iter = 1; iter <= iter_num; iter++){
   // reset market initial condition
   prevMarket = market;
   currentMarket = market;
-  probs = math.row(P_quarter, market);
+  // probs = math.row(P_quarter, market);
 
   // reset portfolio_value
   portfolio_value = 10000;
@@ -545,20 +569,20 @@ for (let iter = 1; iter <= iter_num; iter++){
 
   for( let t = 1; t < final_time; t++){
     // adopt optimal strategy
-    current_strategy = math.column(opt_pol, prevMarket);
+    current_strategy = opt_pol_array[prevMarket];
 
     // market transition given previous market
     rand = Math.random();
-    if (rand < probs.get([0,0])){
+    if (rand < P_array[currentMarket][0]){
       currentMarket = 0;
-    } else if (rand < (probs.get([0,0])+probs.get([0,1]))) {
+    } else if (rand < P_array[currentMarket][0]+P_array[currentMarket][1]) {
       currentMarket = 1;
     } else {
       currentMarket = 2;
     }
 
-    // update probability
-    probs = math.row(P_quarter, currentMarket);
+    // // update probability
+    // probs = math.row(P_quarter, currentMarket);
 
     // market text
     let market_text = "";
@@ -575,19 +599,19 @@ for (let iter = 1; iter <= iter_num; iter++){
     }
 
     // Compute portfolio value under current strategy and transitioned market
-    portfolio_value = (1+r_p(current_strategy,currentMarket))*portfolio_value;
+    portfolio_value = (1+r_p(current_strategy,currentMarket,mu_array, L_array))*portfolio_value;
 
     // Compute benchmark portfolio values
-    PV1 = (1+r_p(math.column(benchmark_strategy,0),currentMarket))*PV1;
-    PV2 = (1+r_p(math.column(benchmark_strategy,1),currentMarket))*PV2;
-    PV3 = (1+r_p(math.column(benchmark_strategy,2),currentMarket))*PV3;
-    PV4 = (1+r_p(math.column(benchmark_strategy,3),currentMarket))*PV4;
-    PV5 = (1+r_p(math.column(benchmark_strategy,4),currentMarket))*PV5;
+    PV1 = (1+r_p(bench1,currentMarket,mu_array, L_array))*PV1;
+    PV2 = (1+r_p(bench2,currentMarket,mu_array, L_array))*PV2;
+    PV3 = (1+r_p(bench3,currentMarket,mu_array, L_array))*PV3;
+    PV4 = (1+r_p(bench4,currentMarket,mu_array, L_array))*PV4;
+    PV5 = (1+r_p(bench5,currentMarket,mu_array, L_array))*PV5;
 
     // Update table
     // ONLY FOR LAST ITERATION
     if (iter == iter_num){
-      html += `<tr><td>${t}</td><td style = "color: ${mktColor}; font-weight: bold;">${market_text}</td><td>[${math.squeeze(current_strategy).toArray().map(w => w.toFixed(2)).join(', ')}]</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td>`;
+      html += `<tr><td>${t}</td><td style = "color: ${mktColor}; font-weight: bold;">${market_text}</td><td>[${current_strategy.map(w => w[0].toFixed(2)).join(', ')}]</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td>`;
     }
 
     // For next iteration
@@ -1006,7 +1030,7 @@ for (let iter = 1; iter <= iter_num; iter++){
           <th>Conservative</th>
           <th>All Cash</th>
         </tr>
-        <tr><td>0</td><td><span id = "table_init_cond">bear</span></td><td>N/A</td><td>10000</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+        <tr><td>0</td><td><span id = "table_init_cond">bear</span></td><td> </td><td>10000</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
         </thead>
         <tbody id="simulation_body">
         </tbody>
