@@ -149,13 +149,14 @@ const P_annual = math.matrix([
   [0.2, 0.6, 0.2],
   [0.1, 0.35, 0.55]
 ]);
-const benchmark = math.matrix([
-  [1, 0, 0],
-  [0.7, 0.2, 0],
-  [0.5, 0.3, 0.2],
-  [0.3, 0.4, 0.3],
-  [0, 0, 1]
-]);
+// const benchmark = math.matrix([
+//   [1, 0, 0],
+//   [0.7, 0.2, 0],
+//   [0.5, 0.3, 0.2],
+//   [0.3, 0.4, 0.3],
+//   [0, 1, 0],
+//   [0, 0, 1]
+// ]);
 // quarter from annual
 // mu_quarter = (1+mu_annual)^(1/4)-1
 const mu_s_quarter = math.matrix([
@@ -182,12 +183,12 @@ const DISCOUNT = Math.exp(-RISK_FREE_RATE*0.25);
 
 // benchmarks
 const benchmark_strategy = math.matrix([
-  [1, 0.7, 0.5, 0.3, 0],
-  [0, 0.2, 0.3, 0.4, 0],
-  [0, 0.1, 0.2, 0.3, 1]
+  [1, 0.7, 0.5, 0.3, 0, 0],
+  [0, 0.2, 0.3, 0.4, 1, 0],
+  [0, 0.1, 0.2, 0.3, 0, 1]
 ]);
 
-const STRATEGY_NAME = ["allStocks", "aggressive", "moderate","conservative","allCash"];
+const STRATEGY_NAME = ["allStocks", "aggressive", "moderate","conservative","allBonds", "allCash"];
 
 const L_bear = cholesky(Sigma_bear_quarter);
 const L_normal = cholesky(Sigma_normal_quarter);
@@ -504,6 +505,7 @@ function compare_strategy(){
   document.getElementById("moderate_perf").textContent = avg_performance.moderate_avg.toFixed(2);
   document.getElementById("conservative_perf").textContent = avg_performance.conservative_avg.toFixed(2);
   document.getElementById("allCash_perf").textContent = avg_performance.allCash_avg.toFixed(2);
+  document.getElementById("allBonds_perf").textContent = avg_performance.allBonds_avg.toFixed(2);
 
 
 }
@@ -526,6 +528,7 @@ function simulate_path(lambda, market, time, opt_pol){
   const bench3 = math.column(benchmark_strategy,2).toArray();
   const bench4 = math.column(benchmark_strategy,3).toArray();
   const bench5 = math.column(benchmark_strategy,4).toArray();
+  const bench6 = math.column(benchmark_strategy,5).toArray();
 
   let prevMarket = market;
   let currentMarket = market;
@@ -542,7 +545,8 @@ function simulate_path(lambda, market, time, opt_pol){
   let PV2 = 10000; // aggressive
   let PV3 = 10000; // moderate
   let PV4 = 10000; // conservative
-  let PV5 = 10000; // all cash
+  let PV5 = 10000; // all bonds
+  let PV6 = 10000; // all cash
 
   // for computing average
   let PV1_sum = 0;
@@ -550,6 +554,7 @@ function simulate_path(lambda, market, time, opt_pol){
   let PV3_sum = 0;
   let PV4_sum = 0;
   let PV5_sum = 0;
+  let PV6_sum = 0;
 
 // iterations to compute average
 let iter_num = 50000;
@@ -566,6 +571,7 @@ for (let iter = 1; iter <= iter_num; iter++){
   PV3 = 10000;
   PV4 = 10000;
   PV5 = 10000;
+  PV6 = 10000;
 
   for( let t = 1; t < final_time; t++){
     // adopt optimal strategy
@@ -607,11 +613,12 @@ for (let iter = 1; iter <= iter_num; iter++){
     PV3 = (1+r_p(bench3,currentMarket,mu_array, L_array))*PV3;
     PV4 = (1+r_p(bench4,currentMarket,mu_array, L_array))*PV4;
     PV5 = (1+r_p(bench5,currentMarket,mu_array, L_array))*PV5;
+    PV6 = (1+r_p(bench6,currentMarket,mu_array, L_array))*PV6;
 
     // Update table
     // ONLY FOR LAST ITERATION
     if (iter == iter_num){
-      html += `<tr><td>${t}</td><td style = "color: ${mktColor}; font-weight: bold;">${market_text}</td><td>[${current_strategy.map(w => w[0].toFixed(2)).join(', ')}]</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td>`;
+      html += `<tr><td>${t}</td><td style = "color: ${mktColor}; font-weight: bold;">${market_text}</td><td>[${current_strategy.map(w => w[0].toFixed(2)).join(', ')}]</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td><td>${PV6.toFixed(2)}</td>`;
     }
 
     // For next iteration
@@ -625,6 +632,7 @@ for (let iter = 1; iter <= iter_num; iter++){
     PV3_sum += PV3;
     PV4_sum += PV4;
     PV5_sum += PV5;
+    PV6_sum += PV6;
   }
 
   tbody.innerHTML = html;
@@ -636,8 +644,9 @@ for (let iter = 1; iter <= iter_num; iter++){
   PV3_sum = PV3_sum/iter_num;
   PV4_sum = PV4_sum/iter_num;
   PV5_sum = PV5_sum/iter_num;
+  PV6_sum = PV6_sum/iter_num;
 
-  return {opt_avg: portfolio_value_sum, allStocks_avg: PV1_sum, aggressive_avg: PV2_sum, moderate_avg: PV3_sum, conservative_avg: PV4_sum, allCash_avg : PV5_sum}
+  return {opt_avg: portfolio_value_sum, allStocks_avg: PV1_sum, aggressive_avg: PV2_sum, moderate_avg: PV3_sum, conservative_avg: PV4_sum, allBonds_avg : PV5_sum, allCash_avg : PV6_sum}
 
 }
 
@@ -839,7 +848,7 @@ for (let iter = 1; iter <= iter_num; iter++){
     \]
     The method of Lagragian multipliers only finds stationary points. However, because the objective function is convex (\(Q \succcurlyeq 0\)), the stationary points are local minima.
     <br>
-    You can compare the performance of the optimal strategy against benchmark portfolios (all stocks, aggressive, moderate, conservative, all cash).
+    You can compare the performance of the optimal strategy against benchmark portfolios (all stocks, aggressive, moderate, conservative, all bonds, all cash).
     <br>
     The parameters are given in the tables (<b style="color:blue">Values are annualized</b>).<br>
     <div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
@@ -857,6 +866,7 @@ for (let iter = 1; iter <= iter_num; iter++){
       <tr><td>Aggressive</td><td>70</td><td>20</td><td>10</td></tr>
       <tr><td>Moderate</td><td>50</td><td>30</td><td>20</td></tr>
       <tr><td>Conservative</td><td>30</td><td>40</td><td>30</td></tr>
+      <tr><td>All bonds</td><td>0</td><td>100</td><td>0</td></tr>
       <tr><td>All cash</td><td>0</td><td>0</td><td>100</td></tr>
       </thead>
       <tbody>
@@ -1015,6 +1025,7 @@ for (let iter = 1; iter <= iter_num; iter++){
       Average Aggressive Performance: $<span id="aggressive_perf"></span><br>
       Average Moderate Performance: $<span id="moderate_perf"></span><br>
       Average Conservative Performance: $<span id="conservative_perf"></span><br>
+      Average All Bonds Performance: $<span id="allBonds_perf"></span><br>
       Average All Cash Performance: $<span id="allCash_perf"></span><br>
       <label>Last iteration:</label>
       <table class = "table table-striped" id = "sim_table">
@@ -1028,6 +1039,7 @@ for (let iter = 1; iter <= iter_num; iter++){
           <th>Aggressive</th>
           <th>Moderate</th>
           <th>Conservative</th>
+          <th>All Bonds</th>
           <th>All Cash</th>
         </tr>
         <tr><td>0</td><td><span id = "table_init_cond">bear</span></td><td> </td><td>10000</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
