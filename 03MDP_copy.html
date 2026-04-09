@@ -189,6 +189,11 @@ const benchmark_strategy = math.matrix([
 
 const STRATEGY_NAME = ["allStocks", "aggressive", "moderate","conservative","allCash"];
 
+const L_bear = cholesky(Sigma_bear_quarter);
+const L_normal = cholesky(Sigma_normal_quarter);
+const L_bull = cholesky(Sigma_bull_quarter);
+const L_matrices = [L_bear, L_normal, L_bull];
+
 // Variables
 let lambda, init_cond, strategy, market, T_length;
 
@@ -299,7 +304,7 @@ function ValueIteration(lambda) {
 ////////////////////////////// QP SOLVER
 // interior point method
 function QPSolve(Q,c,A,b,G,h){
-  let eps = 0.00001;
+  let eps = 0.001;
   // get dimensions
   let l = math.size(Q).get([0]); // state space size
   let m = math.size(A).get([0]); // # inequalities
@@ -417,7 +422,8 @@ function cholesky(M){
 }
 
 //////////////////////// RANDOM CORRELATED RETURN RATE
-function return_rate(mu, Sigma){
+// use pre-computed cholesky
+function return_rate(mu, L){
   let l = math.size(mu).get([0]);
 
   let Z_array = [];
@@ -425,7 +431,7 @@ function return_rate(mu, Sigma){
     Z_array.push([norm_rand()]);
   }
   let Z = math.matrix(Z_array);
-  let L = cholesky(Sigma);
+  // let L = cholesky(Sigma);
   let X = math.add(mu,math.multiply(L,Z));
 
   return X;
@@ -440,7 +446,8 @@ function r_p(strategy, market){
   let cov = convariance_quarter[market]
 
   // return of the portfolio given a strategy and known market condition
-  let rate = return_rate(mu,cov);
+  let L = L_matrices[market];
+  let rate = return_rate(mu,L);
   let net_rate = strategy.get([0,0])*rate.get([0,0])+strategy.get([1,0])*rate.get([1,0])+strategy.get([2,0])*rate.get([2,0])
 
   // const w = STRATEGIES[strategy];
