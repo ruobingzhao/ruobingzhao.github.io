@@ -525,6 +525,8 @@ let iter_num = 50000;
 for (let iter = 1; iter <= iter_num; iter++){
   // reset market initial condition
   prevMarket = market;
+  currentMarket = market;
+  probs = math.row(P_quarter, market);
 
   // reset portfolio_value
   portfolio_value = 10000;
@@ -536,12 +538,7 @@ for (let iter = 1; iter <= iter_num; iter++){
 
   for( let t = 1; t < final_time; t++){
     // adopt optimal strategy
-    for (let i = 0; i < 3; i++){
-      if (prevMarket == i){
-        current_strategy = math.column(opt_pol, i);
-        break;
-      }
-    }
+    current_strategy = math.column(opt_pol, prevMarket);
 
     // market transition given previous market
     rand = Math.random();
