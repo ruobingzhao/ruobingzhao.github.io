@@ -10,7 +10,7 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.0.1/math.min.js"></script>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
@@ -120,38 +120,79 @@ html { background: white; margin:0;}
  #right_col {float:right;} */
 </style>
 <script>
+////////////////////////////////////
 
 // Constants: Returns of assets under market conditions and market condition transition matrix
-const RETURNS =  {
-  bear : { stocks: -25, bonds: 6, cash: 1},
-  normal: {stocks: 8, bonds: 4, cash: 2},
-  bull: {stocks: 25, bonds: 3, cash: 2}
-};
-
-// Transition matrix
-const Pr =  {
-  bear : { bear: 0.4, normal: 0.5, bull: 0.1},
-  normal: {bear: 0.2, normal: 0.6, bull: 0.2},
-  bull: {bear: 0.1, normal: 0.35, bull: 0.55}
-};
+const mu_s_annual = math.matrix([
+  [-0.25, 0.08, 0.25],
+  [0.06, 0.04, 0.03],
+  [0.02, 0.02, 0.02]
+]);
+const Sigma_bear_annual = math.matrix([
+  [0.08, 0.015, -0.02],
+  [0.015, 0.02, 0.005],
+  [-0.02, 0.005, 0.03]
+]);
+const Sigma_normal_annual = math.matrix([
+  [0.04, 0.005, -0.005],
+  [0.005, 0.01, 0.002],
+  [-0.005, 0.002, 0.02]
+]);
+const Sigma_bull_annual = math.matrix([
+  [0.03, 0.002, -0.002],
+  [0.002, 0.01, 0.001],
+  [-0.002, 0.002, 0.015]
+]);
+const convariance_annual = [Sigma_bear_annual, Sigma_normal_annual, Sigma_bull_annual];
+const P_annual = math.matrix([
+  [0.4, 0.5, 0.1],
+  [0.2, 0.6, 0.2],
+  [0.1, 0.35, 0.55]
+]);
+const benchmark = math.matrix([
+  [1, 0, 0],
+  [0.7, 0.2, 0],
+  [0.5, 0.3, 0.2],
+  [0.3, 0.4, 0.3],
+  [0, 0, 1]
+]);
+// quarter from annual
+// mu_quarter = (1+mu_annual)^(1/4)-1
+const mu_s_quarter = math.matrix([
+  [-0.0694, 0.0194, 0.0574],
+  [0.0147, 0.0099, 0.0074],
+  [0.005, 0.005, 0.005]
+]);
+// convariance matrices
+// quarter from annual: divide by 4 (approximately)
+const Sigma_bear_quarter = math.multiply(0.25, Sigma_bear_annual);
+const Sigma_normal_quarter = math.multiply(0.25, Sigma_normal_annual);
+const Sigma_bull_quarter = math.multiply(0.25, Sigma_bull_annual);
+const convariance_quarter = [Sigma_bear_quarter, Sigma_normal_quarter, Sigma_bull_quarter];
+// quarterly transition probability
+// Linear approximation
+// P_quarter = I + 0.25(P_annual - I)
+const P_quarter = math.add(math.identity(3),math.multiply(0.25, math.subtract(P_annual, math.identity(3))));
 
 const MARKET_COND = ["bear", "normal", "bull"];
+// annual rate
 const RISK_FREE_RATE = 0.02;
-const DISCOUNT = Math.exp(-RISK_FREE_RATE*1);
+// quarterly discount
+const DISCOUNT = Math.exp(-RISK_FREE_RATE*0.25);
 
-const STRATEGIES = {
-  "allStocks": {stocks: 1, bonds: 0, cash: 0},
- "aggressive": {stocks: 0.7, bonds: 0.2, cash: 0.1},
-  "moderate": {stocks: 0.5, bonds: 0.3, cash: 0.2},
-  "conservative": {stocks: 0.3, bonds: 0.4, cash: 0.3},
-  "allCash": {stocks: 0, bonds: 0, cash: 1}};
+// benchmarks
+const benchmark_strategy = math.matrix([
+  [1, 0.7, 0.5, 0.3, 0],
+  [0, 0.2, 0.3, 0.4, 0],
+  [0, 0.1, 0.2, 0.3, 1]
+]);
 
-  const STRATEGY_NAME = ["allStocks", "aggressive", "moderate","conservative","allCash"];
+const STRATEGY_NAME = ["allStocks", "aggressive", "moderate","conservative","allCash"];
 
 // Variables
 let lambda, init_cond, strategy, market, T_length;
 
-//////////// Display
+//////////////////////// Display
 
 window.onload = function() {
   // Display lambda, T duration values
@@ -179,152 +220,277 @@ window.onload = function() {
 
 }
 
-//////////// COMPUTATIONS
+//////////////////////////////////// COMPUTATIONS
 
+// Value Iteration
+function ValueIteration(lambda) {
+
+  // Initialize every value to zero
+  let V_old = math.matrix([0,0,0]);
+  let V_new = math.clone(V_old);
+  let policy = math.matrix([
+    [0,0,0],
+    [0,0,0],
+    [0,0,0]
+  ]);
+
+  // max_iter = 1000, error = 0.0001
+  for (var i = 0; i < 1000; i++){
+    // V(s) = max_w {g_adj(w,s)} + gamma*E^s[V(s')];
+    // calculate V(bear), V(normal), V(bull)
+    for (let j = 0; j < 3; j++){
+      // compute gamma*E^s[V(s')] = gamma*sum_{s'}P(s'|s)V(s')
+      let sum = DISCOUNT*math.multiply(math.row(P_quarter, j), V_old).get([0]);
+
+      // get transition matrix row
+      let p_row = math.row(P_quarter,j);
+      let p_array = p_row.toArray()[0];
+
+      // compute \bar{\mu}_s => column
+      let mu_bar_s = math.multiply(mu_s_quarter, math.transpose(p_row));
+
+      // compute \bar{\Sigma}_s => matrix
+      let Sigma_bar_s = math.add(math.add(math.multiply(convariance_quarter[0], p_array[0]),math.multiply(convariance_quarter[1], p_array[1])), math.multiply(convariance_quarter[2], p_array[2]));
+
+      // compute \bar{\Sigma}_{s \to s'} => matrix
+      let mu_bar_s_matrix = math.multiply(mu_bar_s, math.matrix([[1,1,1]]));
+      let diff_mu = math.subtract(mu_s_quarter,mu_bar_s_matrix);
+      let Sigma_bar_ss = math.multiply(diff_mu, math.multiply(math.diag(p_array), math.transpose(diff_mu)));
+
+      // extract policy
+      let Q = math.multiply(2*lambda, math.add(Sigma_bar_s, Sigma_bar_ss));
+      let c = math.multiply(-1, mu_bar_s);
+      let A = math.identity(3);
+      let b = math.transpose(math.matrix([[0,0,0]]));
+      let G = math.matrix([[1,1,1]]);
+      let h = 1;
+      let x_opt = QPSolve(Q,c,A,b,G,h);
+      // first three rows
+      let w_opt = math.subset(x_opt,math.index([0,1,2],0));
+      // j-th column
+      let idx = math.index([0,1,2], j);
+      policy.subset(idx, w_opt);
+
+      // add max_w {g_adj(w,s)} to V(s)
+      // compute max_w {g_adj(w,s)}
+      // -(1/2)x^T Q x - c^T x
+      let val = math.multiply(math.transpose(w_opt), math.multiply(Q, w_opt));
+      val = math.multiply(-0.5, val);
+      val = math.subtract(val, math.multiply(math.transpose(c), w_opt));
+      val = val.get([0,0]);
+      sum += val;
+
+      // update V(s)
+      V_new.set([j],sum);
+    }
+
+   // check convergence
+   if (math.norm(math.subtract(V_new,V_old), 'inf') < 0.0001){
+     break;
+   }
+   // update V_old
+   V_old = math.clone(V_new);
+  }
+
+  // return the value function
+  return policy;
+}
+
+////////////////////////////// QP SOLVER
+// interior point method
+function QPSolve(Q,c,A,b,G,h){
+  let eps = 0.00001;
+  // get dimensions
+  let l = math.size(Q).get([0]); // state space size
+  let m = math.size(A).get([0]); // # inequalities
+  let n = math.size(G).get([0]); // # equalities
+  let size = l+m+m+n;
+  // x - lx1; y - mx1; z - nx1; s = mx1
+  // initial guess
+  let x = math.zeros(l,1);
+  let y = math.ones(m,1);
+  let z = math.zeros(n,1);
+  let s = math.ones(m,1);
+
+  // Newton's iteration
+  for (let iter = 0; iter < 1000; iter++){
+    // calculate eta, delta
+    let eta = math.multiply(math.transpose(y),s).get([0,0]);
+    let delta = 0.1*eta/m;
+
+    // construct Jacobian
+    // Q - lxl; A - mxm; G - 1xl; S - mxm; Y - mxm
+    // [Q -A^T -G^T  0]
+    // [A   0    0  -I]
+    // [G   0    0   0]
+    // [0   S    0   Y]
+    let Y_matrix = math.diag(math.squeeze(y).toArray());
+    let S_matrix = math.diag(math.squeeze(s).toArray());
+    let row1 = math.concat(Q, math.transpose(math.multiply(-1,A)), math.transpose(math.multiply(-1,G)), math.zeros(l,size-l-m-n), 1);
+    let row2 = math.concat(A, math.zeros(m,m), math.zeros(m,n), math.multiply(-1,math.identity(m)),1);
+    let row3 = math.concat(G, math.zeros(n,m), math.zeros(n,n), math.zeros(n,m),1);
+    let row4 = math.concat(math.zeros(m,l), S_matrix, math.zeros(m,n), Y_matrix, 1);
+    let Jacobian = math.concat(row1, row2, row3, row4, 0);
+
+    // construct residuals
+    // [Qx+c-A^Ty -G^Tz]
+    // [Ax-s-b]
+    // [Gx-h]
+    // [YSe-delta*e]
+    let e = math.ones(m,1);
+    let r1 = math.subtract(math.subtract(math.add(math.multiply(Q,x),c), math.multiply(math.transpose(A),y)), math.multiply(math.transpose(G),z));
+    let r2 = math.subtract(math.subtract(math.multiply(A,x), s),b);
+    let r3 = math.subtract(math.multiply(G,x),h);
+    let r4 = math.subtract(math.multiply(Y_matrix,math.multiply(S_matrix,e)),math.multiply(delta,e));
+    let RHS = math.concat(r1,r2,r3,r4,0);
+
+    // check convergence
+    if (math.norm(math.squeeze(RHS)) < eps){
+      break;
+    }
+
+    // solve linear system
+    let delta_x = math.lusolve(Jacobian, math.multiply(-1,RHS));
+    let dx = math.subset(delta_x, math.index(math.range(0,l),0));
+    let dy = math.subset(delta_x, math.index(math.range(l,l+m),0));
+    let dz = math.subset(delta_x, math.index(math.range(l+m,l+m+n),0));
+    let ds = math.subset(delta_x, math.index(math.range(l+m+n,size),0));
+
+    // find alpha_max
+    let alpha = Infinity;
+    for (let i = 0; i< m; i++){
+      if (dy.get([i,0]) < 0){
+        alpha = Math.min(alpha, -y.get([i,0])/dy.get([i,0]));
+      }
+    }
+    for (let i = 0; i< m; i++){
+      if (ds.get([i,0]) < 0){
+        alpha = Math.min(alpha, -s.get([i,0])/ds.get([i,0]));
+      }
+    }
+    alpha = Math.min(alpha, 1);
+
+    // update current state
+    x = math.add(x, math.multiply(0.99*alpha,dx));
+    y = math.add(y, math.multiply(0.99*alpha,dy));
+    z = math.add(z, math.multiply(0.99*alpha,dz));
+    s = math.add(s, math.multiply(0.99*alpha,ds));
+
+  }
+
+  let opt_x = math.concat(x,y,z,s, 0);
+  return opt_x;
+}
+
+//////////////////////// HELPER
+//////////////////////// normal random (Box Muller)
+function norm_rand() {
+  let u = 0, v = 0;
+  while (u == 0){
+    u = Math.random();
+  }
+  while (v == 0){
+    v = Math.random();
+  }
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+//////////////////////// Cholesky
+function cholesky(M){
+  let A = M.toArray();
+  let n = A.length;
+  let L = Array.from({length: n},() => Array(n).fill(0));
+
+  for (let i = 0; i<n; i++){
+    for (let j = 0; j<=i; j++){
+      let sum = 0;
+      for (let k = 0; k<j; k++){
+        sum += L[i][k]* L[j][k];
+      }
+      if (i == j){
+        L[i][j] = Math.sqrt(A[i][i]- sum);
+      } else {
+        L[i][j] = (1/L[i][j]) * (A[i][j] - sum);
+      }
+    }
+  }
+  return math.matrix(L);
+}
+
+//////////////////////// RANDOM CORRELATED RETURN RATE
+function return_rate(mu, Sigma){
+  let l = math.size(mu).get([0]);
+
+  let Z_array = [];
+  for (let i = 0; i<l; i++){
+    Z_array.push([norm_rand()]);
+  }
+  let Z = math.matrix(Z_array);
+  let L = cholesky(Sigma);
+  let X = math.add(mu,math.multiply(L,Z));
+
+  return X;
+}
+
+////////////////////////// Portfolio return before risk adjustment
+function r_p(strategy, market){
+  // strategy = [w_stocks, w_bonds, w_cash]^T;
+  // market = 0,1,2 bear normal bull
+  // get mu_s_quarter, and covariance
+  let mu = math.column(mu_s_quarter,market);
+  let cov = convariance_quarter[market]
+
+  // return of the portfolio given a strategy and known market condition
+  let rate = return_rate(mu,cov);
+  let net_rate = strategy.get([0,0])*rate.get([0,0])+strategy.get([1,0])*rate.get([1,0])+strategy.get([2,0])*rate.get([2,0])
+
+  // const w = STRATEGIES[strategy];
+  // const r = RETURNS[market];
+  return net_rate;
+}
+
+//////////////////////// Simulation
 function compare_strategy(){
 
   const lambda = document.getElementById("LambdaSlider").value/10;
   const market = document.querySelector('input[name="init_cond"]:checked').value;
   const time = document.getElementById("TimeSlider").value;
+  let market_idx = 0;
+  if (market == "bear"){
+    market_idx = 0;
+  } else if (market == "normal"){
+    market_idx = 1;
+  } else if (market == "bull"){
+    market_idx = 2;
+  }
 
-  // // Optimal Policy
-  // const bestIndex
+  // Run value iteration, compute optimal policy
+  const opt_policy = ValueIteration(lambda);
 
-  // Run value iteration
-  const results = ValueIteration(lambda);
-  // display = 0;
-
-  // if (market == "bear"){
-  //   display = results.values.bear;
-  // } else if (market == "normal") {
-  //   display = results.values.normal;
-  // } else if (market == "bull") {
-  //   display = results.values.bull;
-  // }
-
-  const optimal_policy = [STRATEGY_NAME[results.policy.bear],STRATEGY_NAME[results.policy.normal],STRATEGY_NAME[results.policy.bull]];
+  let bear_w = math.column(opt_policy,0).toArray().map(w => w[0].toFixed(2));
+  let normal_w = math.column(opt_policy,1).toArray().map(w => w[0].toFixed(2));
+  let bull_w = math.column(opt_policy,2).toArray().map(w => w[0].toFixed(2));
 
   // Display results
   // document.getElementById("ValueFunc_display").textContent = display;
-  document.getElementById("bear_policy").textContent = optimal_policy[0];
-  document.getElementById("normal_policy").textContent = optimal_policy[1];
-  document.getElementById("bull_policy").textContent = optimal_policy[2];
-  // document.getElementById("AllStocksVal_display").textContent = 1;
-  // document.getElementById("AggressiveVal_display").textContent = 2;
-  // document.getElementById("ModerateVal_display").textContent = 3;
-  // document.getElementById("ConservativeVal_display").textContent = 4;
-  // document.getElementById("AllCashVal_display").textContent = 5;
-
+  document.getElementById("bear_policy").textContent = `[${bear_w.join(', ')}]`;
+  document.getElementById("normal_policy").textContent = `[${normal_w.join(', ')}]`;
+  document.getElementById("bull_policy").textContent = `[${bull_w.join(', ')}]`;
   // Simulate path
-  const avg_performance = simulate_path(lambda, market, time, optimal_policy)
+  const avg_performance = simulate_path(lambda, market_idx, time, opt_policy)
 
-    // Display average performance
-    document.getElementById("opt_perf").textContent = avg_performance.opt_avg.toFixed(2);
-    document.getElementById("allStocks_perf").textContent = avg_performance.allStocks_avg.toFixed(2);
-    document.getElementById("aggressive_perf").textContent = avg_performance.aggressive_avg.toFixed(2);
-    document.getElementById("moderate_perf").textContent = avg_performance.moderate_avg.toFixed(2);
-    document.getElementById("conservative_perf").textContent = avg_performance.conservative_avg.toFixed(2);
-    document.getElementById("allCash_perf").textContent = avg_performance.allCash_avg.toFixed(2);
+  // Display average performance
+  document.getElementById("opt_perf").textContent = avg_performance.opt_avg.toFixed(2);
+  document.getElementById("allStocks_perf").textContent = avg_performance.allStocks_avg.toFixed(2);
+  document.getElementById("aggressive_perf").textContent = avg_performance.aggressive_avg.toFixed(2);
+  document.getElementById("moderate_perf").textContent = avg_performance.moderate_avg.toFixed(2);
+  document.getElementById("conservative_perf").textContent = avg_performance.conservative_avg.toFixed(2);
+  document.getElementById("allCash_perf").textContent = avg_performance.allCash_avg.toFixed(2);
 
 
 }
-
-// Portfolio return before risk adjustment
-function r_p(strategy, market){
-  // return of the portfolio given a strategy and known market condition
-  const w = STRATEGIES[strategy];
-  const r = RETURNS[market];
-  return (w.stocks*r.stocks + w.bonds*r.bonds + w.cash*r.cash)/100;
-}
-
-// Risk adjusted return
-function r_adj(strategy, market, lambda){
-
-let mean;
-let variance;
-
-  // given market in previous period
-  if (market == "bear"){
-  mean = r_p(strategy, "bear")*Pr.bear.bear + r_p(strategy, "normal")*Pr.bear.normal + r_p(strategy, "bull")*Pr.bear.bull;
-  variance = Pr.bear.bear*(r_p(strategy, "bear")-mean)**2 + Pr.bear.normal*(r_p(strategy, "normal")-mean)**2 + Pr.bear.bull*(r_p(strategy, "bull")-mean)**2;
-} else if (market == "normal"){
-mean = r_p(strategy, "bear")*Pr.normal.bear + r_p(strategy, "normal")*Pr.normal.normal + r_p(strategy, "bull")*Pr.normal.bull;
-variance = Pr.normal.bear*(r_p(strategy, "bear")-mean)**2 + Pr.normal.normal*(r_p(strategy, "normal")-mean)**2 + Pr.normal.bull*(r_p(strategy, "bull")-mean)**2;
-} else if (market == "bull"){
-mean = r_p(strategy, "bear")*Pr.bull.bear + r_p(strategy, "normal")*Pr.bull.normal + r_p(strategy, "bull")*Pr.bull.bull;
-variance = Pr.bull.bear*(r_p(strategy, "bear")-mean)**2 + Pr.bull.normal*(r_p(strategy, "normal")-mean)**2 + Pr.bull.bull*(r_p(strategy, "bull")-mean)**2;
-}
-
-// Return risk adjusted return
-return mean - lambda*variance;
-
-}
-
-function ValueIteration(lambda) {
-
-  // Initialize every value to zero
-  let V_bear = 0;
-  let V_normal = 0;
-  let V_bull = 0;
-  let policy = {bear: 0, normal: 0, bull: 0};
-  const w_states = ["allStocks", "aggressive", "moderate", "conservative", "allCash"];
-
-  // max_iter = 200, error = 0.001
-  for (var i = 0; i < 200; i++){
-    let V_old = [V_bear, V_normal, V_bull];
-
-    let bear_calc = [r_adj(w_states[0],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
-  r_adj(w_states[1],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
-r_adj(w_states[2],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
-r_adj(w_states[3],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull),
-r_adj(w_states[4],"bear",lambda) + DISCOUNT*(V_old[0]*Pr.bear.bear+ V_old[1]*Pr.bear.normal + V_old[2]*Pr.bear.bull)];
-
-let normal_calc = [r_adj(w_states[0],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
-r_adj(w_states[1],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
-r_adj(w_states[2],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
-r_adj(w_states[3],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull),
-r_adj(w_states[4],"normal",lambda) + DISCOUNT*(V_old[0]*Pr.normal.bear+ V_old[1]*Pr.normal.normal + V_old[2]*Pr.normal.bull)];
-
-let bull_calc = [r_adj(w_states[0],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
-r_adj(w_states[1],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
-r_adj(w_states[2],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
-r_adj(w_states[3],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull),
-r_adj(w_states[4],"bull",lambda) + DISCOUNT*(V_old[0]*Pr.bull.bear+ V_old[1]*Pr.bull.normal + V_old[2]*Pr.bull.bull)];
-
-
-        V_bear = Math.max(...bear_calc);
-
-// Extract optimal policy
-policy.bear = bear_calc.indexOf(V_bear);
-
-        V_normal  = Math.max(...normal_calc);
-
-// Extract optimal Policy
-policy.normal  = normal_calc.indexOf(V_normal);
-
-        V_bull  = Math.max(...bull_calc);
-
-    // Extract optimal policy
-    policy.bull  = bull_calc.indexOf(V_bull);
-
-
-    let V_new = [V_bear, V_normal, V_bull];
-
-   // Break the iteration if converged
-   if (math.norm(math.subtract(V_new,V_old), 'inf') < 0.01){
-     break;
-   }
-
-  }
-
-  // return the value function
-  return { values: {bear: V_bear, normal: V_normal, bull: V_bull },
-policy: policy}
-}
-
-//////////// Simulation
 
 function simulate_path(lambda, market, time, opt_pol){
+  // market: 0 - bear, 1 - normal, 2 - bull
   // For simulation table
   const tbody = document.getElementById("simulation_body");
   tbody.innerHTML = ""; // Clear previous results
@@ -337,7 +503,7 @@ function simulate_path(lambda, market, time, opt_pol){
   let current_strategy = "allCash";
   let rand = 0;
   let final_time = Number(time)+1;
-  let probs = Pr[prevMarket];
+  let probs = math.row(P_quarter, market);
   let mktColor = "black";
 
   // Benchmark portfolios
@@ -355,9 +521,8 @@ function simulate_path(lambda, market, time, opt_pol){
   let PV5_sum = 0;
 
 // iterations to compute average
-for (let iter = 1; iter <= 50000; iter++){
-  html = "";// clear table (only display the last iteration)
-
+let iter_num = 50000;
+for (let iter = 1; iter <= iter_num; iter++){
   // reset market initial condition
   prevMarket = market;
 
@@ -371,48 +536,55 @@ for (let iter = 1; iter <= 50000; iter++){
 
   for( let t = 1; t < final_time; t++){
     // adopt optimal strategy
-    if (prevMarket == "bear"){
-      current_strategy = opt_pol[0];
-    } else if (prevMarket == "normal"){
-      current_strategy = opt_pol[1];
-    } else if (prevMarket == "bull"){
-      current_strategy = opt_pol[2];
+    for (let i = 0; i < 3; i++){
+      if (prevMarket == i){
+        current_strategy = math.column(opt_pol, i);
+        break;
+      }
     }
 
-    // market transition given previous mar;ket
+    // market transition given previous market
     rand = Math.random();
-    if (rand < probs.bear){
-      currentMarket = "bear";
-    } else if (rand < (probs.bear+probs.normal)){
-      currentMarket = "normal";
+    if (rand < probs.get([0,0])){
+      currentMarket = 0;
+    } else if (rand < (probs.get([0,0])+probs.get([0,1]))) {
+      currentMarket = 1;
     } else {
-      currentMarket = "bull";
+      currentMarket = 2;
     }
 
     // update probability
-    probs = Pr[currentMarket];
+    probs = math.row(P_quarter, currentMarket);
 
+    // market text
+    let market_text = "";
     // update market color
-    if (currentMarket == "bear"){
+    if (currentMarket == 0){
       mktColor = "red";
-    } else if (currentMarket == "normal"){
+      market_text = "bear";
+    } else if (currentMarket == 1){
       mktColor = "#ffcc00";
-    } else if (currentMarket == "bull"){
+      market_text = "normal";
+    } else if (currentMarket == 2){
       mktColor = "#00cc00";
+      market_text = "bull";
     }
 
     // Compute portfolio value under current strategy and transitioned market
     portfolio_value = (1+r_p(current_strategy,currentMarket))*portfolio_value;
 
     // Compute benchmark portfolio values
-    PV1 = (1+r_p("allStocks",currentMarket))*PV1;
-    PV2 = (1+r_p("aggressive",currentMarket))*PV2;
-    PV3 = (1+r_p("moderate",currentMarket))*PV3;
-    PV4 = (1+r_p("conservative",currentMarket))*PV4;
-    PV5 = (1+r_p("allCash",currentMarket))*PV5;
+    PV1 = (1+r_p(math.column(benchmark_strategy,0),currentMarket))*PV1;
+    PV2 = (1+r_p(math.column(benchmark_strategy,1),currentMarket))*PV2;
+    PV3 = (1+r_p(math.column(benchmark_strategy,2),currentMarket))*PV3;
+    PV4 = (1+r_p(math.column(benchmark_strategy,3),currentMarket))*PV4;
+    PV5 = (1+r_p(math.column(benchmark_strategy,4),currentMarket))*PV5;
 
     // Update table
-    html += `<tr><td>${t}</td><td style = "color: ${mktColor}"; font-weight: bold;>${currentMarket}</td><td>${current_strategy}</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td>`;
+    // ONLY FOR LAST ITERATION
+    if (iter == iter_num){
+      html += `<tr><td>${t}</td><td style = "color: ${mktColor}; font-weight: bold;">${market_text}</td><td>[${math.squeeze(current_strategy).toArray().map(w => w.toFixed(2)).join(', ')}]</td><td>${portfolio_value.toFixed(2)}</td><td>${PV1.toFixed(2)}</td><td>${PV2.toFixed(2)}</td><td>${PV3.toFixed(2)}</td><td>${PV4.toFixed(2)}</td><td>${PV5.toFixed(2)}</td>`;
+    }
 
     // For next iteration
     prevMarket = currentMarket;
@@ -427,22 +599,19 @@ for (let iter = 1; iter <= 50000; iter++){
     PV5_sum += PV5;
   }
 
-    tbody.innerHTML = html;
+  tbody.innerHTML = html;
 
-    // compute average portfolio values (50000 iterations)
-    portfolio_value_sum = portfolio_value_sum/50000;
-    PV1_sum = PV1_sum/50000;
-    PV2_sum = PV2_sum/50000;
-    PV3_sum = PV3_sum/50000;
-    PV4_sum = PV4_sum/50000;
-    PV5_sum = PV5_sum/50000;
+  // compute average portfolio values (50000 iterations)
+  portfolio_value_sum = portfolio_value_sum/iter_num;
+  PV1_sum = PV1_sum/iter_num;
+  PV2_sum = PV2_sum/iter_num;
+  PV3_sum = PV3_sum/iter_num;
+  PV4_sum = PV4_sum/iter_num;
+  PV5_sum = PV5_sum/iter_num;
 
-    return {opt_avg: portfolio_value_sum, allStocks_avg: PV1_sum, aggressive_avg: PV2_sum, moderate_avg: PV3_sum, conservative_avg: PV4_sum, allCash_avg : PV5_sum}
+  return {opt_avg: portfolio_value_sum, allStocks_avg: PV1_sum, aggressive_avg: PV2_sum, moderate_avg: PV3_sum, conservative_avg: PV4_sum, allCash_avg : PV5_sum}
 
-  }
-
-
-
+}
 
 </script>
 <div id="wrap">
@@ -504,14 +673,7 @@ for (let iter = 1; iter <= 50000; iter++){
     g(\mathbf{w},s) = \mathbf{w}^T \mathbf{r}_s
     \]
     where \(\mathbf{r}_s\) is return vector of the coming quarter.
-    <!-- The risk-adjusted gain of portfolio under market condition \(s\) and risk-aversion parameter \(\lambda\) is given by
-    \[
-    \begin{aligned}
-    g_{\text{adj}}(\mathbf{w},s) & = \mathbb{E}[g(\mathbf{w},s)] - \lambda \cdot \mathrm{Var}(g(\mathbf{w},s))\\
-    & = \mathbf{w}^T \mu_s - \lambda\cdot \mathbf{w}^T \Sigma_s \mathbf{w}
-    \end{aligned}
-    \] -->
-    Since the manager cannot predict the future and only makes decisions at the beginning of each trading period based on the knowledge of the <i>previous</i> market condition, the risk-adjusted gain of a portfolio \(\mathbf{w}\) under <i>previous</i> market condition \(s\) and risk-aversion parameter \(\lambda\) is defined as (Notation: \(\mathbb{E}^s[\cdot]\) denotes conditional expectation on \(s_{\text{prev}} = s\))
+    Since the manager cannot predict the future and only makes decisions at the beginning of each trading period based on the knowledge of the <i>previous</i> market condition, the risk-adjusted gain of a portfolio \(\mathbf{w}\) under <i>previous</i> market condition \(s\) and risk-aversion parameter \(\lambda\) is defined as (Notation: \(\mathbb{E}^s[\cdot]\) denotes conditional expectation on \(s_{\text{prev}} = s\), \(s'\) denotes the next state after \(s\))
     \[
     \begin{aligned}
     g_{\text{adj}}(\mathbf{w},s) & = \mathbb{E}^s[g(\mathbf{w},s')] - \lambda \cdot \mathrm{Var}^s(g(\mathbf{w},s'))\\
@@ -536,7 +698,7 @@ for (let iter = 1; iter <= 50000; iter++){
     V(s) = \max_{\mathbf{w}}\; \bigg\{g_{\text{adj}}(\mathbf{w},s) + \gamma\cdot \mathbb{E}^{s}\big[ V(s')\big]\bigg\}
     \end{gather}
     \]
-    where \(\gamma \equiv e^{-(\text{risk free rate})\cdot\Delta t}\) is the discount factor. Because the term \(\gamma\cdot\mathbb{E}^{s}\big[ V(s')\big] = \gamma\cdot \sum_{s'}P(s'|s) V(s')\) does not depend on \(\mathbf{w}\), this becomes a quadratic programming (QP) problem:
+    where \(\gamma \equiv e^{-(\text{risk free rate})\cdot\Delta t}\) is the discount factor. Because the term \(\gamma\cdot\mathbb{E}^{s}\big[ V(s')\big] = \gamma\cdot \sum_{s'}P(s'|s) V(s')\) does not depend on \(\mathbf{w}\), this becomes a quadratic programming (QP) problem (Note: when \(\lambda = 0\), it becomes a linear programming (LP) problem):
     \[
     \begin{aligned}
     \max_{\mathbf{w}} \;\; \mathbf{w}^T\bar{\mu}_{s} - \lambda\cdot & \bigg(\mathbf{w}^T\bar{\Sigma}_{s}\mathbf{w} + \mathbf{w}^T\bar{\Sigma}_{s\to s'}\mathbf{w} \bigg)\\
@@ -544,7 +706,7 @@ for (let iter = 1; iter <= 50000; iter++){
     \sum_i w_i & = 1
     \end{aligned}
     \]
-    The QP can be solved using the interior point method. The maximization problem is equivalent to
+    The QP/LP can be solved using the interior point method. Note that the objective function and the constraints are all convex. The maximization problem is equivalent to
     \[
     \begin{aligned}
     \min_{x} \;\; \frac{1}{2}x^T Q x & + c^T x\\
@@ -566,7 +728,7 @@ for (let iter = 1; iter <= 50000; iter++){
     \[
     L(x,y,z,s) = \frac{1}{2}x^T Q x + c^T x - y^T(Ax-s-b) - z^T(Gx-h)
     \]
-    where \(y\), \(z\) are Lagrange multipliers, and \(s>0\) is the slack variable (to turn inequality constraint into equality constraint). The optimality conditions are
+    where \(y\), \(z\) are Lagrange multipliers, and \(s>0\) is the slack variable to turn inequality constraints into equality constraints. The optimality conditions (necessary and sufficient) are
     \[
     \begin{gather}
     Qx + c - A^T y - G^T z = 0\\
@@ -592,7 +754,9 @@ for (let iter = 1; iter <= 50000; iter++){
     \]
     This can be solved using Newton's method:
     <br>
-    Start with an initial guess \((x^{(0)},y^{(0)},z^{(0)}, s^{(0)})\). At the \(k\)-th iteration, first calculate
+    1. Start with an initial guess \((x^{(0)},y^{(0)},z^{(0)}, s^{(0)})\).
+    <br>
+    2. At the \(k\)-th iteration, first calculate the (surrogate) primal-dual gap
     \[
     \begin{gather}
     \eta^{(k)} = (y^{(k)})^T s^{(k)}\\
@@ -600,7 +764,8 @@ for (let iter = 1; iter <= 50000; iter++){
     \end{gather}
     \]
     where \(m\) is the number of original inequality constraints (\(Ax\geq b\)), and \(q>0\) is a parameter to be chosen (for example \(q = 0.1\) or \(q = 0.5\)).
-    Then calculate \((\Delta x, \Delta y, \Delta z, \Delta s)\) from \((x^{(k)},y^{(k)},z^{(k)}, s^{(k)})\) by solving
+    <br>
+    3. Calculate \((\Delta x, \Delta y, \Delta z, \Delta s)\) from \((x^{(k)},y^{(k)},z^{(k)}, s^{(k)})\) by solving
     \[
     \underbrace{\begin{pmatrix}
     Q & -A^T & -G^T & 0\\
@@ -620,12 +785,13 @@ for (let iter = 1; iter <= 50000; iter++){
     Y^{(k)}S^{(k)}e-\delta^{(k)} e
     \end{pmatrix}
     \]
-    Instead of updating \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)}) = (x^{(k)},y^{(k)},z^{(k)}, s^{(k)}) + (\Delta x, \Delta y, \Delta z, \Delta s)\), first check the maximum increment so that \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)})\) stays in the interior of the feasible set:
+    4. Instead of updating \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)}) = (x^{(k)},y^{(k)},z^{(k)}, s^{(k)}) + (\Delta x, \Delta y, \Delta z, \Delta s)\), first check the maximum increment so that \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)})\) stays in the interior of the feasible set:
     \[
     \alpha_{\text{max}} = \min \bigg\{ 1, \; \min \{-\frac{y_i^{(k)}}{\Delta y_i} : \Delta y_i < 0\}, \; \min \{-\frac{s_i^{(k)}}{\Delta s_i} : \Delta s_i < 0\}\bigg\}
     \]
     If \(\Delta y_i \geq 0\), \(\Delta s_i \geq 0\) for all \(i\), set \(\min \big\{-\frac{y_i^{(k)}}{\Delta y_i} : \Delta y_i < 0\big\} = \infty\), \(\min \big\{-\frac{s_i^{(k)}}{\Delta s_i} : \Delta s_i < 0\big\} = \infty\).
-    Then update the state (multiply \(\alpha_{\text{max}}\) by \(0.99\) to make sure it stays in the feasible set):
+    <br>
+    5. Update the state (multiply \(\alpha_{\text{max}}\) by \(0.99\) to make sure it stays in the feasible set):
     \[
     \begin{aligned}
     x^{(k+1)} & = x^{(k)} + 0.99\alpha_{\text{max}}\Delta x\\
@@ -634,7 +800,7 @@ for (let iter = 1; iter <= 50000; iter++){
     s^{(k+1)} & = s^{(k)} + 0.99\alpha_{\text{max}}\Delta s
     \end{aligned}
     \]
-    Repeat until
+    6. Repeat until
     \[
     \begin{gather}
     \left\|Qx^{(k)} + c - A^T y^{(k)} - G^T z^{(k)}\right\|_2 < \epsilon\\
@@ -643,55 +809,11 @@ for (let iter = 1; iter <= 50000; iter++){
     \eta^{(k)} < \epsilon
     \end{gather}
     \]
-    <!-- \[
-    Y = \begin{pmatrix}y_1 & 0 & 0 & ... & 0\\
-    0 & y_2 & 0 & ... & 0\end{pmatrix}
-    \] -->
-    <!-- The Bellman equation is
-    \[
-    \begin{aligned}
-    V(s) & = \max_{\mathbf{w}}\; \bigg\{\mathbb{E}^{s}\big[g_{\text{adj}}(\mathbf{w},s') + \gamma  V(s')\big]\bigg\}\\
-    & = \max_{\mathbf{w}}\; \bigg\{\mathbb{E}^{s}\big[g_{\text{adj}}(\mathbf{w},s')\big] + \gamma  \sum_{s'}P(s'|s)\cdot V(s')\bigg\}\\
-    & = \max_{\mathbf{w}}\; \bigg\{\mathbb{E}^{s}\big[\mathbf{w}^T \mu_{s'} - \lambda\cdot \mathbf{w}^T \Sigma_{s'} \mathbf{w}\big] + \gamma  \sum_{s'}P(s'|s)\cdot V(s')\bigg\}\\
-    & = \max_{\mathbf{w}}\; \bigg\{\sum_{s'}P(s'|s)\cdot\mathbf{w}^T \mu_{s'} - \lambda\cdot \mathbf{w}^T \sum_{s'}P(s'|s)\Sigma_{s'} \mathbf{w} + \gamma  \sum_{s'}P(s'|s)\cdot V(s')\bigg\}
-    \end{aligned}
-    \]
-    The last term does not depend on \(\mathbf{w}\). Therefore, this becomes a quadratic programming (QP) problem:
-    \[
-    \begin{aligned}
-    \max_{\mathbf{w}} \;\; & \sum_{s'}P(s'|s)\cdot\mathbf{w}^T \mu_{s'} - \lambda\cdot \mathbf{w}^T \sum_{s'}P(s'|s)\Sigma_{s'} \mathbf{w}\\
-    \mathrm{s.t.}\; & w_i \geq 0\\
-    & \sum_i w_i = 1
-    \end{aligned}
-    \] -->
-    <!-- The mean return of a given portfolio strategy \(w\) and the previous market condition \(s\), is given by
-    \[
-    \mathbb{E}[r(w,s)] = w^T \bar{\mu}_s, \;\text{ where }\;\bar{\mu}_s \equiv \sum_{s'}P(s'|s)\mu_{s'}
-    \]
-    This is the expected return of the coming quarter with market condition \(s'\) after having selected a strategy \(w\) based on the knowledge of the previous quarter's market condition \(s\). The variance of return is defined as
-    \[
-    \mathrm{Var}[r(w,s)] = \sum_{s'}P(s'|s)\cdot w^T \,\Sigma_{s'} \,w + \sum_{s'} P(s'|s)\cdot (w^T\mu_{s'} - w^T\bar{\mu}_s)^2
-    \]
-    where \(\Sigma_{s'}\) is the covariance matrix between the asset types under market condition \(s'\). Note that the <a href = "https://en.wikipedia.org/wiki/Law_of_total_variance">Law of Total Variance</a> is applied here. Finally, the risk-adjusted return is defined as
-    \[
-    r_{\text{adj}}(w,s) = \mathbb{E}[r(w,s)] - \lambda \cdot \mathrm{Var} [r(w,s)]
-    \]
-    where \(\lambda\) is the risk aversion level. -->
-    <!-- The Bellman equation is
-    \[
-    V(s) = \max_w \bigg\{r_{adj}(w,s) + \gamma \sum_{s'}P(s'|s)\cdot V(s')\bigg\}
-    \]
-    where \(\gamma \equiv e^{-{(\text{risk free rate})\cdot \Delta t}}\) is the discount factor. This is a quadratic programming (QP) problem:
-    \[
-    \begin{aligned}
-    \max_w \;\; & w^T\bar{\mu}_s - \lambda\cdot w^T \,\Sigma_{\text{total}} \,w\\
-    \mathrm{s.t.}\; & w_i \geq 0\\
-    & \sum_i w_i = 1
-    \end{aligned}
-    \] -->
+    The method of Lagragian multipliers only finds stationary points. However, because the objective function is convex (\(Q \succcurlyeq 0\)), the stationary points are local minima.
+    <br>
     You can compare the performance of the optimal strategy against benchmark portfolios (all stocks, aggressive, moderate, conservative, all cash).
     <br>
-    The parameters are given in the tables.<br>
+    The parameters are given in the tables (<b>Values are annualized</b>).<br>
     <div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
       <div>
       <table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
@@ -743,7 +865,7 @@ for (let iter = 1; iter <= 50000; iter++){
       </tr>
       <tr><td>Stocks</td><td>-25%</td><td>8%</td><td>25%</td></tr>
       <tr><td>Bonds</td><td>6%</td><td>4%</td><td>3%</td></tr>
-      <tr><td>Cash</td><td>1%</td><td>2%</td><td>2%</td></tr>
+      <tr><td>Cash</td><td>2%</td><td>2%</td><td>2%</td></tr>
       </thead>
       <tbody>
       </tbody>
@@ -763,9 +885,9 @@ for (let iter = 1; iter <= 50000; iter++){
     </tr>
     </thead>
     <tbody>
-      <tr><td>Stocks</td><td>100</td><td>0</td><td>0</td></tr>
-      <tr><td>Bonds</td><td>70</td><td>20</td><td>10</td></tr>
-      <tr><td>Cash</td><td>50</td><td>30</td><td>20</td></tr>
+      <tr><td>Stocks</td><td>0.08</td><td>0.015</td><td>-0.02</td></tr>
+      <tr><td>Bonds</td><td>0.015</td><td>0.02</td><td>0.005</td></tr>
+      <tr><td>Cash</td><td>-0.02</td><td>0.005</td><td>0.03</td></tr>
     </tbody>
   </table>
 </div>
@@ -781,9 +903,9 @@ for (let iter = 1; iter <= 50000; iter++){
     </tr>
     </thead>
     <tbody>
-      <tr><td>Stocks</td><td>100</td><td>0</td><td>0</td></tr>
-      <tr><td>Bonds</td><td>70</td><td>20</td><td>10</td></tr>
-      <tr><td>Cash</td><td>50</td><td>30</td><td>20</td></tr>
+      <tr><td>Stocks</td><td>0.04</td><td>0.005</td><td>-0.005</td></tr>
+      <tr><td>Bonds</td><td>0.005</td><td>0.01</td><td>0.002</td></tr>
+      <tr><td>Cash</td><td>-0.005</td><td>0.002</td><td>0.02</td></tr>
     </tbody>
   </table>
 </div>
@@ -799,9 +921,9 @@ for (let iter = 1; iter <= 50000; iter++){
   </tr>
   </thead>
   <tbody>
-    <tr><td>Stocks</td><td>100</td><td>0</td><td>0</td></tr>
-    <tr><td>Bonds</td><td>70</td><td>20</td><td>10</td></tr>
-    <tr><td>Cash</td><td>50</td><td>30</td><td>20</td></tr>
+    <tr><td>Stocks</td><td>0.03</td><td>0.002</td><td>-0.002</td></tr>
+    <tr><td>Bonds</td><td>0.002</td><td>0.01</td><td>0.001</td></tr>
+    <tr><td>Cash</td><td>-0.002</td><td>0.001</td><td>0.015</td></tr>
   </tbody>
 </table>
 </div>
@@ -828,7 +950,7 @@ for (let iter = 1; iter <= 50000; iter++){
     <input type="radio" name="init_cond" value="bull" > bull
   </div>
   <label>Number of trading periods T = </label>
-  <span id = "display_time">24</span>
+  <span id = "display_time">24</span> quarters
   <div class="Time">
     <div class="slidercontainer">
       <input type="range" id="TimeSlider" min="10" max="50" step="1" value="24">
@@ -847,7 +969,7 @@ for (let iter = 1; iter <= 50000; iter++){
       bull: <span id="bull_policy"></span><br>
     </div>
     <div class ="compare results">
-      <label>Compare results: Simulated course of <span id = "sim_T_length">24</span> years: optimal strategy vs. benchmark portfolios.<br> Initial investment: $10000 </label><br>
+      <label>Compare results: Simulated course of <span id = "sim_T_length">24</span> quarters: optimal strategy vs. benchmark portfolios.<br> Initial investment: $10000 </label><br>
       Average Optimal Strategy Performance: $<span id="opt_perf"></span><br>
       Average All Stocks Performance: $<span id="allStocks_perf"></span><br>
       Average Aggressive Performance: $<span id="aggressive_perf"></span><br>
