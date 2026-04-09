@@ -414,7 +414,7 @@ function cholesky(M){
       if (i == j){
         L[i][j] = Math.sqrt(A[i][i]- sum);
       } else {
-        L[i][j] = (1/L[i][j]) * (A[i][j] - sum);
+        L[i][j] = (1/L[j][j]) * (A[i][j] - sum);
       }
     }
   }
