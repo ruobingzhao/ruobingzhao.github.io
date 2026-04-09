@@ -129,19 +129,19 @@ const mu_s_annual = math.matrix([
   [0.02, 0.02, 0.02]
 ]);
 const Sigma_bear_annual = math.matrix([
-  [0.08, 0.015, -0.02],
-  [0.015, 0.02, 0.005],
-  [-0.02, 0.005, 0.03]
+  [0.04, -0.0036, 0.0],
+  [-0.0036, 0.0036, 0.0],
+  [0.0, 0.0, 0.0001]
 ]);
 const Sigma_normal_annual = math.matrix([
-  [0.04, 0.005, -0.005],
-  [0.005, 0.01, 0.002],
-  [-0.005, 0.002, 0.02]
+  [0.0225, -0.00075, 0.0],
+  [-0.00075, 0.0025, 0.0],
+  [0.0, 0.0, 0.0001]
 ]);
 const Sigma_bull_annual = math.matrix([
-  [0.03, 0.002, -0.002],
-  [0.002, 0.01, 0.001],
-  [-0.002, 0.002, 0.015]
+  [0.0144, 0.00048, 0.0],
+  [0.00048, 0.0016, 0.0],
+  [0.0, 0.0, 0.0001]
 ]);
 const convariance_annual = [Sigma_bear_annual, Sigma_normal_annual, Sigma_bull_annual];
 const P_annual = math.matrix([
@@ -879,7 +879,7 @@ for (let iter = 1; iter <= iter_num; iter++){
     <div style="display:flex;flex-direction: row; gap:20px; align-items:flex-start; margin-bottom:10px;margin-top:10px;">
   <div>
   <table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
-    <label>Covariance matrix (bear)</label>
+    <label>Covariance matrix (bear)<br><small style="font-weight: normal;">(Implied volatility in %)</small></label>
     <thead>
       <tr>
         <td>\(\sigma_{ij}\)</td>
@@ -889,15 +889,18 @@ for (let iter = 1; iter <= iter_num; iter++){
     </tr>
     </thead>
     <tbody>
-      <tr><td>Stocks</td><td>0.08</td><td>0.015</td><td>-0.02</td></tr>
-      <tr><td>Bonds</td><td>0.015</td><td>0.02</td><td>0.005</td></tr>
-      <tr><td>Cash</td><td>-0.02</td><td>0.005</td><td>0.03</td></tr>
+      <tr><td>Stocks<br><small class="text-muted">20% Volatility</small>
+      </td><td>0.04</td><td>-0.0036</td><td>0</td></tr>
+      <tr><td>Bonds<br><small class="text-muted">6% Volatility</small>
+      </td><td>-0.0036</td><td>0.0036</td><td>0</td></tr>
+      <tr><td>Cash<br><small class="text-muted">1% Volatility</small>
+      </td><td>0</td><td>0</td><td>0.0001</td></tr>
     </tbody>
   </table>
 </div>
 <div>
   <table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
-    <label>Covariance matrix (normal)</label>
+    <label>Covariance matrix (normal)<br><small style="font-weight: normal;">(Implied volatility in %)</small></label>
     <thead>
       <tr>
         <td>\(\sigma_{ij}\)</td>
@@ -907,29 +910,38 @@ for (let iter = 1; iter <= iter_num; iter++){
     </tr>
     </thead>
     <tbody>
-      <tr><td>Stocks</td><td>0.04</td><td>0.005</td><td>-0.005</td></tr>
-      <tr><td>Bonds</td><td>0.005</td><td>0.01</td><td>0.002</td></tr>
-      <tr><td>Cash</td><td>-0.005</td><td>0.002</td><td>0.02</td></tr>
+      <tr><td>Stocks<br><small class="text-muted">15% Volatility</small></td>
+        <td>0.0225</td><td>-0.00075</td><td>0</td></tr>
+      <tr><td>Bonds<br><small class="text-muted">5% Volatility</small></td>
+        <td>-0.00075</td><td>0.0025</td><td>0</td></tr>
+      <tr><td>Cash<br><small class="text-muted">1% Volatility</small></td>
+        <td>0</td><td>0</td><td>0.0001</td></tr>
     </tbody>
   </table>
 </div>
 <div>
-<table id = "weight-table" class = "table table-bordered table-condensed" style="width:auto;">
-  <label>Covariance matrix (bull)</label>
-  <thead>
-    <tr>
-      <td>\(\sigma_{ij}\)</td>
-    <td>Stocks</td>
-    <td>Bonds</td>
-    <td>Cash</td>
-  </tr>
-  </thead>
-  <tbody>
-    <tr><td>Stocks</td><td>0.03</td><td>0.002</td><td>-0.002</td></tr>
-    <tr><td>Bonds</td><td>0.002</td><td>0.01</td><td>0.001</td></tr>
-    <tr><td>Cash</td><td>-0.002</td><td>0.001</td><td>0.015</td></tr>
-  </tbody>
-</table>
+  <table id="weight-table" class="table table-bordered table-condensed" style="width:auto;">
+    <label>Covariance matrix (bull) <br><small style="font-weight: normal;">(Implied volatility in %)</small></label>
+    <thead>
+      <tr>
+        <td>\(\sigma_{ij}\)</td>
+        <td>Stocks</td>
+        <td>Bonds</td>
+        <td>Cash</td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Stocks<br><small class="text-muted">12% Volatility</small></td>
+        <td>0.0144</td><td>0.00048</td><td>0</td>
+      </tr>
+      <tr><td>Bonds<br><small class="text-muted">4% Volatility</small></td>
+        <td>0.00048</td><td>0.0016</td><td>0</td>
+      </tr>
+      <tr><td>Cash<br><small class="text-muted">1% Volatility</small></td>
+        <td>0</td><td>0</td><td>0.0001</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 </div>
 <!-- <br> -->
