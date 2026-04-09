@@ -966,16 +966,16 @@ for (let iter = 1; iter <= iter_num; iter++){
     <input type="radio" name="init_cond" value="bull" > bull
   </div>
   <label>Number of trading periods T = </label>
-  <span id = "display_time">24</span> quarters
+  <span id = "display_time">60</span> quarters
   <div class="Time">
     <div class="slidercontainer">
-      <input type="range" id="TimeSlider" min="10" max="50" step="1" value="24">
+      <input type="range" id="TimeSlider" min="10" max="120" step="1" value="60">
     </div>
   </div>
 </div>
       </div>
         <input type ="button" value = "Start Simulation" onClick = "compare_strategy()">
-        <br>
+        <i style="color:blue">Calculation may take a few seconds.</i>
       </form>
     </div>
     <div class = "Optimal policy">
@@ -985,7 +985,7 @@ for (let iter = 1; iter <= iter_num; iter++){
       bull: <span id="bull_policy"></span><br>
     </div>
     <div class ="compare results">
-      <label>Compare results: Simulated course of <span id = "sim_T_length">24</span> quarters: optimal strategy vs. benchmark portfolios.<br> Initial investment: $10000 </label><br>
+      <label>Compare results: Simulated course of <span id = "sim_T_length">60</span> quarters: optimal strategy vs. benchmark portfolios.<br> Initial investment: $10000 </label><br>
       Average Optimal Strategy Performance: $<span id="opt_perf"></span><br>
       Average All Stocks Performance: $<span id="allStocks_perf"></span><br>
       Average Aggressive Performance: $<span id="aggressive_perf"></span><br>
