@@ -422,7 +422,7 @@ function cholesky(M){
   return math.matrix(L);
 }
 
-//////////////////////// RANDOM CORRELATED RETURN RATE
+//////////////////////// RANDOM CORRELATED RETURN RATE PRE RISK ADJUSTMENT
 // use pre-computed cholesky
 function return_rate(mu_array, L_array){
   // let l = math.size(mu).get([0]);
@@ -447,25 +447,6 @@ function return_rate(mu_array, L_array){
   }
 
   return X;
-}
-
-////////////////////////// Portfolio return before risk adjustment
-function r_p(strategy_array, market, mu_array, L_array){
-  // strategy = [w_stocks, w_bonds, w_cash]^T;
-  // market = 0,1,2 bear normal bull
-  // get mu_s_quarter, and covariance
-  let mu = mu_array[market];
-  // let cov = convariance_quarter[market];
-
-  // return of the portfolio given a strategy and known market condition
-  let L = L_array[market];
-  let rate = return_rate(mu,L);
-  let net_rate = strategy_array[0][0]*rate[0] + strategy_array[1][0]*rate[1] + strategy_array[2][0]*rate[2];
-  // let net_rate = strategy.get([0,0])*rate.get([0,0])+strategy.get([1,0])*rate.get([1,0])+strategy.get([2,0])*rate.get([2,0])
-
-  // const w = STRATEGIES[strategy];
-  // const r = RETURNS[market];
-  return net_rate;
 }
 
 //////////////////////// Simulation
@@ -604,16 +585,28 @@ for (let iter = 1; iter <= iter_num; iter++){
       market_text = "bull";
     }
 
+    // sample return rates
+    let currentRate = return_rate(mu_array[currentMarket],L_array[currentMarket]);
+
+    // compute net return rate for portfolios strategies
+    let rate_opt = current_strategy[0][0]*currentRate[0]+current_strategy[1][0]*currentRate[1]+current_strategy[2][0]*currentRate[2];
+    let rate_1 = bench1[0][0]*currentRate[0]+bench1[1][0]*currentRate[1]+bench1[2][0]*currentRate[2];
+    let rate_2 = bench2[0][0]*currentRate[0]+bench2[1][0]*currentRate[1]+bench2[2][0]*currentRate[2];
+    let rate_3 = bench3[0][0]*currentRate[0]+bench3[1][0]*currentRate[1]+bench3[2][0]*currentRate[2];
+    let rate_4 = bench4[0][0]*currentRate[0]+bench4[1][0]*currentRate[1]+bench4[2][0]*currentRate[2];
+    let rate_5 = bench5[0][0]*currentRate[0]+bench5[1][0]*currentRate[1]+bench5[2][0]*currentRate[2];
+    let rate_6 = bench6[0][0]*currentRate[0]+bench6[1][0]*currentRate[1]+bench6[2][0]*currentRate[2];
+
     // Compute portfolio value under current strategy and transitioned market
-    portfolio_value = (1+r_p(current_strategy,currentMarket,mu_array, L_array))*portfolio_value;
+    portfolio_value = (1+rate_opt)*portfolio_value;
 
     // Compute benchmark portfolio values
-    PV1 = (1+r_p(bench1,currentMarket,mu_array, L_array))*PV1;
-    PV2 = (1+r_p(bench2,currentMarket,mu_array, L_array))*PV2;
-    PV3 = (1+r_p(bench3,currentMarket,mu_array, L_array))*PV3;
-    PV4 = (1+r_p(bench4,currentMarket,mu_array, L_array))*PV4;
-    PV5 = (1+r_p(bench5,currentMarket,mu_array, L_array))*PV5;
-    PV6 = (1+r_p(bench6,currentMarket,mu_array, L_array))*PV6;
+    PV1 = (1+rate_1)*PV1;
+    PV2 = (1+rate_2)*PV2;
+    PV3 = (1+rate_3)*PV3;
+    PV4 = (1+rate_4)*PV4;
+    PV5 = (1+rate_5)*PV5;
+    PV6 = (1+rate_6)*PV6;
 
     // Update table
     // ONLY FOR LAST ITERATION
