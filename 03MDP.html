@@ -305,7 +305,7 @@ function ValueIteration(lambda) {
 ////////////////////////////// QP SOLVER
 // interior point method
 function QPSolve(Q,c,A,b,G,h){
-  let eps = 0.0001;
+  let eps = 0.00001;
   // get dimensions
   let l = math.size(Q).get([0]); // state space size
   let m = math.size(A).get([0]); // # inequalities
