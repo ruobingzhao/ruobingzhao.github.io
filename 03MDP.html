@@ -4,7 +4,7 @@
 <meta name="description" content="This simple applet models investment portfolio management as a Markov Decision Process. In this problem, at the beginning of each trading period (1 quarter), the manager rebalances the portfolio based on their knowledge of the previous quarter's market condition (bear, normal, bull). The return rate of each asset is a random variable with mean and covariance matrix that are different under different market conditions. A risk-adjusted return function based on the Markowitz portfolio theory is used to compute the Bellman equation. The optimal strategy is computed as a quadratic programming (QP) problem and solved using primal-dual interior point method. You can compare the performance of the optimal strategy against benchmark portfolios." />
 <meta name="keywords" content="Markov Decision Process, Numerical Methods" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Markov Decision Process Demo</title>
+<title>Markov Decision Process + Convex Optimization Demo</title>
 <meta name="author" content="Ruobing Zhao">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -452,7 +452,7 @@ function return_rate(mu_array, L_array){
 //////////////////////// Simulation
 function compare_strategy(){
 
-  const lambda = document.getElementById("LambdaSlider").value/10;
+  const lambda = document.getElementById("LambdaSlider").value;
   const market = document.querySelector('input[name="init_cond"]:checked').value;
   const time = document.getElementById("TimeSlider").value;
   let market_idx = 0;
@@ -678,7 +678,7 @@ for (let iter = 1; iter <= iter_num; iter++){
       4. Markov Decision Process + Convex Optimization Demo
     </h4>
     <a href="num_meth.html">Back to Contents</a><br>
-    This simple applet models investment portfolio management as a Markov Decision Process. In this problem, at the beginning of each trading period (1 quarter), the manager rebalances the portfolio based on their knowledge of the previous quarter's market condition (bear, normal, bull), selecting a strategy \(\mathbf{w} = (w_{stocks}, w_{bonds}, w_{cash})^T\), where \(w_i\) is the weight of the asset type in the portfolio. A risk-adjusted return function based on the <a href="https://doi.org/10.1111/j.1540-6261.1952.tb01525.x">Markowitz Portfolio Theory</a> is used to compute the Bellman equation.
+    This simple applet models investment portfolio management as a Markov Decision Process. In this problem, at the beginning of each trading period (1 quarter), the manager rebalances the portfolio based on their knowledge of the previous quarter's market condition (bear, normal, bull), selecting a strategy \(\mathbf{w} = (w_{stocks}, w_{bonds}, w_{cash})^T\), where \(w_i\) is the weight of the asset type in the portfolio. A risk-adjusted return function based on the <a href="https://doi.org/10.1111/j.1540-6261.1952.tb01525.x">Markowitz Portfolio Theory</a> is used to compute the Bellman equation. The optimal strategy is computed as a quadratic programming (QP) problem and solved using primal-dual interior point method.
     <br>
     For each market condition \(s\), the return rates of the assets are given by a vector of random variables
     \[
@@ -736,7 +736,7 @@ for (let iter = 1; iter <= iter_num; iter++){
     \sum_i w_i & = 1
     \end{aligned}
     \]
-    The QP/LP can be solved using the interior point method. Note that the objective function and the constraints are all convex. The maximization problem is equivalent to
+    The QP/LP can be solved using the primal-dual interior point method. Note that the objective function and the constraints are all convex. The maximization problem is equivalent to
     \[
     \begin{aligned}
     \min_{x} \;\; \frac{1}{2}x^T Q x & + c^T x\\
@@ -784,7 +784,7 @@ for (let iter = 1; iter <= iter_num; iter++){
     \]
     This can be solved using Newton's method:
     <br>
-    1. Start with an initial guess \((x^{(0)},y^{(0)},z^{(0)}, s^{(0)})\).
+    1. Start with an initial guess \((x^{(0)},y^{(0)},z^{(0)}, s^{(0)})\). For example, \(x^{0} = 0\), \(y^{0} = 1\), \(z^{0} = 0\), \(s^{0} = 1\). Note that in the initial guess \(y^{0}\), \(s^{0}\) should be strictly positive, but the constraints (\(Ax\geq b\), \(Gx= h\)) are not necessarily satisfied.
     <br>
     2. At the \(k\)-th iteration, first calculate the (surrogate) primal-dual gap
     \[
@@ -815,13 +815,13 @@ for (let iter = 1; iter <= iter_num; iter++){
     Y^{(k)}S^{(k)}e-\delta^{(k)} e
     \end{pmatrix}
     \]
-    4. Instead of updating \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)}) = (x^{(k)},y^{(k)},z^{(k)}, s^{(k)}) + (\Delta x, \Delta y, \Delta z, \Delta s)\), first check the maximum increment so that \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)})\) stays in the interior of the feasible set:
+    4. Instead of updating \((x^{(k+1)},y^{(k+1)},z^{(k+1)}, s^{(k+1)}) = (x^{(k)},y^{(k)},z^{(k)}, s^{(k)}) + (\Delta x, \Delta y, \Delta z, \Delta s)\), first check the maximum increment so that \(y^{(k+1)}\), \(s^{(k+1)}\) stays strictly positive:
     \[
     \alpha_{\text{max}} = \min \bigg\{ 1, \; \min \{-\frac{y_i^{(k)}}{\Delta y_i} : \Delta y_i < 0\}, \; \min \{-\frac{s_i^{(k)}}{\Delta s_i} : \Delta s_i < 0\}\bigg\}
     \]
     If \(\Delta y_i \geq 0\), \(\Delta s_i \geq 0\) for all \(i\), set \(\min \big\{-\frac{y_i^{(k)}}{\Delta y_i} : \Delta y_i < 0\big\} = \infty\), \(\min \big\{-\frac{s_i^{(k)}}{\Delta s_i} : \Delta s_i < 0\big\} = \infty\).
     <br>
-    5. Update the state (multiply \(\alpha_{\text{max}}\) by \(0.99\) to make sure it stays in the feasible set):
+    5. Update the state (multiply \(\alpha_{\text{max}}\) by \(0.99\) to make sure \(y\) and \(s\) stay positive):
     \[
     \begin{aligned}
     x^{(k+1)} & = x^{(k)} + 0.99\alpha_{\text{max}}\Delta x\\
@@ -839,7 +839,7 @@ for (let iter = 1; iter <= iter_num; iter++){
     \eta^{(k)} < \epsilon
     \end{gather}
     \]
-    The method of Lagrange multipliers only finds stationary points. However, because the objective function is convex (\(Q \succcurlyeq 0\)), the stationary points are local minima.
+    The method of Lagrange multipliers only finds stationary points. However, because the objective function is convex (\(Q \succcurlyeq 0\), or when \(\lambda = 0\) the function is linear), the stationary points are minima.
     <br>
     You can compare the performance of the optimal strategy against benchmark portfolios (all stocks, aggressive, moderate, conservative, all bonds, all cash).
     <br>
@@ -981,7 +981,7 @@ for (let iter = 1; iter <= iter_num; iter++){
         <div class = "sliderrow">
         <div class="slidercontainer">
           Risk neutral
-          <input type="range" id="LambdaSlider" name="lambda" min="0" max="12" step="0.5" value="0">
+          <input type="range" id="LambdaSlider" name="lambda" min="0" max="2.0" step="0.05" value="0">
           Risk averse
         </div>
         <div class="form-group">
